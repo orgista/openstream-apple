@@ -1,0 +1,185 @@
+{
+  "meta": {
+    "imdb_id": "tt22084616",
+    "country": "United States of America",
+    "description": "Fighting crime full-time as Spider-Man in a world that doesn't remember him\u2014and the pressure of seeing his old friends move on without him\u2014sparks a change in Peter Parker he may not have the power to control. But that transformation might also be the only thing that can stop a shocking new threat to the city and those he loves - a powerful villain no one can even see.",
+    "director": [
+      "Destin Daniel Cretton"
+    ],
+    "genre": [
+      "Science Fiction",
+      "Action",
+      "Adventure"
+    ],
+    "imdbRating": "8.1",
+    "name": "Spider-Man: Brand New Day",
+    "released": "2026-07-29T00:00:00.000Z",
+    "slug": "movie/spider-man:-brand-new-day-22084616",
+    "type": "movie",
+    "writer": [
+      "Erik Sommers",
+      "Chris McKenna"
+    ],
+    "year": "2026",
+    "trailers": [
+      {
+        "source": "P3uI5sLosKU",
+        "type": "Trailer"
+      },
+      {
+        "source": "62bIsvRcPv0",
+        "type": "Trailer"
+      },
+      {
+        "source": "8TZMtslA3UY",
+        "type": "Trailer"
+      }
+    ],
+    "background": "https://api.ratingposterdb.com/t0-free-rpdb/tmdb/backdrop-default/movie-969681.png?fallback=true",
+    "poster": "https://api.ratingposterdb.com/t0-free-rpdb/tmdb/poster-default/movie-969681.png?fallback=true",
+    "runtime": "2h25min",
+    "id": "tmdb:969681",
+    "genres": [
+      "Science Fiction",
+      "Action",
+      "Adventure"
+    ],
+    "ageRating": null,
+    "releaseInfo": "2026",
+    "trailerStreams": [
+      {
+        "title": "Final Trailer (Peter\u2019s Journey)",
+        "ytId": "P3uI5sLosKU"
+      },
+      {
+        "title": "New Trailer",
+        "ytId": "62bIsvRcPv0"
+      },
+      {
+        "title": "Official Trailer",
+        "ytId": "8TZMtslA3UY"
+      }
+    ],
+    "links": [
+      {
+        "name": "8.1",
+        "category": "imdb",
+        "url": "https://imdb.com/title/tt22084616"
+      },
+      {
+        "name": "Spider-Man: Brand New Day",
+        "category": "share",
+        "url": "https://www.strem.io/s/movie/spider-man:-brand-new-day-22084616"
+      },
+      {
+        "name": "Science Fiction",
+        "category": "Genres",
+        "url": "stremio:///discover/https%3A%2F%2Ftmdb.elfhosted.com%2Fen-US%2Fmanifest.json/movie/tmdb.top?genre=Science%20Fiction"
+      },
+      {
+        "name": "Action",
+        "category": "Genres",
+        "url": "stremio:///discover/https%3A%2F%2Ftmdb.elfhosted.com%2Fen-US%2Fmanifest.json/movie/tmdb.top?genre=Action"
+      },
+      {
+        "name": "Adventure",
+        "category": "Genres",
+        "url": "stremio:///discover/https%3A%2F%2Ftmdb.elfhosted.com%2Fen-US%2Fmanifest.json/movie/tmdb.top?genre=Adventure"
+      },
+      {
+        "name": "Tom Holland",
+        "category": "Cast",
+        "url": "stremio:///search?search=Tom%20Holland"
+      },
+      {
+        "name": "Zendaya",
+        "category": "Cast",
+        "url": "stremio:///search?search=Zendaya"
+      },
+      {
+        "name": "Mark Ruffalo",
+        "category": "Cast",
+        "url": "stremio:///search?search=Mark%20Ruffalo"
+      },
+      {
+        "name": "Jon Bernthal",
+        "category": "Cast",
+        "url": "stremio:///search?search=Jon%20Bernthal"
+      },
+      {
+        "name": "Jacob Batalon",
+        "category": "Cast",
+        "url": "stremio:///search?search=Jacob%20Batalon"
+      },
+      {
+        "name": "Destin Daniel Cretton",
+        "category": "Directors",
+        "url": "stremio:///search?search=Destin%20Daniel%20Cretton"
+      },
+      {
+        "name": "Erik Sommers",
+        "category": "Writers",
+        "url": "stremio:///search?search=Erik%20Sommers"
+      },
+      {
+        "name": "Chris McKenna",
+        "category": "Writers",
+        "url": "stremio:///search?search=Chris%20McKenna"
+      },
+      {
+        "name": "Spider-Man: Homecoming",
+        "category": "Spider-Man (MCU) Collection",
+        "url": "stremio:///detail/movie/tmdb:315635"
+      },
+      {
+        "name": "Spider-Man: Far From Home",
+        "category": "Spider-Man (MCU) Collection",
+        "url": "stremio:///detail/movie/tmdb:429617"
+      },
+      {
+        "name": "Spider-Man: No Way Home",
+        "category": "Spider-Man (MCU) Collection",
+        "url": "stremio:///detail/movie/tmdb:634649"
+      },
+      {
+        "name": "Spider-Man: Brand New Day",
+        "category": "Spider-Man (MCU) Collection",
+        "url": "stremio:///detail/movie/tmdb:969681"
+      }
+    ],
+    "behaviorHints": {
+      "defaultVideoId": "tt22084616",
+      "hasScheduledVideos": false
+    },
+    "logo": "https://api.ratingposterdb.com/t0-free-rpdb/tmdb/logo-default/movie-969681.png?fallback=true",
+    "app_extras": {
+      "cast": [
+        {
+          "name": "Tom Holland",
+          "character": "Peter Parker / Spider-Man",
+          "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/5OK84Wn1bIEIThFKcVoaN087mLj.jpg"
+        },
+        {
+          "name": "Zendaya",
+          "character": "MJ",
+          "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/3WdOloHpjtjL96uVOhFRRCcYSwq.jpg"
+        },
+        {
+          "name": "Mark Ruffalo",
+          "character": "Bruce Banner / Hulk",
+          "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/5GilHMOt5PAQh6rlUKZzGmaKEI7.jpg"
+        },
+        {
+          "name": "Jon Bernthal",
+          "character": "Frank Castle / Punisher",
+          "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/aSH27tGD4PJoCO54RQnARSSSIQy.jpg"
+        },
+        {
+          "name": "Jacob Batalon",
+          "character": "Ned Leeds",
+          "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/53YhaL4xw4Sb1ssoHkeSSBaO29c.jpg"
+        }
+      ]
+    }
+  }
+}

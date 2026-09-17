@@ -1,0 +1,21 @@
+OpenStream third-party notices
+
+AMSMB2 4.0.3
+Copyright (c) Amin Sobhani
+Source: https://github.com/amosavian/AMSMB2/tree/4.0.3
+
+AMSMB2 wraps and statically links libsmb2. The resulting AMSMB2 framework is
+embedded dynamically by the OpenStream iOS, tvOS, and macOS app targets. The
+upstream project states that the combined library is distributed under the
+GNU Lesser General Public License, version 2.1. A verbatim copy of that license
+is bundled alongside this notice as AMSMB2-LGPL-2.1.txt.
+
+libsmb2
+Copyright belongs to the libsmb2 contributors identified in its source files.
+Source: https://github.com/sahlberg/libsmb2
+
+The libsmb2 client library is licensed under the GNU Lesser General Public
+License, version 2.1 or, at your option, any later version.
+
+The corresponding dependency source and build inputs are available through
+the pinned Swift package reference in OpenStream's Package.resolved file.

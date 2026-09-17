@@ -1,0 +1,288 @@
+{
+  "metas": [
+    {
+      "id": "tmdb:969681",
+      "name": "Spider-Man: Brand New Day",
+      "genre": [
+        "Science Fiction",
+        "Action",
+        "Adventure"
+      ],
+      "poster": "https://api.ratingposterdb.com/t0-free-rpdb/tmdb/poster-default/movie-969681.png?fallback=true",
+      "background": "https://image.tmdb.org/t/p/w1280/7iwUUcKURMT7aKfCwMy6YnGtchD.jpg",
+      "posterShape": "regular",
+      "imdbRating": "7.8",
+      "year": "2026",
+      "releaseInfo": "2026",
+      "type": "movie",
+      "description": "Fighting crime full-time as Spider-Man in a world that doesn't remember him\u2014and the pressure of seeing his old friends move on without him\u2014sparks a change in Peter Parker he may not have the power to control. But that transformation might also be the only thing that can stop a shocking new threat to the city and those he loves - a powerful villain no one can even see.",
+      "runtime": "2h25min",
+      "director": [
+        "Destin Daniel Cretton"
+      ],
+      "writer": [
+        "Erik Sommers",
+        "Chris McKenna"
+      ],
+      "links": [
+        {
+          "name": "7.8",
+          "category": "imdb",
+          "url": "https://imdb.com/title/tt22084616"
+        },
+        {
+          "name": "Tom Holland",
+          "category": "Cast",
+          "url": "stremio:///search?search=Tom%20Holland"
+        },
+        {
+          "name": "Zendaya",
+          "category": "Cast",
+          "url": "stremio:///search?search=Zendaya"
+        },
+        {
+          "name": "Mark Ruffalo",
+          "category": "Cast",
+          "url": "stremio:///search?search=Mark%20Ruffalo"
+        },
+        {
+          "name": "Jon Bernthal",
+          "category": "Cast",
+          "url": "stremio:///search?search=Jon%20Bernthal"
+        },
+        {
+          "name": "Jacob Batalon",
+          "category": "Cast",
+          "url": "stremio:///search?search=Jacob%20Batalon"
+        },
+        {
+          "name": "Destin Daniel Cretton",
+          "category": "Directors",
+          "url": "stremio:///search?search=Destin%20Daniel%20Cretton"
+        },
+        {
+          "name": "Erik Sommers",
+          "category": "Writers",
+          "url": "stremio:///search?search=Erik%20Sommers"
+        },
+        {
+          "name": "Chris McKenna",
+          "category": "Writers",
+          "url": "stremio:///search?search=Chris%20McKenna"
+        }
+      ],
+      "app_extras": {
+        "cast": [
+          {
+            "name": "Tom Holland",
+            "character": "Peter Parker / Spider-Man",
+            "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/5OK84Wn1bIEIThFKcVoaN087mLj.jpg"
+          },
+          {
+            "name": "Zendaya",
+            "character": "MJ",
+            "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/3WdOloHpjtjL96uVOhFRRCcYSwq.jpg"
+          },
+          {
+            "name": "Mark Ruffalo",
+            "character": "Bruce Banner / Hulk",
+            "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/5GilHMOt5PAQh6rlUKZzGmaKEI7.jpg"
+          },
+          {
+            "name": "Jon Bernthal",
+            "character": "Frank Castle / Punisher",
+            "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/aSH27tGD4PJoCO54RQnARSSSIQy.jpg"
+          },
+          {
+            "name": "Jacob Batalon",
+            "character": "Ned Leeds",
+            "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/53YhaL4xw4Sb1ssoHkeSSBaO29c.jpg"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tmdb:1204680",
+      "name": "Coyote vs. Acme",
+      "genre": [
+        "Comedy",
+        "Adventure",
+        "Family"
+      ],
+      "poster": "https://api.ratingposterdb.com/t0-free-rpdb/tmdb/poster-default/movie-1204680.png?fallback=true",
+      "background": "https://image.tmdb.org/t/p/w1280/l9mFW9HQnAZ4r1ChZJHoOT3jaal.jpg",
+      "posterShape": "regular",
+      "imdbRating": "7.6",
+      "year": "2026",
+      "releaseInfo": "2026",
+      "type": "movie",
+      "description": "After Acme products fail him one too many times in his dogged pursuit of the Roadrunner, Wile E. Coyote decides to hire a billboard lawyer to sue the Acme Corporation.",
+      "runtime": "1h43min",
+      "director": [
+        "Dave Green"
+      ],
+      "writer": [],
+      "links": [
+        {
+          "name": "7.6",
+          "category": "imdb",
+          "url": "https://imdb.com/title/tt1756855"
+        },
+        {
+          "name": "Will Forte",
+          "category": "Cast",
+          "url": "stremio:///search?search=Will%20Forte"
+        },
+        {
+          "name": "Lana Condor",
+          "category": "Cast",
+          "url": "stremio:///search?search=Lana%20Condor"
+        },
+        {
+          "name": "John Cena",
+          "category": "Cast",
+          "url": "stremio:///search?search=John%20Cena"
+        },
+        {
+          "name": "Tone Bell",
+          "category": "Cast",
+          "url": "stremio:///search?search=Tone%20Bell"
+        },
+        {
+          "name": "Martha Kelly",
+          "category": "Cast",
+          "url": "stremio:///search?search=Martha%20Kelly"
+        },
+        {
+          "name": "Dave Green",
+          "category": "Directors",
+          "url": "stremio:///search?search=Dave%20Green"
+        }
+      ],
+      "app_extras": {
+        "cast": [
+          {
+            "name": "Will Forte",
+            "character": "Kevin Avery",
+            "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/4VEzbkL3HwHTUZAPA5PyypFG2U.jpg"
+          },
+          {
+            "name": "Lana Condor",
+            "character": "Paige Avery",
+            "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/vWn27Fk2GLwH7o9fBG9hBWZI6OR.jpg"
+          },
+          {
+            "name": "John Cena",
+            "character": "Buddy Crane",
+            "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/rgB2eIOt7WyQjdgJCOuESdDlrjg.jpg"
+          },
+          {
+            "name": "Tone Bell",
+            "character": "Sal Maltese",
+            "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/fB06Xj5FgwvHcZESsNGMupGBTyY.jpg"
+          },
+          {
+            "name": "Martha Kelly",
+            "character": "Dottie Jones",
+            "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/ac7HoARDIHdYNqpzgJBzpmKHXHR.jpg"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tmdb:1368337",
+      "name": "The Odyssey",
+      "genre": [
+        "Adventure",
+        "Action",
+        "Fantasy"
+      ],
+      "poster": "https://api.ratingposterdb.com/t0-free-rpdb/tmdb/poster-default/movie-1368337.png?fallback=true",
+      "background": "https://image.tmdb.org/t/p/w1280/RMXG8myu1aGlNUsRjtxzmpdMK0.jpg",
+      "posterShape": "regular",
+      "imdbRating": "8.0",
+      "year": "2026",
+      "releaseInfo": "2026",
+      "type": "movie",
+      "description": "Odysseus, the legendary King of Ithaca, embarks on a long and perilous journey home following the Trojan War. Throughout his voyage, he is forced to confront the whims of gods, mythological monsters, and trials that stretch both his cunning and his humanity to the breaking point.",
+      "runtime": "2h53min",
+      "director": [
+        "Christopher Nolan"
+      ],
+      "writer": [
+        "Christopher Nolan"
+      ],
+      "links": [
+        {
+          "name": "8.0",
+          "category": "imdb",
+          "url": "https://imdb.com/title/tt33764258"
+        },
+        {
+          "name": "Matt Damon",
+          "category": "Cast",
+          "url": "stremio:///search?search=Matt%20Damon"
+        },
+        {
+          "name": "Tom Holland",
+          "category": "Cast",
+          "url": "stremio:///search?search=Tom%20Holland"
+        },
+        {
+          "name": "Anne Hathaway",
+          "category": "Cast",
+          "url": "stremio:///search?search=Anne%20Hathaway"
+        },
+        {
+          "name": "Robert Pattinson",
+          "category": "Cast",
+          "url": "stremio:///search?search=Robert%20Pattinson"
+        },
+        {
+          "name": "Himesh Patel",
+          "category": "Cast",
+          "url": "stremio:///search?search=Himesh%20Patel"
+        },
+        {
+          "name": "Christopher Nolan",
+          "category": "Directors",
+          "url": "stremio:///search?search=Christopher%20Nolan"
+        },
+        {
+          "name": "Christopher Nolan",
+          "category": "Writers",
+          "url": "stremio:///search?search=Christopher%20Nolan"
+        }
+      ],
+      "app_extras": {
+        "cast": [
+          {
+            "name": "Matt Damon",
+            "character": "Odysseus",
+            "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/aCvBXTAR9B1qRjIRzMBYhhbm1fR.jpg"
+          },
+          {
+            "name": "Tom Holland",
+            "character": "Telemachus",
+            "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/5OK84Wn1bIEIThFKcVoaN087mLj.jpg"
+          },
+          {
+            "name": "Anne Hathaway",
+            "character": "Penelope",
+            "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/nbccV2pMoyLTCeg5DQip24Eq0Jp.jpg"
+          },
+          {
+            "name": "Robert Pattinson",
+            "character": "Antinous",
+            "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/sRUM2u8qLcsOaTm0jGJGlOEQhlQ.jpg"
+          },
+          {
+            "name": "Himesh Patel",
+            "character": "Eurylochus",
+            "photo": "https://image.tmdb.org/t/p/w276_and_h350_face/icqsXLmU0FxBGTv63kkA0GcrecO.jpg"
+          }
+        ]
+      }
+    }
+  ]
+}

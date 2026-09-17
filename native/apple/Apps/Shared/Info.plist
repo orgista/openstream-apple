@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+#if OPENSTREAM_LONG_FORM_VIDEO
+	<!-- OPENSTREAM_LONG_FORM_VIDEO is defined for tvOS as well as iOS, so
+	     this key lands in both plists. That is harmless: ActivityKit does not
+	     exist on tvOS and the key is ignored there. Kept under this flag
+	     rather than adding a second definition to four build configurations
+	     for one boolean. -->
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>AVInitialRouteSharingPolicy</key>
+	<string>LongFormVideo</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
+#endif
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>OpenStream connects to media servers and add-ons on your local network.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_openstream._tcp</string>
+		<string>_smb._tcp</string>
+	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.orgista.openstream.routes</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>openstream</string>
+			</array>
+		</dict>
+	</array>
+	<!-- User-configured IPTV providers frequently expose HTTP-only playlist
+	     and media endpoints. Credentials remain separate from the stored URL. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>UIDesignRequiresCompatibility</key>
+	<true/>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+</dict>
+</plist>
