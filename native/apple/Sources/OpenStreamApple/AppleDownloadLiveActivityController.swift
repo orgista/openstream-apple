@@ -14,7 +14,9 @@ public final class AppleDownloadLiveActivityController {
     public static let shared = AppleDownloadLiveActivityController()
 
     #if canImport(ActivityKit) && os(iOS)
-    private var activity: Activity<AppleDownloadActivityAttributes>?
+    // ActivityKit's Activity is not Sendable. Keep only its identifier on the
+    // main actor; resolve the framework object where its async API is called.
+    private var activityID: String?
     #endif
 
     public init() {}
@@ -58,18 +60,18 @@ public final class AppleDownloadLiveActivityController {
             end(with: state)
             return
         }
-        if let activity {
-            Task { await activity.update(ActivityContent(state: state, staleDate: nil)) }
+        if let activityID {
+            Task { await Self.updateActivity(id: activityID, state: state) }
             return
         }
         let attributes = AppleDownloadActivityAttributes(
             title: title, subtitle: subtitle, destination: destination
         )
         do {
-            activity = try Activity.request(
+            activityID = try Activity.request(
                 attributes: attributes,
                 content: ActivityContent(state: state, staleDate: nil)
-            )
+            ).id
             appleTrace("live activity: started for \(title)")
         } catch {
             appleTraceFailure("live activity: request failed — \(error.localizedDescription)")
@@ -81,12 +83,26 @@ public final class AppleDownloadLiveActivityController {
     /// completed download is seen rather than vanishing mid-glance.
     public func end(with state: AppleDownloadActivityState? = nil) {
         #if canImport(ActivityKit) && os(iOS)
-        guard let current = activity else { return }
-        activity = nil
-        Task {
-            let content = state.map { ActivityContent(state: $0, staleDate: nil) }
-            await current.end(content, dismissalPolicy: .after(.now.addingTimeInterval(4)))
-        }
+        guard let activityID else { return }
+        self.activityID = nil
+        Task { await Self.endActivity(id: activityID, state: state) }
         #endif
     }
+
+    #if canImport(ActivityKit) && os(iOS)
+    private nonisolated static func updateActivity(id: String, state: AppleDownloadActivityState) async {
+        guard let activity = Activity<AppleDownloadActivityAttributes>.activities.first(where: { $0.id == id }) else {
+            return
+        }
+        await activity.update(ActivityContent(state: state, staleDate: nil))
+    }
+
+    private nonisolated static func endActivity(id: String, state: AppleDownloadActivityState?) async {
+        guard let activity = Activity<AppleDownloadActivityAttributes>.activities.first(where: { $0.id == id }) else {
+            return
+        }
+        let content = state.map { ActivityContent(state: $0, staleDate: nil) }
+        await activity.end(content, dismissalPolicy: .after(.now.addingTimeInterval(4)))
+    }
+    #endif
 }
