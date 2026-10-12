@@ -24,7 +24,7 @@ public struct AppleOfflineDownloadDebugView: View {
             VStack(alignment: .leading, spacing: 22) {
                 Text("Sample Movie")
                     .font(.largeTitle.bold())
-                Text("OpenStream Offline Storage")
+                Text("oStream Offline Storage")
                     .foregroundStyle(.secondary)
                 status
                 Spacer()
@@ -43,7 +43,7 @@ public struct AppleOfflineDownloadDebugView: View {
                     itemTitle: "Sample Movie",
                     subtitle: "Local fixture",
                     artworkURL: nil,
-                    destinationLabel: "OpenStream Offline Storage"
+                    destinationLabel: "oStream Offline Storage"
                 ),
                 plans: [.init(sourceURL: fixtureURL, requestHeaders: [:], protectedCapabilityToRevoke: nil)]
             )
@@ -80,7 +80,7 @@ public struct AppleOfflineDownloadDebugView: View {
             Label("Download complete", systemImage: "checkmark.circle.fill")
                 .font(.title2.bold())
                 .accessibilityIdentifier("fixture.download.completed")
-            Text("\(byteLabel(bytes)) saved to OpenStream Offline Storage")
+            Text("\(byteLabel(bytes)) saved to oStream Offline Storage")
             Text(destination.lastPathComponent)
                 .font(.footnote.monospaced())
                 .foregroundStyle(.secondary)

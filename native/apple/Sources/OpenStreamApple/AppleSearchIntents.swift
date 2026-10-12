@@ -7,7 +7,7 @@ import CoreSpotlight
 #endif
 
 public struct OpenStreamMediaEntity: AppEntity, Identifiable, Sendable {
-    public static let typeDisplayRepresentation: TypeDisplayRepresentation = "OpenStream Media"
+    public static let typeDisplayRepresentation: TypeDisplayRepresentation = "oStream Media"
     public static let defaultQuery = OpenStreamMediaQuery()
 
     public let id: String
@@ -88,8 +88,8 @@ public final class AppleAppIntentHandoff {
 }
 
 public struct SearchOpenStreamIntent: ShowInAppSearchResultsIntent {
-    public static let title: LocalizedStringResource = "Search OpenStream"
-    public static let description = IntentDescription("Search content from sources you added to OpenStream.")
+    public static let title: LocalizedStringResource = "Search oStream"
+    public static let description = IntentDescription("Search content from sources you added to oStream.")
     public static let searchScopes: [StringSearchScope] = [.general, .movies, .tv]
 
     @Parameter(title: "Search")
@@ -106,8 +106,8 @@ public struct SearchOpenStreamIntent: ShowInAppSearchResultsIntent {
 }
 
 public struct PlayOpenStreamVideoIntent: PlayVideoIntent {
-    public static let title: LocalizedStringResource = "Play in OpenStream"
-    public static let description = IntentDescription("Find a movie or show in OpenStream and open the safe playback route.")
+    public static let title: LocalizedStringResource = "Play in oStream"
+    public static let description = IntentDescription("Find a movie or show in oStream and open the safe playback route.")
     public static let supportedCategories: [VideoCategory] = [.movies, .tv]
 
     @Parameter(title: "Title")
@@ -131,8 +131,8 @@ public struct PlayOpenStreamVideoIntent: PlayVideoIntent {
 }
 
 public struct OpenOpenStreamMediaIntent: AppIntent {
-    public static let title: LocalizedStringResource = "Open OpenStream Media"
-    public static let description = IntentDescription("Open one indexed title in OpenStream.")
+    public static let title: LocalizedStringResource = "Open oStream Media"
+    public static let description = IntentDescription("Open one indexed title in oStream.")
     public static let openAppWhenRun = true
 
     @Parameter(title: "Media")
@@ -147,8 +147,8 @@ public struct OpenOpenStreamMediaIntent: AppIntent {
 }
 
 public struct ContinueWatchingOpenStreamIntent: AppIntent {
-    public static let title: LocalizedStringResource = "Continue Watching in OpenStream"
-    public static let description = IntentDescription("Open Continue Watching in OpenStream.")
+    public static let title: LocalizedStringResource = "Continue Watching in oStream"
+    public static let description = IntentDescription("Open Continue Watching in oStream.")
     public static let openAppWhenRun = true
 
     public init() {}
@@ -162,15 +162,20 @@ public struct ContinueWatchingOpenStreamIntent: AppIntent {
 public struct OpenStreamShortcuts: AppShortcutsProvider {
     public static var appShortcuts: [AppShortcut] {
         AppShortcut(
+            intent: WatchOpenStreamChannelIntent(),
+            phrases: ["Watch \(\.$channel) in \(.applicationName)"],
+            shortTitle: "Watch Channel", systemImageName: "tv"
+        )
+        AppShortcut(
             intent: SearchOpenStreamIntent(),
             phrases: ["Search with \(.applicationName)"],
-            shortTitle: "Search OpenStream",
+            shortTitle: "Search oStream",
             systemImageName: "magnifyingglass"
         )
         AppShortcut(
             intent: PlayOpenStreamVideoIntent(),
             phrases: ["Play a video with \(.applicationName)"],
-            shortTitle: "Play in OpenStream",
+            shortTitle: "Play in oStream",
             systemImageName: "play.fill"
         )
         AppShortcut(

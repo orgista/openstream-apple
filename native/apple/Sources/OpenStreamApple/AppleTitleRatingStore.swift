@@ -48,6 +48,15 @@ public struct AppleTitleRatingStore: @unchecked Sendable {
         }
     }
 
+    func restoreConfigurationRatings(_ values: [String: Int]) {
+        for id in defaults.stringArray(forKey: "\(keyPrefix)ids") ?? [] {
+            defaults.removeObject(forKey: keyPrefix + id)
+        }
+        let valid = values.filter { AppleTitleRating(rawValue: $0.value) != nil }
+        for (id, rating) in valid { defaults.set(rating, forKey: keyPrefix + id) }
+        defaults.set(valid.keys.sorted(), forKey: "\(keyPrefix)ids")
+    }
+
     private func key(for mediaID: String) -> String {
         keyPrefix + ApplePlaybackIdentity.digest(for: mediaID)
     }

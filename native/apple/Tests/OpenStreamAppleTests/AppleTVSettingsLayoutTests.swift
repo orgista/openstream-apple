@@ -8,10 +8,10 @@ struct AppleTVSettingsLayoutTests {
 
     @Test func sectionsListInTheOwnerOrder() {
         #expect(AppleTVSettingsSection.allCases.map(\.title) == [
-            "Sources", "Channel Manager", "Live TV", "Discover", "Services",
+            "Sources", "Channel Manager", "Restrictions", "Live TV", "Discover", "Services",
             "Playback", "Privacy", "Storage", "About",
         ])
-        #expect(AppleTVSettingsSection.allCases.count == 9)
+        #expect(AppleTVSettingsSection.allCases.count == 10)
         #expect(AppleTVSettingsSection.defaultSelection == .sources)
         #expect(AppleTVSettingsSection.allCases.first == .sources)
         #expect(AppleTVSettingsSection.allCases.last == .about)

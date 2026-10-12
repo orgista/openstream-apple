@@ -3,7 +3,7 @@ import Testing
 @testable import OpenStreamApple
 
 @Test func playbackIdentityIsStableAndNeverContainsTheSourceValue() throws {
-    let mediaID = "file:///Users/example/Movies/private-title.mp4"
+    let mediaID = "file:///fixture/Movies/private-title.mp4"
     let first = try #require(ApplePlaybackIdentity.storageKey(for: mediaID))
     let second = try #require(ApplePlaybackIdentity.storageKey(for: mediaID))
 
@@ -19,7 +19,7 @@ import Testing
     let defaults = try #require(UserDefaults(suiteName: suiteName))
     defer { defaults.removePersistentDomain(forName: suiteName) }
     let store = ApplePlaybackStore(defaults: defaults)
-    let rawMediaID = "/Users/example/Movies/private-title.mp4"
+    let rawMediaID = "/fixture/Movies/private-title.mp4"
 
     store.save(mediaID: rawMediaID, position: 569, duration: 600)
     #expect(store.progress(for: rawMediaID)?.resumePosition == 569)

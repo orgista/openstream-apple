@@ -4,7 +4,7 @@ import Foundation
 /// pipeline. HTTP alone does not prove container or codec support, so callers
 /// must inspect the asset and route it through `ApplePlaybackPreparer` before
 /// creating a player.
-public struct AppleStremioHTTPPlaybackCandidate: Equatable, Sendable {
+public struct AppleMediaHTTPPlaybackCandidate: Equatable, Sendable {
     public let title: String
     public let sourceURL: URL
     public let filename: String?
@@ -59,9 +59,9 @@ public struct AppleStremioHTTPPlaybackCandidate: Equatable, Sendable {
 /// A locator returned by an add-on that OpenStream cannot truthfully pass to
 /// AVFoundation as media. These values are retained so the UI can explain why
 /// an add-on result was not offered as a playable URL without silently treating
-/// a torrent, web page, or YouTube identifier as direct media.
-public enum AppleStremioUnsupportedReason: Equatable, Sendable {
-    case torrent(infoHash: String, fileIndex: Int?, sources: [String])
+/// a web page or YouTube identifier as direct media. Results that carry no
+/// HTTP(S) locator at all are reported as `missingLocator`.
+public enum AppleMediaUnsupportedReason: Equatable, Sendable {
     case externalLink(URL)
     case youtube(videoID: String)
     case invalidHTTPURL
@@ -69,7 +69,7 @@ public enum AppleStremioUnsupportedReason: Equatable, Sendable {
     case missingLocator
 }
 
-public struct AppleStremioUnsupportedStream: Equatable, Sendable {
+public struct AppleMediaUnsupportedStream: Equatable, Sendable {
     public let title: String
     public let filename: String?
     public let reason: AppleStremioUnsupportedReason
@@ -81,7 +81,7 @@ public struct AppleStremioUnsupportedStream: Equatable, Sendable {
     }
 }
 
-public struct AppleStremioStreamSelection: Equatable, Sendable {
+public struct AppleMediaStreamSelection: Equatable, Sendable {
     public let httpCandidates: [AppleStremioHTTPPlaybackCandidate]
     public let unsupported: [AppleStremioUnsupportedStream]
 
@@ -96,7 +96,7 @@ public struct AppleStremioStreamSelection: Equatable, Sendable {
     public static let empty = AppleStremioStreamSelection(httpCandidates: [], unsupported: [])
 }
 
-public struct AppleStremioSubtitleTrack: Equatable, Sendable {
+public struct AppleMediaSubtitleTrack: Equatable, Sendable {
     public let id: String
     public let url: URL
     public let language: String
@@ -110,7 +110,7 @@ public struct AppleStremioSubtitleTrack: Equatable, Sendable {
     }
 }
 
-public enum AppleStremioPlaybackError: Swift.Error, Equatable, LocalizedError, Sendable {
+public enum AppleMediaPlaybackError: Swift.Error, Equatable, LocalizedError, Sendable {
     case invalidSource
     case invalidMediaIdentity
     case nonHTTPResponse
@@ -142,7 +142,8 @@ public enum AppleStremioPlaybackError: Swift.Error, Equatable, LocalizedError, S
 /// A bounded Stremio playback-resource client. It deliberately resolves only
 /// the protocol layer: native media compatibility remains an AVAsset runtime
 /// decision made by the playback preparation pipeline.
-public struct AppleStremioPlaybackClient: Sendable {
+#if OPENSTREAM_ADDONS
+public struct AppleMediaPlaybackClient: Sendable {
     public typealias Loader = @Sendable (URLRequest) async throws -> (Data, URLResponse)
     public typealias Sleeper = @Sendable (Duration) async throws -> Void
 
@@ -170,7 +171,7 @@ public struct AppleStremioPlaybackClient: Sendable {
         type: String,
         mediaID: String
     ) async throws -> AppleStremioStreamSelection {
-        guard source.kind == .stremio,
+        guard source.isAddon,
               source.isEnabled,
               source.resources.contains(where: { $0.caseInsensitiveCompare("stream") == .orderedSame }) else {
             return .empty
@@ -194,7 +195,7 @@ public struct AppleStremioPlaybackClient: Sendable {
         type: String,
         mediaID: String
     ) async throws -> [AppleStremioSubtitleTrack] {
-        guard source.kind == .stremio,
+        guard source.isAddon,
               source.isEnabled,
               source.resources.contains(where: { $0.caseInsensitiveCompare("subtitles") == .orderedSame }) else {
             return []
@@ -244,7 +245,7 @@ public struct AppleStremioPlaybackClient: Sendable {
                         filename: cleanFilename(value.behaviorHints?.filename),
                         requestHeaders: headers,
                         requiresGateway: notWebReady,
-                        qualityDescription: [value.name, value.title].compactMap { $0 }.joined(separator: " "),
+                        qualityDescription: [value.name, value.title, value.description].compactMap { $0 }.joined(separator: " "),
                         sizeBytes: value.behaviorHints?.videoSize
                     ))
                 }
@@ -253,19 +254,13 @@ public struct AppleStremioPlaybackClient: Sendable {
 
             guard unsupported.count < maximumUnsupportedStreams else { continue }
             let reason: AppleStremioUnsupportedReason
-            if let hash = validInfoHash(value.infoHash) {
-                reason = .torrent(
-                    infoHash: hash,
-                    fileIndex: validFileIndex(value.fileIndex),
-                    sources: safeTorrentSources(value.sources)
-                )
-            } else if let videoID = validYouTubeID(value.youtubeID) {
+            if let videoID = validYouTubeID(value.youtubeID) {
                 reason = .youtube(videoID: videoID)
             } else if let externalURL = safeExternalURL(value.externalURL) {
                 reason = .externalLink(externalURL)
             } else if value.url?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false {
                 reason = .invalidHTTPURL
-            } else if value.infoHash != nil || value.youtubeID != nil || value.externalURL != nil {
+            } else if value.youtubeID != nil || value.externalURL != nil {
                 reason = .invalidLocator
             } else {
                 reason = .missingLocator
@@ -432,7 +427,10 @@ public struct AppleStremioPlaybackClient: Sendable {
     private static func safeProxyHeaders(_ values: [String: String]?) -> [String: String] {
         guard let values else { return [:] }
         let allowed = Set(["user-agent", "referer", "origin", "cookie", "authorization"])
-        return Dictionary(uniqueKeysWithValues: values.prefix(16).compactMap { name, value in
+        // Trimming can fold two names an add-on sent ("Referer" and
+        // " Referer ") into one, so duplicates keep the first rather than
+        // trapping in `Dictionary(uniqueKeysWithValues:)`.
+        let pairs = values.sorted { $0.key < $1.key }.prefix(16).compactMap { name, value -> (String, String)? in
             let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
             let cleanValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
             guard allowed.contains(cleanName.lowercased()),
@@ -442,7 +440,8 @@ public struct AppleStremioPlaybackClient: Sendable {
                 return nil
             }
             return (cleanName, cleanValue)
-        })
+        }
+        return Dictionary(pairs, uniquingKeysWith: { first, _ in first })
     }
 
     private static func safeHTTPURL(_ value: String) -> URL? {
@@ -476,21 +475,6 @@ public struct AppleStremioPlaybackClient: Sendable {
         return components.url
     }
 
-    private static func validInfoHash(_ value: String?) -> String? {
-        guard let candidate = value?.trimmingCharacters(in: .whitespacesAndNewlines),
-              candidate.utf8.count == 40 || candidate.utf8.count == 32 else { return nil }
-        let bytes = candidate.utf8
-        if bytes.count == 40,
-           bytes.allSatisfy({ (48 ... 57).contains($0) || (65 ... 70).contains($0) || (97 ... 102).contains($0) }) {
-            return candidate.lowercased()
-        }
-        if bytes.count == 32,
-           bytes.allSatisfy({ (65 ... 90).contains($0) || (97 ... 122).contains($0) || (50 ... 55).contains($0) }) {
-            return candidate.uppercased()
-        }
-        return nil
-    }
-
     private static func validYouTubeID(_ value: String?) -> String? {
         guard let candidate = value?.trimmingCharacters(in: .whitespacesAndNewlines),
               (1 ... 128).contains(candidate.utf8.count),
@@ -499,25 +483,6 @@ public struct AppleStremioPlaybackClient: Sendable {
                       (97 ... 122).contains($0) || $0 == 45 || $0 == 95
               }) else { return nil }
         return candidate
-    }
-
-    private static func validFileIndex(_ value: Int?) -> Int? {
-        guard let value, (0 ... 100_000).contains(value) else { return nil }
-        return value
-    }
-
-    private static func safeTorrentSources(_ values: [String]?) -> [String] {
-        guard let values else { return [] }
-        var seen = Set<String>()
-        return values.prefix(64).compactMap { value in
-            let clean = value.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard (1 ... 2_048).contains(clean.utf8.count),
-                  !clean.unicodeScalars.contains(where: CharacterSet.controlCharacters.contains),
-                  seen.insert(clean).inserted else {
-                return nil
-            }
-            return clean
-        }
     }
 
     private static func subtitleMimeType(_ url: URL) -> String {
@@ -567,6 +532,7 @@ public struct AppleStremioPlaybackClient: Sendable {
         try await Task.sleep(for: duration)
     }
 }
+#endif
 
 private struct AppleStremioLossy<Value: Decodable>: Decodable {
     let value: Value?
@@ -611,17 +577,14 @@ private struct RawStream: Decodable {
 
     let title: String?
     let name: String?
+    let description: String?
     let url: String?
     let externalURL: String?
     let youtubeID: String?
-    let infoHash: String?
-    let fileIndex: Int?
-    let sources: [String]?
     let behaviorHints: BehaviorHints?
 
     private enum CodingKeys: String, CodingKey {
-        case title, name, url, externalURL = "externalUrl", youtubeID = "ytId", infoHash
-        case fileIndex = "fileIdx", sources
+        case title, name, description, url, externalURL = "externalUrl", youtubeID = "ytId"
         case behaviorHints
     }
 
@@ -629,12 +592,10 @@ private struct RawStream: Decodable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         title = try? container.decode(String.self, forKey: .title)
         name = try? container.decode(String.self, forKey: .name)
+        description = try? container.decode(String.self, forKey: .description)
         url = try? container.decode(String.self, forKey: .url)
         externalURL = try? container.decode(String.self, forKey: .externalURL)
         youtubeID = try? container.decode(String.self, forKey: .youtubeID)
-        infoHash = try? container.decode(String.self, forKey: .infoHash)
-        fileIndex = try? container.decode(Int.self, forKey: .fileIndex)
-        sources = try? container.decode([String].self, forKey: .sources)
         behaviorHints = try? container.decode(BehaviorHints.self, forKey: .behaviorHints)
     }
 }
@@ -664,3 +625,19 @@ private struct RawSubtitle: Decodable {
         language = try? container.decode(String.self, forKey: .language)
     }
 }
+
+public typealias AppleStremioHTTPPlaybackCandidate = AppleMediaHTTPPlaybackCandidate
+
+public typealias AppleStremioUnsupportedReason = AppleMediaUnsupportedReason
+
+public typealias AppleStremioUnsupportedStream = AppleMediaUnsupportedStream
+
+public typealias AppleStremioStreamSelection = AppleMediaStreamSelection
+
+public typealias AppleStremioSubtitleTrack = AppleMediaSubtitleTrack
+
+public typealias AppleStremioPlaybackError = AppleMediaPlaybackError
+
+#if OPENSTREAM_ADDONS
+public typealias AppleStremioPlaybackClient = AppleMediaPlaybackClient
+#endif

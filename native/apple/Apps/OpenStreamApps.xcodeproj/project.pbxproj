@@ -7,10 +7,41 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D00000000000000000000044 /* Watch Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000044 /* Watch Assets.xcassets */; };
+		084BDE91F37ABFC62DD16953 /* AppStoreScreenshotUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42C5AD7DD647D200BEBD523C /* AppStoreScreenshotUITests.swift */; };
+		08897ED4EA3FB6233278368B /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 749D758BBC852A12509217D3 /* Cocoa.framework */; };
+		0A329C96DE873245B81BEDD8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 515F2F6124AE9E61D64D3E10 /* Foundation.framework */; };
+		0D23C363DD58C423B3EE3B96 /* OpenStreamApple in Frameworks */ = {isa = PBXBuildFile; productRef = 7F9D59526BDA80CCA8E01297 /* OpenStreamApple */; };
+		343E6FBEB8C65C3016DDB601 /* AppStoreScreenshotUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42C5AD7DD647D200BEBD523C /* AppStoreScreenshotUITests.swift */; };
 		3545C0B977F1F75D484AD8ED /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57A9EDE0EB4D1AE2F7607070 /* Foundation.framework */; };
+		51A32276ED29BE9EE33C74AE /* AppleMessagesExtensionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59D22BCCC6AE343179BCBE05 /* AppleMessagesExtensionUITests.swift */; };
+		6060B3E32D3B17B7F9793D3E /* AppStoreScreenshotUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42C5AD7DD647D200BEBD523C /* AppStoreScreenshotUITests.swift */; };
+		63CF3657B1280DDCA312F763 /* OpenStreamMessagesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EF3BF2AFB564D81B0674276 /* OpenStreamMessagesViewController.swift */; };
+		7A1000000000000000000002 /* AppleTVTopShelfUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1000000000000000000001 /* AppleTVTopShelfUITests.swift */; };
+		7A1000000000000000000004 /* AppleiOSLiveActivityUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1000000000000000000003 /* AppleiOSLiveActivityUITests.swift */; };
+		7A1000000000000000000006 /* AppleiOSSystemIntegrationUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1000000000000000000005 /* AppleiOSSystemIntegrationUITests.swift */; };
+		7A1000000000000000000011 /* OpenStreamUITestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1000000000000000000010 /* OpenStreamUITestCase.swift */; };
+		7A1000000000000000000013 /* AppleiOSStubSmokeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1000000000000000000012 /* AppleiOSStubSmokeUITests.swift */; };
+		7A1000000000000000000021 /* AppleDeviceSmokeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1000000000000000000020 /* AppleDeviceSmokeUITests.swift */; };
+		7A1000000000000000000031 /* AppleOwnerContentUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1000000000000000000030 /* AppleOwnerContentUITests.swift */; };
+		7A1000000000000000000051 /* AppleUXTourUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1000000000000000000050 /* AppleUXTourUITests.swift */; };
+		7A1000000000000000000053 /* AppleUXCaptureUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1000000000000000000052 /* AppleUXCaptureUITests.swift */; };
+		7A1000000000000000000015 /* OpenStreamUITestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1000000000000000000014 /* OpenStreamUITestCase.swift */; };
+		7A1000000000000000000017 /* AppleTVStubSmokeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1000000000000000000016 /* AppleTVStubSmokeUITests.swift */; };
+		7A1000000000000000000019 /* OpenStreamUITestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1000000000000000000018 /* OpenStreamUITestCase.swift */; };
+		A5B100000000000000000001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A5B000000000000000000001 /* PrivacyInfo.xcprivacy */; };
+		A5B100000000000000000002 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A5B000000000000000000001 /* PrivacyInfo.xcprivacy */; };
+		A5B100000000000000000003 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A5B000000000000000000001 /* PrivacyInfo.xcprivacy */; };
+		A5B100000000000000000004 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A5B000000000000000000001 /* PrivacyInfo.xcprivacy */; };
+		A5B100000000000000000005 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A5B000000000000000000003 /* PrivacyInfo.xcprivacy */; };
+		A5B100000000000000000006 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A5B000000000000000000002 /* PrivacyInfo.xcprivacy */; };
+		A5B100000000000000000007 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A5B000000000000000000004 /* PrivacyInfo.xcprivacy */; };
+		A5B100000000000000000008 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A5B000000000000000000005 /* PrivacyInfo.xcprivacy */; };
+		A9DFB0A2C2BF8A24229BB45D /* AppleMacScreenshotUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C369990DBB3867E958FE11 /* AppleMacScreenshotUITests.swift */; };
 		AB1000000000000000000001 /* AppleiOSUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1000000000000000000002 /* AppleiOSUITests.swift */; };
 		ACE25E4B2EFB78058040C93F /* AppleTVFocusUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 791687CEE8616CBB3C5CCAE0 /* AppleTVFocusUITests.swift */; };
+		7A1000000000000000000041 /* AppleVisionPlayerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1000000000000000000040 /* AppleVisionPlayerUITests.swift */; };
+		B273701D1EE329791A414789 /* AppStoreScreenshotUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42C5AD7DD647D200BEBD523C /* AppStoreScreenshotUITests.swift */; };
+		BB800056C96FC3E8BF129BB9 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 515F2F6124AE9E61D64D3E10 /* Foundation.framework */; };
 		D00000000000000000000001 /* OpenStreamApps.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000001 /* OpenStreamApps.swift */; };
 		D00000000000000000000002 /* OpenStreamApps.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000001 /* OpenStreamApps.swift */; };
 		D00000000000000000000003 /* OpenStreamApps.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000001 /* OpenStreamApps.swift */; };
@@ -25,22 +56,53 @@
 		D00000000000000000000014 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000008 /* Assets.xcassets */; };
 		D00000000000000000000015 /* TopShelfProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000010 /* TopShelfProvider.swift */; };
 		D00000000000000000000016 /* OpenStream Top Shelf.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = C00000000000000000000013 /* OpenStream Top Shelf.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		D00000000000000000000040 /* OpenStreamWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000040 /* OpenStreamWatchApp.swift */; };
-		D00000000000000000000041 /* AppleWatchLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000041 /* AppleWatchLink.swift */; };
-		D00000000000000000000042 /* OpenStreamWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = C00000000000000000000042 /* OpenStreamWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		D00000000000000000000030 /* OpenStreamWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000030 /* OpenStreamWidgets.swift */; };
-		D00000000000000000000033 /* OpenStreamDownloadActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000034 /* OpenStreamDownloadActivity.swift */; };
-		D00000000000000000000031 /* OpenStreamApple in Frameworks */ = {isa = PBXBuildFile; productRef = K00000000000000000000030 /* OpenStreamApple */; };
-		D00000000000000000000032 /* OpenStreamWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = C00000000000000000000031 /* OpenStreamWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D00000000000000000000017 /* AMSMB2 in Frameworks */ = {isa = PBXBuildFile; productRef = K00000000000000000000005 /* AMSMB2 */; };
 		D00000000000000000000018 /* AMSMB2 in Frameworks */ = {isa = PBXBuildFile; productRef = K00000000000000000000006 /* AMSMB2 */; };
 		D00000000000000000000019 /* AMSMB2 in Frameworks */ = {isa = PBXBuildFile; productRef = K00000000000000000000007 /* AMSMB2 */; };
 		D00000000000000000000020 /* AMSMB2 in Embed Frameworks */ = {isa = PBXBuildFile; productRef = K00000000000000000000005 /* AMSMB2 */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D00000000000000000000021 /* AMSMB2 in Embed Frameworks */ = {isa = PBXBuildFile; productRef = K00000000000000000000006 /* AMSMB2 */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D00000000000000000000022 /* AMSMB2 in Embed Frameworks */ = {isa = PBXBuildFile; productRef = K00000000000000000000007 /* AMSMB2 */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		D00000000000000000000030 /* OpenStreamWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000030 /* OpenStreamWidgets.swift */; };
+		D00000000000000000000031 /* OpenStreamApple in Frameworks */ = {isa = PBXBuildFile; productRef = K00000000000000000000030 /* OpenStreamApple */; };
+		D00000000000000000000032 /* OpenStreamWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = C00000000000000000000031 /* OpenStreamWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D00000000000000000000033 /* OpenStreamDownloadActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000034 /* OpenStreamDownloadActivity.swift */; };
+		D00000000000000000000040 /* OpenStreamWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000040 /* OpenStreamWatchApp.swift */; };
+		D00000000000000000000041 /* AppleWatchLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000041 /* AppleWatchLink.swift */; };
+		D00000000000000000000042 /* OpenStreamWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = C00000000000000000000042 /* OpenStreamWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D00000000000000000000044 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000044 /* Assets.xcassets */; };
+		D00000000000000000000061 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000060 /* AppIcon.icon */; };
+		D00000000000000000000062 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000060 /* AppIcon.icon */; };
+		E2B2AB38C6D68040B501C422 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 99D9BC94256B56EF50B40F8D /* Assets.xcassets */; };
+		FD7D51600EA6E0DA8FC34047 /* OpenStreamMessages.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 6ADFECBFDE89C06061477463 /* OpenStreamMessages.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A5C00000000000000000000B /* ShareViewController.swift in Build */ = {isa = PBXBuildFile; fileRef = A5C000000000000000000001 /* ShareViewController.swift */; };
+		A5C00000000000000000000C /* ShareAppOpener.swift in Build */ = {isa = PBXBuildFile; fileRef = A5C000000000000000000002 /* ShareAppOpener.swift */; };
+		A5C00000000000000000000D /* AppleSharedLinkHandoff.swift in Build */ = {isa = PBXBuildFile; fileRef = A5C000000000000000000003 /* AppleSharedLinkHandoff.swift */; };
+		A5C00000000000000000000E /* PrivacyInfo.xcprivacy in Build */ = {isa = PBXBuildFile; fileRef = A5C000000000000000000004 /* PrivacyInfo.xcprivacy */; };
+		A5C00000000000000000000F /* OpenStreamShare.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A5C000000000000000000005; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		9491219B77546A7E7645F97E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A00000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F00000000000000000000003;
+			remoteInfo = "OpenStream visionOS";
+		};
+		979BBF2B9904A3C09FA46270 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A00000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F00000000000000000000004;
+			remoteInfo = "OpenStream macOS";
+		};
+		98B0F877FC822C1FF225FD4F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A00000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BC08BCCF680E156733C6B315;
+			remoteInfo = "OpenStream Messages";
+		};
 		L00000000000000000000001 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = A00000000000000000000001 /* Project object */;
@@ -62,6 +124,7 @@
 			remoteGlobalIDString = F00000000000000000000040;
 			remoteInfo = "OpenStream Watch";
 		};
+		A5C00000000000000000001F = {isa = PBXContainerItemProxy; containerPortal = A00000000000000000000001; proxyType = 1; remoteGlobalIDString = A5C00000000000000000001E; remoteInfo = "OpenStream Share"; };
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -72,28 +135,6 @@
 			dstSubfolderSpec = 13;
 			files = (
 				D00000000000000000000016 /* OpenStream Top Shelf.appex in Embed App Extensions */,
-			);
-			name = "Embed App Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		E00000000000000000000043 /* Embed Watch Content */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
-			dstSubfolderSpec = 16;
-			files = (
-				D00000000000000000000042 /* OpenStreamWatch.app in Embed Watch Content */,
-			);
-			name = "Embed Watch Content";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		E00000000000000000000033 /* Embed App Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				D00000000000000000000032 /* OpenStreamWidgets.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -131,45 +172,137 @@
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E00000000000000000000033 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				D00000000000000000000032 /* OpenStreamWidgets.appex in Embed App Extensions */,
+				A5C00000000000000000000F /* OpenStreamShare.appex in Embed App Extensions */,
+				FD7D51600EA6E0DA8FC34047 /* OpenStreamMessages.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E00000000000000000000043 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				D00000000000000000000042 /* OpenStreamWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		C00000000000000000000044 /* Watch Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		1EF3BF2AFB564D81B0674276 /* OpenStreamMessagesViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OpenStreamMessagesViewController.swift; sourceTree = "<group>"; };
+		7A1000000000000000000040 /* AppleVisionPlayerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleVisionPlayerUITests.swift; sourceTree = "<group>"; };
+		42C5AD7DD647D200BEBD523C /* AppStoreScreenshotUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppStoreScreenshotUITests.swift; sourceTree = "<group>"; };
+		515F2F6124AE9E61D64D3E10 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		57A9EDE0EB4D1AE2F7607070 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
-		AB1000000000000000000002 /* AppleiOSUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppleiOSUITests.swift; sourceTree = "<group>"; };
+		59D22BCCC6AE343179BCBE05 /* AppleMessagesExtensionUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppleMessagesExtensionUITests.swift; sourceTree = "<group>"; };
+		6ADFECBFDE89C06061477463 /* OpenStreamMessages.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; name = OpenStreamMessages.appex; path = OpenStreamMessages.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		749D758BBC852A12509217D3 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 		791687CEE8616CBB3C5CCAE0 /* AppleTVFocusUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppleTVFocusUITests.swift; sourceTree = "<group>"; };
+		7A1000000000000000000001 /* AppleTVTopShelfUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleTVTopShelfUITests.swift; sourceTree = "<group>"; };
+		7A1000000000000000000003 /* AppleiOSLiveActivityUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleiOSLiveActivityUITests.swift; sourceTree = "<group>"; };
+		7A1000000000000000000005 /* AppleiOSSystemIntegrationUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleiOSSystemIntegrationUITests.swift; sourceTree = "<group>"; };
+		7A1000000000000000000010 /* OpenStreamUITestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenStreamUITestCase.swift; sourceTree = "<group>"; };
+		7A1000000000000000000012 /* AppleiOSStubSmokeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleiOSStubSmokeUITests.swift; sourceTree = "<group>"; };
+		7A1000000000000000000020 /* AppleDeviceSmokeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleDeviceSmokeUITests.swift; sourceTree = "<group>"; };
+		7A1000000000000000000030 /* AppleOwnerContentUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleOwnerContentUITests.swift; sourceTree = "<group>"; };
+		7A1000000000000000000050 /* AppleUXTourUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleUXTourUITests.swift; sourceTree = "<group>"; };
+		7A1000000000000000000052 /* AppleUXCaptureUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleUXCaptureUITests.swift; sourceTree = "<group>"; };
+		7A1000000000000000000014 /* OpenStreamUITestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenStreamUITestCase.swift; sourceTree = "<group>"; };
+		7A1000000000000000000016 /* AppleTVStubSmokeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleTVStubSmokeUITests.swift; sourceTree = "<group>"; };
+		7A1000000000000000000018 /* OpenStreamUITestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenStreamUITestCase.swift; sourceTree = "<group>"; };
+		99D9BC94256B56EF50B40F8D /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		9FFCCEE5468C8AFD791C6212 /* OpenStreamVisionUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OpenStreamVisionUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A5B000000000000000000001 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Shared/PrivacyInfo.xcprivacy; sourceTree = SOURCE_ROOT; };
+		A5B000000000000000000002 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = OpenStreamWidgets/PrivacyInfo.xcprivacy; sourceTree = SOURCE_ROOT; };
+		A5B000000000000000000003 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = OpenStreamTopShelf/PrivacyInfo.xcprivacy; sourceTree = SOURCE_ROOT; };
+		A5B000000000000000000004 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = OpenStreamWatch/PrivacyInfo.xcprivacy; sourceTree = SOURCE_ROOT; };
+		A5B000000000000000000005 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = OpenStreamMessages/PrivacyInfo.xcprivacy; sourceTree = SOURCE_ROOT; };
+		AA46D3A260772617171DEAD7 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		AB1000000000000000000002 /* AppleiOSUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppleiOSUITests.swift; sourceTree = "<group>"; };
+		AB1000000000000000000003 /* OpenStreamiOSUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OpenStreamiOSUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B1C369990DBB3867E958FE11 /* AppleMacScreenshotUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppleMacScreenshotUITests.swift; sourceTree = "<group>"; };
 		C00000000000000000000001 /* OpenStreamApps.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenStreamApps.swift; sourceTree = "<group>"; };
 		C00000000000000000000003 /* OpenStream iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "OpenStream iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C00000000000000000000004 /* OpenStream tvOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "OpenStream tvOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C00000000000000000000005 /* OpenStream visionOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "OpenStream visionOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		C00000000000000000000006 /* OpenStream macOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "OpenStream macOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C00000000000000000000006 /* oStream.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "oStream.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C00000000000000000000007 /* OpenStreamMacOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenStreamMacOS.entitlements; sourceTree = "<group>"; };
 		C00000000000000000000008 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C00000000000000000000009 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C00000000000000000000010 /* TopShelfProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopShelfProvider.swift; sourceTree = "<group>"; };
 		C00000000000000000000011 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C00000000000000000000012 /* OpenStreamTopShelf.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenStreamTopShelf.entitlements; sourceTree = "<group>"; };
-		C00000000000000000000040 /* OpenStreamWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenStreamWatchApp.swift; sourceTree = "<group>"; };
-		C00000000000000000000041 /* AppleWatchLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleWatchLink.swift; sourceTree = "<group>"; };
-		C00000000000000000000042 /* OpenStreamWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenStreamWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		C00000000000000000000043 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		C00000000000000000000034 /* OpenStreamDownloadActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenStreamDownloadActivity.swift; sourceTree = "<group>"; };
+		C00000000000000000000013 /* OpenStream Top Shelf.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "OpenStream Top Shelf.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C00000000000000000000014 /* OpenStreamTV.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenStreamTV.entitlements; sourceTree = "<group>"; };
 		C00000000000000000000030 /* OpenStreamWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenStreamWidgets.swift; sourceTree = "<group>"; };
 		C00000000000000000000031 /* OpenStreamWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OpenStreamWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C00000000000000000000032 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C00000000000000000000033 /* OpenStreamWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenStreamWidgets.entitlements; sourceTree = "<group>"; };
-		C00000000000000000000013 /* OpenStream Top Shelf.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "OpenStream Top Shelf.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
-		C00000000000000000000014 /* OpenStreamTV.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenStreamTV.entitlements; sourceTree = "<group>"; };
-		AB1000000000000000000003 /* OpenStreamiOSUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OpenStreamiOSUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C00000000000000000000034 /* OpenStreamDownloadActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenStreamDownloadActivity.swift; sourceTree = "<group>"; };
+		C00000000000000000000040 /* OpenStreamWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenStreamWatchApp.swift; sourceTree = "<group>"; };
+		C00000000000000000000041 /* AppleWatchLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleWatchLink.swift; sourceTree = "<group>"; };
+		C00000000000000000000042 /* OpenStreamWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenStreamWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C00000000000000000000043 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C00000000000000000000044 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C00000000000000000000060 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
+		D250BAE285EB9F0BBB8574E8 /* OpenStreamMessages.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = OpenStreamMessages.entitlements; sourceTree = "<group>"; };
 		F0939948B102A07B300065C8 /* OpenStreamTVUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OpenStreamTVUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FBC0D50DDECAD797F31ABA92 /* OpenStreamMacUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OpenStreamMacUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A5C000000000000000000001 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OpenStreamShare/ShareViewController.swift"; sourceTree = SOURCE_ROOT; };
+		A5C000000000000000000002 /* ShareAppOpener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OpenStreamShare/ShareAppOpener.swift"; sourceTree = SOURCE_ROOT; };
+		A5C000000000000000000003 /* AppleSharedLinkHandoff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "../Sources/OpenStreamApple/AppleSharedLinkHandoff.swift"; sourceTree = SOURCE_ROOT; };
+		A5C000000000000000000004 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "OpenStreamShare/PrivacyInfo.xcprivacy"; sourceTree = SOURCE_ROOT; };
+		A5C000000000000000000005 /* OpenStreamShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; path = OpenStreamShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		0DAEE8B33A3FB46CD52CEFB9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB800056C96FC3E8BF129BB9 /* Foundation.framework in Frameworks */,
+				0D23C363DD58C423B3EE3B96 /* OpenStreamApple in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5DBADBEE1D22CEC94B085213 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				3545C0B977F1F75D484AD8ED /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8DA91385F56A58C3FB6DE169 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				08897ED4EA3FB6233278368B /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AB1000000000000000000006 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D0EB360D49D5B2D0F45EBDEB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0A329C96DE873245B81BEDD8 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -208,6 +341,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E00000000000000000000014 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E00000000000000000000031 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -216,32 +356,62 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		E00000000000000000000014 /* Frameworks */ = {
+		E00000000000000000000041 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A5C000000000000000000015 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		AB1000000000000000000004 /* OpenStreamiOSUITests */ = {
-			isa = PBXGroup;
-			children = (
-				AB1000000000000000000002 /* AppleiOSUITests.swift */,
-			);
-			name = OpenStreamiOSUITests;
-			path = OpenStreamiOSUITests;
-			sourceTree = "<group>";
-		};
 		504F1C7952DD147607128A5B /* OpenStreamTVUITests */ = {
 			isa = PBXGroup;
 			children = (
 				791687CEE8616CBB3C5CCAE0 /* AppleTVFocusUITests.swift */,
+				7A1000000000000000000016 /* AppleTVStubSmokeUITests.swift */,
+				7A1000000000000000000014 /* OpenStreamUITestCase.swift */,
+				7A1000000000000000000001 /* AppleTVTopShelfUITests.swift */,
 			);
 			name = OpenStreamTVUITests;
 			path = OpenStreamTVUITests;
+			sourceTree = "<group>";
+		};
+		5947E0E45A8167EE101C8B30 /* OS X */ = {
+			isa = PBXGroup;
+			children = (
+				749D758BBC852A12509217D3 /* Cocoa.framework */,
+			);
+			name = "OS X";
+			sourceTree = "<group>";
+		};
+		7A1000000000000000000042 /* OpenStreamVisionUITests */ = {
+			isa = PBXGroup;
+			children = (
+				7A1000000000000000000040 /* AppleVisionPlayerUITests.swift */,
+			);
+			name = OpenStreamVisionUITests;
+			path = OpenStreamVisionUITests;
+			sourceTree = "<group>";
+		};
+		AB1000000000000000000004 /* OpenStreamiOSUITests */ = {
+			isa = PBXGroup;
+			children = (
+				AB1000000000000000000002 /* AppleiOSUITests.swift */,
+				7A1000000000000000000012 /* AppleiOSStubSmokeUITests.swift */,
+				7A1000000000000000000020 /* AppleDeviceSmokeUITests.swift */,
+				7A1000000000000000000030 /* AppleOwnerContentUITests.swift */,
+				7A1000000000000000000050 /* AppleUXTourUITests.swift */,
+				7A1000000000000000000052 /* AppleUXCaptureUITests.swift */,
+				7A1000000000000000000010 /* OpenStreamUITestCase.swift */,
+				59D22BCCC6AE343179BCBE05 /* AppleMessagesExtensionUITests.swift */,
+				7A1000000000000000000003 /* AppleiOSLiveActivityUITests.swift */,
+				7A1000000000000000000005 /* AppleiOSSystemIntegrationUITests.swift */,
+			);
+			name = OpenStreamiOSUITests;
+			path = OpenStreamiOSUITests;
 			sourceTree = "<group>";
 		};
 		B00000000000000000000001 = {
@@ -250,12 +420,20 @@
 				B00000000000000000000002 /* Shared */,
 				B00000000000000000000005 /* OpenStreamTopShelf */,
 				B00000000000000000000030 /* OpenStreamWidgets */,
+				A5C000000000000000000001 /* Share extension */,
+				A5C000000000000000000002 /* Share extension */,
+				A5C000000000000000000003 /* Share extension */,
+				A5C000000000000000000004 /* Share extension */,
+
 				B00000000000000000000040 /* OpenStreamWatch */,
 				B00000000000000000000003 /* Resources */,
 				B00000000000000000000004 /* Products */,
 				D8C9B4D79767295B9E62F196 /* Frameworks */,
 				504F1C7952DD147607128A5B /* OpenStreamTVUITests */,
 				AB1000000000000000000004 /* OpenStreamiOSUITests */,
+				FD8A9365B9AA8122A63E53D9 /* OpenStreamMessages */,
+				E22FD65A20FB6E45B39E2321 /* OpenStreamMacUITests */,
+				7A1000000000000000000042 /* OpenStreamVisionUITests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -266,7 +444,14 @@
 				C00000000000000000000007 /* OpenStreamMacOS.entitlements */,
 				C00000000000000000000014 /* OpenStreamTV.entitlements */,
 				C00000000000000000000008 /* Assets.xcassets */,
+				C00000000000000000000060 /* AppIcon.icon */,
 				C00000000000000000000009 /* Info.plist */,
+				A5B000000000000000000005 /* PrivacyInfo.xcprivacy */,
+				A5B000000000000000000004 /* PrivacyInfo.xcprivacy */,
+				A5B000000000000000000003 /* PrivacyInfo.xcprivacy */,
+				A5B000000000000000000002 /* PrivacyInfo.xcprivacy */,
+				A5B000000000000000000001 /* PrivacyInfo.xcprivacy */,
+				42C5AD7DD647D200BEBD523C /* AppStoreScreenshotUITests.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -284,25 +469,28 @@
 				C00000000000000000000003 /* OpenStream iOS.app */,
 				C00000000000000000000004 /* OpenStream tvOS.app */,
 				C00000000000000000000005 /* OpenStream visionOS.app */,
-				C00000000000000000000006 /* OpenStream macOS.app */,
+				C00000000000000000000006 /* oStream.app */,
 				C00000000000000000000013 /* OpenStream Top Shelf.appex */,
 				C00000000000000000000031 /* OpenStreamWidgets.appex */,
+				A5C000000000000000000005 /* OpenStreamShare.appex */,
 				C00000000000000000000042 /* OpenStreamWatch.app */,
 				F0939948B102A07B300065C8 /* OpenStreamTVUITests.xctest */,
 				AB1000000000000000000003 /* OpenStreamiOSUITests.xctest */,
+				6ADFECBFDE89C06061477463 /* OpenStreamMessages.appex */,
+				FBC0D50DDECAD797F31ABA92 /* OpenStreamMacUITests.xctest */,
+				9FFCCEE5468C8AFD791C6212 /* OpenStreamVisionUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		B00000000000000000000040 /* OpenStreamWatch */ = {
+		B00000000000000000000005 /* OpenStreamTopShelf */ = {
 			isa = PBXGroup;
 			children = (
-				C00000000000000000000040 /* OpenStreamWatchApp.swift */,
-				C00000000000000000000041 /* AppleWatchLink.swift */,
-				C00000000000000000000043 /* Info.plist */,
-				C00000000000000000000044 /* Watch Assets.xcassets */,
+				C00000000000000000000010 /* TopShelfProvider.swift */,
+				C00000000000000000000011 /* Info.plist */,
+				C00000000000000000000012 /* OpenStreamTopShelf.entitlements */,
 			);
-			path = OpenStreamWatch;
+			path = OpenStreamTopShelf;
 			sourceTree = "<group>";
 		};
 		B00000000000000000000030 /* OpenStreamWidgets */ = {
@@ -316,14 +504,15 @@
 			path = OpenStreamWidgets;
 			sourceTree = "<group>";
 		};
-		B00000000000000000000005 /* OpenStreamTopShelf */ = {
+		B00000000000000000000040 /* OpenStreamWatch */ = {
 			isa = PBXGroup;
 			children = (
-				C00000000000000000000010 /* TopShelfProvider.swift */,
-				C00000000000000000000011 /* Info.plist */,
-				C00000000000000000000012 /* OpenStreamTopShelf.entitlements */,
+				C00000000000000000000040 /* OpenStreamWatchApp.swift */,
+				C00000000000000000000041 /* AppleWatchLink.swift */,
+				C00000000000000000000043 /* Info.plist */,
+				C00000000000000000000044 /* Assets.xcassets */,
 			);
-			path = OpenStreamTopShelf;
+			path = OpenStreamWatch;
 			sourceTree = "<group>";
 		};
 		B5B51EEDD8AA400E965565A3 /* tvOS */ = {
@@ -338,30 +527,45 @@
 			isa = PBXGroup;
 			children = (
 				B5B51EEDD8AA400E965565A3 /* tvOS */,
+				E6AB1F91AE64276ACC058575 /* iOS */,
+				5947E0E45A8167EE101C8B30 /* OS X */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		E22FD65A20FB6E45B39E2321 /* OpenStreamMacUITests */ = {
+			isa = PBXGroup;
+			children = (
+				B1C369990DBB3867E958FE11 /* AppleMacScreenshotUITests.swift */,
+				7A1000000000000000000018 /* OpenStreamUITestCase.swift */,
+			);
+			name = OpenStreamMacUITests;
+			path = OpenStreamMacUITests;
+			sourceTree = "<group>";
+		};
+		E6AB1F91AE64276ACC058575 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				515F2F6124AE9E61D64D3E10 /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		FD8A9365B9AA8122A63E53D9 /* OpenStreamMessages */ = {
+			isa = PBXGroup;
+			children = (
+				1EF3BF2AFB564D81B0674276 /* OpenStreamMessagesViewController.swift */,
+				99D9BC94256B56EF50B40F8D /* Assets.xcassets */,
+				AA46D3A260772617171DEAD7 /* Info.plist */,
+				D250BAE285EB9F0BBB8574E8 /* OpenStreamMessages.entitlements */,
+			);
+			name = OpenStreamMessages;
+			path = OpenStreamMessages;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		AB1000000000000000000008 /* OpenStreamiOSUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = AB100000000000000000000B /* Build configuration list for PBXNativeTarget "OpenStreamiOSUITests" */;
-			buildPhases = (
-				AB1000000000000000000005 /* Sources */,
-				AB1000000000000000000006 /* Frameworks */,
-				AB1000000000000000000007 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = OpenStreamiOSUITests;
-			productName = OpenStreamiOSUITests;
-			productReference = AB1000000000000000000003 /* OpenStreamiOSUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
 		1850CF1B4C5A4C7616364333 /* OpenStreamTVUITests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 50C1C81D655B667EC2DE4D3F /* Build configuration list for PBXNativeTarget "OpenStreamTVUITests" */;
@@ -379,6 +583,61 @@
 			productReference = F0939948B102A07B300065C8 /* OpenStreamTVUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		22B2CA21FCF1293FA42947D6 /* OpenStreamMacUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C3F8DD1F40E14F06C29FF939 /* Build configuration list for PBXNativeTarget "OpenStreamMacUITests" */;
+			buildPhases = (
+				6B773DCDFAEEB4AC3A62ED55 /* Sources */,
+				8DA91385F56A58C3FB6DE169 /* Frameworks */,
+				63B3235B29AFFE9E7DD089C2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				17FD3C535C4927A171E652B9 /* PBXTargetDependency */,
+			);
+			name = OpenStreamMacUITests;
+			productName = OpenStreamMacUITests;
+			productReference = FBC0D50DDECAD797F31ABA92 /* OpenStreamMacUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		AB1000000000000000000008 /* OpenStreamiOSUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AB100000000000000000000B /* Build configuration list for PBXNativeTarget "OpenStreamiOSUITests" */;
+			buildPhases = (
+				AB1000000000000000000005 /* Sources */,
+				AB1000000000000000000006 /* Frameworks */,
+				AB1000000000000000000007 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = OpenStreamiOSUITests;
+			productName = OpenStreamiOSUITests;
+			productReference = AB1000000000000000000003 /* OpenStreamiOSUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		BC08BCCF680E156733C6B315 /* OpenStream Messages */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6487062B321F743C9654336D /* Build configuration list for PBXNativeTarget "OpenStream Messages" */;
+			buildPhases = (
+				D3E0BEEDCA08D1D2C88DCF2E /* Sources */,
+				0DAEE8B33A3FB46CD52CEFB9 /* Frameworks */,
+				84D6F96A6C7AFF33FAB86EAE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "OpenStream Messages";
+			packageProductDependencies = (
+				7F9D59526BDA80CCA8E01297 /* OpenStreamApple */,
+			);
+			productName = "OpenStream Messages";
+			productReference = 6ADFECBFDE89C06061477463 /* OpenStreamMessages.appex */;
+			productType = "com.apple.product-type.app-extension.messages";
+		};
 		F00000000000000000000001 /* OpenStream iOS */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = H00000000000000000000002 /* Build configuration list for PBXNativeTarget "OpenStream iOS" */;
@@ -394,7 +653,9 @@
 			);
 			dependencies = (
 				M00000000000000000000030 /* PBXTargetDependency */,
+				A5C000000000000000000020 /* PBXTargetDependency */,
 				M00000000000000000000040 /* PBXTargetDependency */,
+				3D7B5453CDE2422986D674AC /* PBXTargetDependency */,
 			);
 			name = "OpenStream iOS";
 			packageProductDependencies = (
@@ -468,45 +729,8 @@
 				K00000000000000000000007 /* AMSMB2 */,
 			);
 			productName = "OpenStream macOS";
-			productReference = C00000000000000000000006 /* OpenStream macOS.app */;
+			productReference = C00000000000000000000006 /* oStream.app */;
 			productType = "com.apple.product-type.application";
-		};
-		F00000000000000000000040 /* OpenStream Watch */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = H00000000000000000000040 /* Build configuration list for PBXNativeTarget "OpenStream Watch" */;
-			buildPhases = (
-				E00000000000000000000040 /* Sources */,
-				E00000000000000000000041 /* Frameworks */,
-				E00000000000000000000042 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = "OpenStream Watch";
-			productName = OpenStreamWatch;
-			productReference = C00000000000000000000042 /* OpenStreamWatch.app */;
-			productType = "com.apple.product-type.application";
-		};
-		F00000000000000000000030 /* OpenStream Widgets */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = H00000000000000000000030 /* Build configuration list for PBXNativeTarget "OpenStream Widgets" */;
-			buildPhases = (
-				E00000000000000000000030 /* Sources */,
-				E00000000000000000000031 /* Frameworks */,
-				E00000000000000000000032 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = "OpenStream Widgets";
-			packageProductDependencies = (
-				K00000000000000000000030 /* OpenStreamApple */,
-			);
-			productName = "OpenStreamWidgets";
-			productReference = C00000000000000000000031 /* OpenStreamWidgets.appex */;
-			productType = "com.apple.product-type.app-extension";
 		};
 		F00000000000000000000005 /* OpenStream Top Shelf */ = {
 			isa = PBXNativeTarget;
@@ -525,6 +749,62 @@
 			productReference = C00000000000000000000013 /* OpenStream Top Shelf.appex */;
 			productType = "com.apple.product-type.tv-app-extension";
 		};
+		F00000000000000000000030 /* OpenStream Widgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = H00000000000000000000030 /* Build configuration list for PBXNativeTarget "OpenStream Widgets" */;
+			buildPhases = (
+				E00000000000000000000030 /* Sources */,
+				E00000000000000000000031 /* Frameworks */,
+				E00000000000000000000032 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "OpenStream Widgets";
+			packageProductDependencies = (
+				K00000000000000000000030 /* OpenStreamApple */,
+			);
+			productName = OpenStreamWidgets;
+			productReference = C00000000000000000000031 /* OpenStreamWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		F00000000000000000000040 /* OpenStream Watch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = H00000000000000000000040 /* Build configuration list for PBXNativeTarget "OpenStream Watch" */;
+			buildPhases = (
+				E00000000000000000000040 /* Sources */,
+				E00000000000000000000041 /* Frameworks */,
+				E00000000000000000000042 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "OpenStream Watch";
+			productName = OpenStreamWatch;
+			productReference = C00000000000000000000042 /* OpenStreamWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		F2B91FA3C772665027432E45 /* OpenStreamVisionUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3EEF661FBCBEE5BE583FEF6C /* Build configuration list for PBXNativeTarget "OpenStreamVisionUITests" */;
+			buildPhases = (
+				3A447904F720ED485A43391F /* Sources */,
+				D0EB360D49D5B2D0F45EBDEB /* Frameworks */,
+				9466B5CA214CC158A1EB804E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FBD20F2FE73406B06C79D330 /* PBXTargetDependency */,
+			);
+			name = OpenStreamVisionUITests;
+			productName = OpenStreamVisionUITests;
+			productReference = 9FFCCEE5468C8AFD791C6212 /* OpenStreamVisionUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		A5C00000000000000000001E /* OpenStream Share */ = {isa = PBXNativeTarget; buildConfigurationList = A5C000000000000000000028; buildPhases = (A5C000000000000000000014, A5C000000000000000000015, A5C000000000000000000016, ); buildRules = (); dependencies = (); name = "OpenStream Share"; productName = OpenStreamShare; productReference = A5C000000000000000000005; productType = "com.apple.product-type.app-extension"; };
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -535,6 +815,9 @@
 				LastSwiftUpdateCheck = 2630;
 				LastUpgradeCheck = 2630;
 				TargetAttributes = {
+					22B2CA21FCF1293FA42947D6 = {
+						TestTargetID = F00000000000000000000004;
+					};
 					F00000000000000000000001 = {
 						CreatedOnToolsVersion = 26.3;
 					};
@@ -547,14 +830,14 @@
 					F00000000000000000000004 = {
 						CreatedOnToolsVersion = 26.3;
 					};
-					F00000000000000000000040 = {
-						CreatedOnToolsVersion = 16.0;
+					F00000000000000000000005 = {
+						CreatedOnToolsVersion = 26.3;
 					};
 					F00000000000000000000030 = {
 						CreatedOnToolsVersion = 16.0;
 					};
-					F00000000000000000000005 = {
-						CreatedOnToolsVersion = 26.3;
+					F00000000000000000000040 = {
+						CreatedOnToolsVersion = 16.0;
 					};
 				};
 			};
@@ -582,29 +865,49 @@
 				F00000000000000000000004 /* OpenStream macOS */,
 				F00000000000000000000005 /* OpenStream Top Shelf */,
 				F00000000000000000000030 /* OpenStream Widgets */,
+				A5C00000000000000000001E /* OpenStream Share */,
 				F00000000000000000000040 /* OpenStream Watch */,
 				1850CF1B4C5A4C7616364333 /* OpenStreamTVUITests */,
 				AB1000000000000000000008 /* OpenStreamiOSUITests */,
+				BC08BCCF680E156733C6B315 /* OpenStream Messages */,
+				22B2CA21FCF1293FA42947D6 /* OpenStreamMacUITests */,
+				F2B91FA3C772665027432E45 /* OpenStreamVisionUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		AB1000000000000000000007 /* Resources */ = {
+		115BB3BB958BE92D1B174554 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		AB1000000000000000000006 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
+		63B3235B29AFFE9E7DD089C2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		115BB3BB958BE92D1B174554 /* Resources */ = {
+		84D6F96A6C7AFF33FAB86EAE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A5B100000000000000000008 /* PrivacyInfo.xcprivacy in Resources */,
+				E2B2AB38C6D68040B501C422 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9466B5CA214CC158A1EB804E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AB1000000000000000000007 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -615,7 +918,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A5B100000000000000000001 /* PrivacyInfo.xcprivacy in Resources */,
 				D00000000000000000000011 /* Assets.xcassets in Resources */,
+				D00000000000000000000061 /* AppIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -623,6 +928,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A5B100000000000000000002 /* PrivacyInfo.xcprivacy in Resources */,
 				D00000000000000000000012 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -631,6 +937,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A5B100000000000000000003 /* PrivacyInfo.xcprivacy in Resources */,
 				D00000000000000000000013 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -639,14 +946,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A5B100000000000000000004 /* PrivacyInfo.xcprivacy in Resources */,
 				D00000000000000000000014 /* Assets.xcassets in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		E00000000000000000000032 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
+				D00000000000000000000062 /* AppIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -654,17 +956,47 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A5B100000000000000000005 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E00000000000000000000032 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A5B100000000000000000006 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E00000000000000000000042 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A5B100000000000000000007 /* PrivacyInfo.xcprivacy in Resources */,
+				D00000000000000000000044 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A5C000000000000000000016 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A5C00000000000000000000E, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		AB1000000000000000000005 /* Sources */ = {
+		3A447904F720ED485A43391F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AB1000000000000000000001 /* AppleiOSUITests.swift in Sources */,
+				B273701D1EE329791A414789 /* AppStoreScreenshotUITests.swift in Sources */,
+				7A1000000000000000000041 /* AppleVisionPlayerUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6B773DCDFAEEB4AC3A62ED55 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A9DFB0A2C2BF8A24229BB45D /* AppleMacScreenshotUITests.swift in Sources */,
+				7A1000000000000000000019 /* OpenStreamUITestCase.swift in Sources */,
+				6060B3E32D3B17B7F9793D3E /* AppStoreScreenshotUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -673,6 +1005,36 @@
 			buildActionMask = 2147483647;
 			files = (
 				ACE25E4B2EFB78058040C93F /* AppleTVFocusUITests.swift in Sources */,
+				7A1000000000000000000017 /* AppleTVStubSmokeUITests.swift in Sources */,
+				7A1000000000000000000015 /* OpenStreamUITestCase.swift in Sources */,
+				7A1000000000000000000002 /* AppleTVTopShelfUITests.swift in Sources */,
+				084BDE91F37ABFC62DD16953 /* AppStoreScreenshotUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AB1000000000000000000005 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AB1000000000000000000001 /* AppleiOSUITests.swift in Sources */,
+				7A1000000000000000000013 /* AppleiOSStubSmokeUITests.swift in Sources */,
+				7A1000000000000000000021 /* AppleDeviceSmokeUITests.swift in Sources */,
+				7A1000000000000000000031 /* AppleOwnerContentUITests.swift in Sources */,
+				7A1000000000000000000051 /* AppleUXTourUITests.swift in Sources */,
+				7A1000000000000000000053 /* AppleUXCaptureUITests.swift in Sources */,
+				7A1000000000000000000011 /* OpenStreamUITestCase.swift in Sources */,
+				51A32276ED29BE9EE33C74AE /* AppleMessagesExtensionUITests.swift in Sources */,
+				7A1000000000000000000004 /* AppleiOSLiveActivityUITests.swift in Sources */,
+				7A1000000000000000000006 /* AppleiOSSystemIntegrationUITests.swift in Sources */,
+				343E6FBEB8C65C3016DDB601 /* AppStoreScreenshotUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D3E0BEEDCA08D1D2C88DCF2E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				63CF3657B1280DDCA312F763 /* OpenStreamMessagesViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -708,27 +1070,11 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		E00000000000000000000040 /* Sources */ = {
+		E00000000000000000000013 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D00000000000000000000040 /* OpenStreamWatchApp.swift in Sources */,
-				D00000000000000000000041 /* AppleWatchLink.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		E00000000000000000000041 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		E00000000000000000000042 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				D00000000000000000000044 /* Watch Assets.xcassets in Resources */,
+				D00000000000000000000015 /* TopShelfProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -741,17 +1087,37 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		E00000000000000000000013 /* Sources */ = {
+		E00000000000000000000040 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D00000000000000000000015 /* TopShelfProvider.swift in Sources */,
+				D00000000000000000000040 /* OpenStreamWatchApp.swift in Sources */,
+				D00000000000000000000041 /* AppleWatchLink.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A5C000000000000000000014 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A5C00000000000000000000B, A5C00000000000000000000C, A5C00000000000000000000D, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		17FD3C535C4927A171E652B9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "OpenStream macOS";
+			target = F00000000000000000000004 /* OpenStream macOS */;
+			targetProxy = 979BBF2B9904A3C09FA46270 /* PBXContainerItemProxy */;
+		};
+		3D7B5453CDE2422986D674AC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "OpenStream Messages";
+			target = BC08BCCF680E156733C6B315 /* OpenStream Messages */;
+			targetProxy = 98B0F877FC822C1FF225FD4F /* PBXContainerItemProxy */;
+		};
+		FBD20F2FE73406B06C79D330 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "OpenStream visionOS";
+			target = F00000000000000000000003 /* OpenStream visionOS */;
+			targetProxy = 9491219B77546A7E7645F97E /* PBXContainerItemProxy */;
+		};
 		M00000000000000000000001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = F00000000000000000000005 /* OpenStream Top Shelf */;
@@ -767,48 +1133,15 @@
 			target = F00000000000000000000040 /* OpenStream Watch */;
 			targetProxy = L00000000000000000000040 /* PBXContainerItemProxy */;
 		};
+		A5C000000000000000000020 = {isa = PBXTargetDependency; target = A5C00000000000000000001E; targetProxy = A5C00000000000000000001F; };
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		AB1000000000000000000009 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 2VQ74PD5YG;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = OpenStreamiOSUITests;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.iosuitests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				USES_XCTRUNNER = YES;
-			};
-			name = Debug;
-		};
-		AB100000000000000000000A /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 2VQ74PD5YG;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = OpenStreamiOSUITests;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.iosuitests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				USES_XCTRUNNER = YES;
-			};
-			name = Release;
-		};
 		0607CBCE5B02CEC2C0E15228 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 2VQ74PD5YG;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = OpenStreamTVUITests;
 				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.uitests;
@@ -825,7 +1158,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 2VQ74PD5YG;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = OpenStreamTVUITests;
 				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.uitests;
@@ -838,6 +1171,167 @@
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
+		};
+		73EE090108304D4386204043 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.visionuitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = xros;
+				SUPPORTED_PLATFORMS = "xros xrsimulator";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 7;
+				TEST_TARGET_NAME = "OpenStream visionOS";
+				VALIDATE_PRODUCT = YES;
+				XROS_DEPLOYMENT_TARGET = 2.0;
+			};
+			name = Release;
+		};
+		741C9D330A7668CAAC332B28 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "iMessage App Icon";
+				CODE_SIGN_ENTITLEMENTS = OpenStreamMessages/OpenStreamMessages.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OpenStreamMessages/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.messages;
+				PRODUCT_NAME = OpenStreamMessages;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A6E918D02A7ED9873C6AAA6D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = OpenStreamMacUITests;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.macuitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_VERSION = 6.0;
+				TEST_TARGET_NAME = "OpenStream macOS";
+				USES_XCTRUNNER = YES;
+			};
+			name = Release;
+		};
+		AB1000000000000000000009 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = OpenStreamiOSUITests;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.iosuitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				USES_XCTRUNNER = YES;
+			};
+			name = Debug;
+		};
+		AB100000000000000000000A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = OpenStreamiOSUITests;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.iosuitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				USES_XCTRUNNER = YES;
+			};
+			name = Release;
+		};
+		D8CDF1DFFACDB3DBE7BDA9EA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "iMessage App Icon";
+				CODE_SIGN_ENTITLEMENTS = OpenStreamMessages/OpenStreamMessages.entitlements;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Automatic;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OpenStreamMessages/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.messages;
+				PRODUCT_NAME = OpenStreamMessages;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		DD203094A8748A0D620B75AB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = OpenStreamMacUITests;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.macuitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_VERSION = 6.0;
+				TEST_TARGET_NAME = "OpenStream macOS";
+				USES_XCTRUNNER = YES;
+			};
+			name = Debug;
+		};
+		FF1D5BA5C897175DC705CDAD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.visionuitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = xros;
+				SUPPORTED_PLATFORMS = "xros xrsimulator";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 7;
+				TEST_TARGET_NAME = "OpenStream visionOS";
+				XROS_DEPLOYMENT_TARGET = 2.0;
+			};
+			name = Debug;
 		};
 		G00000000000000000000001 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -853,7 +1347,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				ONLY_ACTIVE_ARCH = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG OPENSTREAM_ADDONS $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -882,14 +1376,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Shared/OpenStreamiOS.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
-				DEVELOPMENT_TEAM = 2VQ74PD5YG;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Shared/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = OpenStream;
+				INFOPLIST_KEY_CFBundleDisplayName = oStream;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "OpenStream uses your local network to manage streaming sources from a web browser.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "oStream finds media servers and connects to network shares on your local network.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -909,6 +1403,7 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) OPENSTREAM_ADDONS";
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -919,14 +1414,16 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Shared/OpenStreamiOS.entitlements;
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
-				DEVELOPMENT_TEAM = 2VQ74PD5YG;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Shared/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = OpenStream;
+				INFOPLIST_KEY_CFBundleDisplayName = oStream;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "OpenStream uses your local network to manage streaming sources from a web browser.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "oStream finds media servers and connects to network shares on your local network.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -957,13 +1454,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconTV;
 				CODE_SIGN_ENTITLEMENTS = Shared/OpenStreamTV.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
-				DEVELOPMENT_TEAM = 2VQ74PD5YG;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Shared/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = OpenStream;
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "OpenStream uses your local network to manage streaming sources from a web browser.";
+				INFOPLIST_KEY_CFBundleDisplayName = oStream;
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "oStream finds media servers and connects to network shares on your local network.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_PREPROCESS = YES;
@@ -977,6 +1474,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = appletvos;
 				SUPPORTED_PLATFORMS = "appletvos appletvsimulator";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) OPENSTREAM_ADDONS";
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 3;
 				TVOS_DEPLOYMENT_TARGET = 18.0;
@@ -988,13 +1486,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconTV;
 				CODE_SIGN_ENTITLEMENTS = Shared/OpenStreamTV.entitlements;
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
-				DEVELOPMENT_TEAM = 2VQ74PD5YG;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Shared/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = OpenStream;
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "OpenStream uses your local network to manage streaming sources from a web browser.";
+				INFOPLIST_KEY_CFBundleDisplayName = oStream;
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "oStream finds media servers and connects to network shares on your local network.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_PREPROCESS = YES;
@@ -1006,6 +1505,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = appletvos;
 				SUPPORTED_PLATFORMS = "appletvos appletvsimulator";
 				SWIFT_VERSION = 6.0;
@@ -1019,13 +1519,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconVision;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
-				DEVELOPMENT_TEAM = 2VQ74PD5YG;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Shared/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = OpenStream;
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "OpenStream uses your local network to manage streaming sources from a web browser.";
+				INFOPLIST_KEY_CFBundleDisplayName = oStream;
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "oStream finds media servers and connects to network shares on your local network.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_PREPROCESS = YES;
@@ -1039,6 +1539,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = xros;
 				SUPPORTED_PLATFORMS = "xros xrsimulator";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) OPENSTREAM_ADDONS";
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 7;
 				XROS_DEPLOYMENT_TARGET = 2.0;
@@ -1049,13 +1550,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconVision;
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
-				DEVELOPMENT_TEAM = 2VQ74PD5YG;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Shared/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = OpenStream;
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "OpenStream uses your local network to manage streaming sources from a web browser.";
+				INFOPLIST_KEY_CFBundleDisplayName = oStream;
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "oStream finds media servers and connects to network shares on your local network.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_PREPROCESS = YES;
@@ -1067,6 +1569,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = xros;
 				SUPPORTED_PLATFORMS = "xros xrsimulator";
 				SWIFT_VERSION = 6.0;
@@ -1078,19 +1581,20 @@
 		G00000000000000000000009 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Shared/OpenStreamMacOS.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 2VQ74PD5YG;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Shared/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = OpenStream;
+				INFOPLIST_KEY_CFBundleDisplayName = oStream;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "OpenStream uses your local network to manage streaming sources from a web browser.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "oStream finds media servers and connects to network shares on your local network.";
 				INFOPLIST_PREPROCESS = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1099,9 +1603,11 @@
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = oStream;
+				PRODUCT_MODULE_NAME = OpenStream;
 				SDKROOT = macosx;
 				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) OPENSTREAM_ADDONS";
 				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
@@ -1109,18 +1615,21 @@
 		G0000000000000000000000A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Shared/OpenStreamMacOS.entitlements;
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 2VQ74PD5YG;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Shared/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = OpenStream;
+				INFOPLIST_KEY_CFBundleDisplayName = oStream;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "OpenStream uses your local network to manage streaming sources from a web browser.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "oStream finds media servers and connects to network shares on your local network.";
 				INFOPLIST_PREPROCESS = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1129,52 +1638,69 @@
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = oStream;
+				PRODUCT_MODULE_NAME = OpenStream;
 				SDKROOT = macosx;
 				SUPPORTED_PLATFORMS = macosx;
 				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
 		};
-		G00000000000000000000040 /* Debug */ = {
+		G0000000000000000000000B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = OpenStreamTopShelf/OpenStreamTopShelf.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
-				DEVELOPMENT_TEAM = 2VQ74PD5YG;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = OpenStreamWatch/Info.plist;
+				INFOPLIST_FILE = OpenStreamTopShelf/Info.plist;
+				LD_ENTRY_POINT = _NSExtensionMain;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.watchkitapp;
-				PRODUCT_NAME = OpenStreamWatch;
-				SDKROOT = watchos;
+				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.topshelf;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = appletvos;
 				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator";
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 18.0;
 			};
 			name = Debug;
 		};
-		G00000000000000000000041 /* Release */ = {
+		G0000000000000000000000C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = OpenStreamTopShelf/OpenStreamTopShelf.entitlements;
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
-				DEVELOPMENT_TEAM = 2VQ74PD5YG;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = OpenStreamWatch/Info.plist;
+				INFOPLIST_FILE = OpenStreamTopShelf/Info.plist;
+				LD_ENTRY_POINT = _NSExtensionMain;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.watchkitapp;
-				PRODUCT_NAME = OpenStreamWatch;
-				SDKROOT = watchos;
+				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.topshelf;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = appletvos;
 				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator";
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 18.0;
 			};
 			name = Release;
 		};
@@ -1183,8 +1709,8 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = OpenStreamWidgets/OpenStreamWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
-				DEVELOPMENT_TEAM = 2VQ74PD5YG;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = OpenStreamWidgets/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1208,9 +1734,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = OpenStreamWidgets/OpenStreamWidgets.entitlements;
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
-				DEVELOPMENT_TEAM = 2VQ74PD5YG;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = OpenStreamWidgets/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -1230,68 +1758,98 @@
 			};
 			name = Release;
 		};
-		G0000000000000000000000B /* Debug */ = {
+		G00000000000000000000040 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = OpenStreamTopShelf/OpenStreamTopShelf.entitlements;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
-				DEVELOPMENT_TEAM = 2VQ74PD5YG;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = OpenStreamTopShelf/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
+				INFOPLIST_FILE = OpenStreamWatch/Info.plist;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.topshelf;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = appletvos;
+				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.watchkitapp;
+				PRODUCT_NAME = OpenStreamWatch;
+				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "appletvos appletvsimulator";
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 3;
-				TVOS_DEPLOYMENT_TARGET = 18.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
 			};
 			name = Debug;
 		};
-		G0000000000000000000000C /* Release */ = {
+		G00000000000000000000041 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = OpenStreamTopShelf/OpenStreamTopShelf.entitlements;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
-				DEVELOPMENT_TEAM = 2VQ74PD5YG;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = OpenStreamTopShelf/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
+				INFOPLIST_FILE = OpenStreamWatch/Info.plist;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.topshelf;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = appletvos;
+				PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.watchkitapp;
+				PRODUCT_NAME = OpenStreamWatch;
+				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "appletvos appletvsimulator";
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 3;
-				TVOS_DEPLOYMENT_TARGET = 18.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
 			};
 			name = Release;
 		};
+		A5C000000000000000000029 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {
+                APPLICATION_EXTENSION_API_ONLY = YES;
+                CODE_SIGN_ENTITLEMENTS = OpenStreamShare/OpenStreamShare.entitlements;
+                CODE_SIGN_STYLE = Automatic;
+                DEVELOPMENT_TEAM = "";
+                CURRENT_PROJECT_VERSION = 1;
+                GENERATE_INFOPLIST_FILE = NO;
+                INFOPLIST_FILE = OpenStreamShare/Info.plist;
+                IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+                LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", );
+                MARKETING_VERSION = 1.0;
+                PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.share;
+                PRODUCT_NAME = OpenStreamShare;
+                SDKROOT = iphoneos;
+                SKIP_INSTALL = YES;
+                SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+                SWIFT_VERSION = 6.0;
+                TARGETED_DEVICE_FAMILY = "1,2";
+            }; name = Debug; };
+		A5C00000000000000000002A /* Release */ = {isa = XCBuildConfiguration; buildSettings = {
+                APPLICATION_EXTENSION_API_ONLY = YES;
+                CODE_SIGN_ENTITLEMENTS = OpenStreamShare/OpenStreamShare.entitlements;
+                CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Automatic;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+                DEVELOPMENT_TEAM = "";
+                CURRENT_PROJECT_VERSION = 1;
+                GENERATE_INFOPLIST_FILE = NO;
+                INFOPLIST_FILE = OpenStreamShare/Info.plist;
+                IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+                LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", );
+                MARKETING_VERSION = 1.0;
+                PRODUCT_BUNDLE_IDENTIFIER = com.orgista.openstream.share;
+                PRODUCT_NAME = OpenStreamShare;
+                SDKROOT = iphoneos;
+                SKIP_INSTALL = YES;
+                SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+                SWIFT_VERSION = 6.0;
+                TARGETED_DEVICE_FAMILY = "1,2";
+            }; name = Release; };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		AB100000000000000000000B /* Build configuration list for PBXNativeTarget "OpenStreamiOSUITests" */ = {
+		3EEF661FBCBEE5BE583FEF6C /* Build configuration list for PBXNativeTarget "OpenStreamVisionUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				AB1000000000000000000009 /* Debug */,
-				AB100000000000000000000A /* Release */,
+				73EE090108304D4386204043 /* Release */,
+				FF1D5BA5C897175DC705CDAD /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -1301,6 +1859,33 @@
 			buildConfigurations = (
 				49CDEF6FE9859E1DB2C6B13D /* Release */,
 				0607CBCE5B02CEC2C0E15228 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6487062B321F743C9654336D /* Build configuration list for PBXNativeTarget "OpenStream Messages" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D8CDF1DFFACDB3DBE7BDA9EA /* Release */,
+				741C9D330A7668CAAC332B28 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AB100000000000000000000B /* Build configuration list for PBXNativeTarget "OpenStreamiOSUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AB1000000000000000000009 /* Debug */,
+				AB100000000000000000000A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C3F8DD1F40E14F06C29FF939 /* Build configuration list for PBXNativeTarget "OpenStreamMacUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A6E918D02A7ED9873C6AAA6D /* Release */,
+				DD203094A8748A0D620B75AB /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -1350,11 +1935,11 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		H00000000000000000000040 /* Build configuration list for PBXNativeTarget "OpenStream Watch" */ = {
+		H00000000000000000000006 /* Build configuration list for PBXNativeTarget "OpenStream Top Shelf" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				G00000000000000000000040 /* Debug */,
-				G00000000000000000000041 /* Release */,
+				G0000000000000000000000B /* Debug */,
+				G0000000000000000000000C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -1368,15 +1953,16 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		H00000000000000000000006 /* Build configuration list for PBXNativeTarget "OpenStream Top Shelf" */ = {
+		H00000000000000000000040 /* Build configuration list for PBXNativeTarget "OpenStream Watch" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				G0000000000000000000000B /* Debug */,
-				G0000000000000000000000C /* Release */,
+				G00000000000000000000040 /* Debug */,
+				G00000000000000000000041 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		A5C000000000000000000028 = {isa = XCConfigurationList; buildConfigurations = (A5C000000000000000000029, A5C00000000000000000002A, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -1398,8 +1984,9 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		K00000000000000000000030 /* OpenStreamApple */ = {
+		7F9D59526BDA80CCA8E01297 /* OpenStreamApple */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = J00000000000000000000001 /* XCLocalSwiftPackageReference ".." */;
 			productName = OpenStreamApple;
 		};
 		K00000000000000000000001 /* OpenStreamApple */ = {
@@ -1436,6 +2023,10 @@
 			isa = XCSwiftPackageProductDependency;
 			package = J00000000000000000000002 /* XCRemoteSwiftPackageReference "AMSMB2" */;
 			productName = AMSMB2;
+		};
+		K00000000000000000000030 /* OpenStreamApple */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = OpenStreamApple;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

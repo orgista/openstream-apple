@@ -3,10 +3,24 @@ import Testing
 @testable import OpenStreamApple
 
 @Suite("Apple TV title page and chrome metrics")
+@MainActor
 struct AppleTVDetailMetricsTests {
+    @Test func seasonMenuOpensOnTheCheckedSeasonInsteadOfSpecials() {
+        #expect(AppleTVDetailMetrics.seasonMenuOrder([0, 1, 2, 37], selected: 37) == [37, 0, 1, 2])
+        #expect(AppleTVDetailMetrics.seasonMenuOrder([0, 1, 2], selected: nil) == [0, 1, 2])
+        #expect(AppleTVDetailMetrics.seasonMenuOrder([0, 1, 2], selected: 9) == [0, 1, 2])
+    }
+
     @Test func heroFillsTheWholeScreen() {
         #expect(AppleTVDetailMetrics.screenSize == CGSize(width: 1920, height: 1080))
         #expect(AppleTVDetailMetrics.heroFrame == CGRect(x: 0, y: 0, width: 1920, height: 1080))
+    }
+
+    /// N43: the backdrop fades into the page instead of ending in a hard
+    /// line; the upper art, where the picture is, stays untouched.
+    @Test func backdropFadesOnlyInItsLowerPart() {
+        let start = AppleTVDetailMetrics.backdropFadeStartFraction
+        #expect(start > 0.5 && start < 1)
     }
 
     @Test func overlaySitsAtEightyFromTheLeadingEdgeAndSixtyFromTheBottom() {
@@ -69,7 +83,8 @@ struct AppleTVDetailMetricsTests {
 
     @Test func tabRootsDrawNoNavigationTitleOnAppleTV() {
         #expect(AppleAlignedTabTitle.style(for: .tvOS) == .hidden)
-        #expect(AppleAlignedTabTitle.style(for: .iOS) == .leadingToolbarItem)
+        #expect(AppleAlignedTabTitle.style(for: .iOS) == .largeNavigationTitle)
+        #expect(AppleAlignedTabTitle.style(for: .iOS, isLive: true) == .inline)
         #expect(AppleAlignedTabTitle.style(for: .macOS) == .inlineLargeNavigationTitle)
         #expect(AppleAlignedTabTitle.style(for: .visionOS) == .inlineLargeNavigationTitle)
     }

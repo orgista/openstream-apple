@@ -1,0 +1,42 @@
+{
+  "configurations": [
+    {
+      "id": "9E3C1B52-4A7D-4F0E-9C61-2D8B7A5E0F14",
+      "name": "Fixtures",
+      "options": {}
+    }
+  ],
+  "defaultOptions": {
+    "commandLineArgumentEntries": [
+      {
+        "argument": "-OpenStreamMuteAudio YES"
+      },
+      {
+        "argument": "-OpenStreamTrace YES"
+      }
+    ],
+    "language": "en",
+    "region": "US",
+    "targetForVariableExpansion": {
+      "containerPath": "container:OpenStreamApps.xcodeproj",
+      "identifier": "F2B91FA3C772665027432E45",
+      "name": "OpenStreamVisionUITests"
+    },
+    "testTimeoutsEnabled": true,
+    "defaultTestExecutionTimeAllowance": 300,
+    "maximumTestExecutionTimeAllowance": 600
+  },
+  "testTargets": [
+    {
+      "target": {
+        "containerPath": "container:OpenStreamApps.xcodeproj",
+        "identifier": "F2B91FA3C772665027432E45",
+        "name": "OpenStreamVisionUITests"
+      },
+      "selectedTests": [
+        "AppleVisionPlayerUITests"
+      ]
+    }
+  ],
+  "version": 1
+}

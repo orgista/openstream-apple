@@ -48,14 +48,26 @@ struct AppleHeroRotationTests {
         #expect(AppleHeroRotation.candidates([String](), id: { $0 }).isEmpty)
     }
 
-    /// The wordmark waits three seconds before giving up (owner 2026-09-14).
-    @Test func theWordmarkFallsBackToTextOnlyAfterThreeSeconds() {
-        #expect(AppleTitleLogoPolicy.loadingGrace == 3.0)
+    /// The wordmark waits five seconds before giving up (owner 2026-09-14:
+    /// three; N62: five).
+    @Test func theWordmarkFallsBackToTextOnlyAfterFiveSeconds() {
+        #expect(AppleTitleLogoPolicy.loadingGrace == 5.0)
         #expect(AppleTitleLogoPolicy.resolvedState(validated: true, loadResult: nil, elapsed: 0) == .hidden)
-        #expect(AppleTitleLogoPolicy.resolvedState(validated: true, loadResult: nil, elapsed: 2.9) == .hidden)
-        #expect(AppleTitleLogoPolicy.resolvedState(validated: true, loadResult: nil, elapsed: 3.0) == .text)
+        #expect(AppleTitleLogoPolicy.resolvedState(validated: true, loadResult: nil, elapsed: 4.9) == .hidden)
+        #expect(AppleTitleLogoPolicy.resolvedState(validated: true, loadResult: nil, elapsed: 5.0) == .text)
         // A wordmark that arrives late still wins over the stand-in text.
         #expect(AppleTitleLogoPolicy.resolvedState(validated: true, loadResult: true, elapsed: 10) == .logo)
+    }
+
+    /// N62: once the text title stands in, a wordmark that lands later is
+    /// not recorded, so the title never swaps under the viewer; a failure
+    /// always is.
+    @Test func aLateWordmarkDoesNotReplaceTheText() {
+        #expect(!AppleTitleLogoPolicy.keepsLoadResult(true, shown: .text))
+        #expect(AppleTitleLogoPolicy.keepsLoadResult(true, shown: .hidden))
+        #expect(AppleTitleLogoPolicy.keepsLoadResult(true, shown: .logo))
+        #expect(AppleTitleLogoPolicy.keepsLoadResult(false, shown: .text))
+        #expect(AppleTitleLogoPolicy.keepsLoadResult(false, shown: .hidden))
     }
 
     // MARK: - Rotation indicator (owner 2026-09-15: "a little bar … it's about

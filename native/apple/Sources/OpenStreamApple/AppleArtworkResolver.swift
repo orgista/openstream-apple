@@ -53,15 +53,20 @@ public actor AppleArtworkResolver {
     }
 }
 
-private struct AppleTMDBConfigurationEnvironmentKey: EnvironmentKey {
-    static let defaultValue: AppleTMDBConfiguration? = nil
-}
-
 extension EnvironmentValues {
     /// The active TMDB configuration (nil when Settings > Metadata is off).
     /// Catalog cards read this to request poster fallback art lazily.
-    public var appleTMDBConfiguration: AppleTMDBConfiguration? {
-        get { self[AppleTMDBConfigurationEnvironmentKey.self] }
-        set { self[AppleTMDBConfigurationEnvironmentKey.self] = newValue }
+    @Entry public var appleTMDBConfiguration: AppleTMDBConfiguration? = nil
+}
+
+extension AppleSettingsStore {
+    /// The TMDB configuration every artwork lookup uses, nil when Settings >
+    /// Metadata is off or there is no key. One definition, so Discover and
+    /// Library ask TMDB for a missing poster in the same way: Library had no
+    /// configuration at all, and drew grey title tiles for the titles
+    /// Discover's Your Library row showed posters for (owner, 2026-09-24).
+    var tmdbConfiguration: AppleTMDBConfiguration? {
+        guard metadataEnabled else { return nil }
+        return try? AppleTMDBConfiguration(credential: tmdbAPIKey)
     }
 }

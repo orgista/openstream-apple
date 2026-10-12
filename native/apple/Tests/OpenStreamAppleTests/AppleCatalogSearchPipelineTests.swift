@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import OpenStreamApple
 
-@Suite(.serialized)
+@Suite(.serialized, .timeLimit(.minutes(1)))
 struct AppleCatalogSearchPipelineTests {
     @Test @MainActor
     func newerQueryCancelsNetworkWorkAndCannotBeOverwritten() async throws {
@@ -90,15 +90,15 @@ struct AppleCatalogSearchPipelineTests {
         )
     }
 
+    /// No wall-clock deadline: the fixture starts only once the store's task
+    /// gets the main actor, which a busy gate can delay for seconds. The
+    /// suite's time limit fails a fixture that never starts.
     private func waitUntil(
         _ predicate: @escaping @Sendable () -> Bool
     ) async throws {
-        let deadline = ContinuousClock.now.advanced(by: .seconds(3))
-        while ContinuousClock.now < deadline {
-            if predicate() { return }
+        while !predicate() {
             try await Task.sleep(for: .milliseconds(2))
         }
-        Issue.record("Timed out waiting for the local fixture")
     }
 }
 

@@ -1,0 +1,24 @@
+{
+  "id": "org.openstream.stub",
+  "version": "1.0.0",
+  "name": "Stub Add-on",
+  "description": "Offline fixtures for UI tests",
+  "resources": [
+    "catalog",
+    "meta",
+    "stream"
+  ],
+  "types": [
+    "movie"
+  ],
+  "idPrefixes": [
+    "tt"
+  ],
+  "catalogs": [
+    {
+      "type": "movie",
+      "id": "top",
+      "name": "Stub Movies"
+    }
+  ]
+}

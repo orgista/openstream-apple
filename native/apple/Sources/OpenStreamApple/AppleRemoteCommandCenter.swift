@@ -2,6 +2,7 @@ import Foundation
 
 #if canImport(MediaPlayer) && !os(macOS)
 import MediaPlayer
+import UIKit
 #endif
 
 /// What a remote command should do, independent of MediaPlayer.
@@ -57,12 +58,41 @@ public final class AppleRemoteCommandCenter {
     private weak var engine: (any ApplePlaybackEngine)?
     private var handlers: [Any] = []
     private var isAttached = false
+    private var metadata = AppleNowPlayingMetadata(title: nil, isLive: false)
+    private var artwork: (url: URL, value: MPMediaItemArtwork)?
+    private var artworkLoad: Task<Void, Never>?
+    /// Republishes on phase and duration changes: attached before the item
+    /// loads, the entry otherwise kept no duration and a paused rate.
+    private var engineObservation: Task<Void, Never>?
 
     public init() {}
 
     public func attach(engine: any ApplePlaybackEngine, title: String?, isLive: Bool) {
-        self.engine = engine
-        guard !isAttached else { return }
+        attach(engine: engine, metadata: AppleNowPlayingMetadata(title: title, isLive: isLive))
+    }
+
+    public func attach(engine: any ApplePlaybackEngine, metadata: AppleNowPlayingMetadata) {
+        let isLive = metadata.isLive
+        self.metadata = metadata
+        loadArtwork(metadata.artworkURL)
+        if self.engine !== engine {
+            self.engine = engine
+            engineObservation?.cancel()
+            engineObservation = Task { [weak self, weak engine] in
+                guard let events = engine?.events else { return }
+                for await event in events {
+                    guard let self, !Task.isCancelled else { return }
+                    switch event {
+                    case .phase, .duration: self.publishNowPlaying()
+                    case .position, .route, .tracks, .failure: break
+                    }
+                }
+            }
+        }
+        guard !isAttached else {
+            publishNowPlaying()
+            return
+        }
         isAttached = true
 
         let center = MPRemoteCommandCenter.shared()
@@ -90,10 +120,14 @@ public final class AppleRemoteCommandCenter {
                 self?.perform(.skipBackward(AppleRemoteCommand.skipInterval)) ?? .commandFailed
             })
         }
-        publishNowPlaying(title: title, isLive: isLive)
+        publishNowPlaying()
     }
 
     public func detach() {
+        engineObservation?.cancel()
+        engineObservation = nil
+        artworkLoad?.cancel()
+        artworkLoad = nil
         let center = MPRemoteCommandCenter.shared()
         center.playCommand.removeTarget(nil)
         center.pauseCommand.removeTarget(nil)
@@ -110,7 +144,7 @@ public final class AppleRemoteCommandCenter {
     /// Refreshes position and rate so the scrubber on the lock screen and in
     /// Control Centre tracks the player.
     public func refreshNowPlaying(title: String?, isLive: Bool) {
-        publishNowPlaying(title: title, isLive: isLive)
+        publishNowPlaying()
     }
 
     @discardableResult
@@ -135,19 +169,40 @@ public final class AppleRemoteCommandCenter {
         return .success
     }
 
-    private func publishNowPlaying(title: String?, isLive: Bool) {
+    private func publishNowPlaying() {
         guard let engine else { return }
-        var info: [String: Any] = [:]
-        info[MPMediaItemPropertyTitle] = title ?? "OpenStream"
-        info[MPNowPlayingInfoPropertyIsLiveStream] = isLive
-        info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = engine.position
-        info[MPNowPlayingInfoPropertyPlaybackRate] = engine.phase == .playing ? 1.0 : 0.0
-        if let duration = engine.duration, duration.isFinite, duration > 0, !isLive {
-            info[MPMediaItemPropertyPlaybackDuration] = duration
+        var info = metadata.nowPlayingInfo(position: engine.position, duration: engine.duration,
+                                           isPlaying: engine.phase == .playing)
+        if let artwork, artwork.url == metadata.artworkURL {
+            info[MPMediaItemPropertyArtwork] = artwork.value
         }
         let center = MPNowPlayingInfoCenter.default()
         center.nowPlayingInfo = info
         center.playbackState = engine.phase == .playing ? .playing : .paused
+        appleTrace("now playing title=\"\(metadata.title)\" series=\(metadata.seriesTitle != nil) live=\(metadata.isLive) artwork=\(info[MPMediaItemPropertyArtwork] != nil) duration=\(info[MPMediaItemPropertyPlaybackDuration] != nil)")
+    }
+
+    /// MediaPlayer calls the request handler on its own queue. Built in a
+    /// nonisolated context so the closure doesn't inherit main-actor
+    /// isolation (a main-actor closure traps with dispatch_assert_queue_fail
+    /// there — every VOD play with artwork crashed, Apple TV 2026-10-02).
+    nonisolated private static func artwork(for picture: UIImage) -> MPMediaItemArtwork {
+        MPMediaItemArtwork(boundsSize: picture.size) { @Sendable _ in picture }
+    }
+
+    /// The poster from the app's own image cache, then the entry again.
+    private func loadArtwork(_ url: URL?) {
+        guard let url else { artwork = nil; return }
+        guard artwork?.url != url else { return }
+        artworkLoad?.cancel()
+        artworkLoad = Task { [weak self] in
+            guard let image = try? await AppleRemoteImageCache.shared.image(url: url, maximumPixelDimension: 600),
+                  !Task.isCancelled, let self else { return }
+            let picture = UIImage(cgImage: image)
+            let value = Self.artwork(for: picture)
+            self.artwork = (url, value)
+            self.publishNowPlaying()
+        }
     }
 }
 #endif

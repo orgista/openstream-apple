@@ -3,9 +3,12 @@ import Observation
 
 public enum AppleCatalogDiscoveryPolicy {
     public static let defaultMaximumCatalogs = 8
-    public static let hardMaximumCatalogs = 12
+    /// The most rows one add-on can put on Discover. TVGardenio lists 172
+    /// catalogs; 12 hid most of them (add-on sweep 2026-10-01). Fetches still
+    /// go out `maximumConcurrentRequests` at a time.
+    public static let hardMaximumCatalogs = 40
     public static let maximumConcurrentRequests = 4
-    public static let maximumTotalRequests = 48
+    public static let maximumTotalRequests = 64
     public static let maximumItemsPerCatalog = 100
     public static let cacheFreshness: TimeInterval = 6 * 60 * 60
 
@@ -13,27 +16,73 @@ public enum AppleCatalogDiscoveryPolicy {
         for source: AppleSource,
         maximumCatalogs: Int = defaultMaximumCatalogs
     ) -> [AppleStremioCatalog] {
-        guard source.kind == .stremio,
+        guard source.isAddon,
               source.isEnabled,
               source.resources.contains(where: { $0.caseInsensitiveCompare("catalog") == .orderedSame }) else {
             return []
         }
         let limit = min(max(maximumCatalogs, 0), hardMaximumCatalogs)
         guard limit > 0 else { return [] }
+        let browsable = browsableCatalogs(for: source)
+        guard !source.catalogChoices.isEmpty else { return Array(browsable.prefix(limit)) }
+        let defaults = Set(browsable.prefix(limit).map(choiceKey))
+        let chosen = browsable.filter { catalog in
+            let key = choiceKey(catalog)
+            return source.catalogChoices[key] ?? defaults.contains(key)
+        }
+        return Array(chosen.prefix(hardMaximumCatalogs))
+    }
+
+    /// The `type:id` key a catalog choice is stored under.
+    public static func choiceKey(_ catalog: AppleStremioCatalog) -> String {
+        "\(catalog.type):\(catalog.id)"
+    }
+
+    /// The catalogs Discover shows for a source when the viewer has chosen
+    /// nothing: the first `defaultMaximumCatalogs` browsable ones.
+    public static func defaultCatalogKeys(for source: AppleSource) -> Set<String> {
+        Set(browsableCatalogs(for: source).prefix(defaultMaximumCatalogs).map(choiceKey))
+    }
+
+    /// Movie and series catalogs: the titles with a full title page, episode
+    /// lists and IMDb-keyed streams.
+    public static func isTitleType(_ type: String) -> Bool {
+        ["movie", "series"].contains(type.lowercased())
+    }
+
+    /// Any catalog type an add-on declares can be a shelf: `tv`, `anime`,
+    /// `channel` and custom types read through the add-on's own resources.
+    public static func isShelfType(_ type: String) -> Bool {
+        let clean = type.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !clean.isEmpty && clean.utf8.count <= 64
+    }
+
+    /// Live types (`tv`, `channel`) from an add-on that serves no meta have
+    /// no title page to show: opening one goes straight to its streams.
+    public static func opensStraightToPlayback(item: AppleCatalogItem, source: AppleSource) -> Bool {
+        ["tv", "channel"].contains(item.type.lowercased())
+            && source.isAddon
+            && !source.resources.contains { $0.caseInsensitiveCompare("meta") == .orderedSame }
+    }
+
+    /// Every catalog Discover could draw for a source, movie and series
+    /// first (so the shelves an add-on had before other types were shown
+    /// keep their places), then the other types in manifest order.
+    public static func browsableCatalogs(for source: AppleSource) -> [AppleStremioCatalog] {
         var seen = Set<String>()
-        var result: [AppleStremioCatalog] = []
+        var titles: [AppleStremioCatalog] = []
+        var others: [AppleStremioCatalog] = []
         for catalog in source.catalogs {
             let key = "\(catalog.type):\(catalog.id)"
             guard !catalog.requiresInput,
-                  ["movie", "series"].contains(catalog.type),
+                  isShelfType(catalog.type),
                   !catalog.id.isEmpty,
                   seen.insert(key).inserted else {
                 continue
             }
-            result.append(catalog)
-            if result.count == limit { break }
+            if isTitleType(catalog.type) { titles.append(catalog) } else { others.append(catalog) }
         }
-        return result
+        return titles + others
     }
 
     public static func sourceConfigurationID(for source: AppleSource) -> String {
@@ -53,6 +102,15 @@ public struct AppleCatalogItem: Identifiable, Codable, Equatable, Sendable {
     public let name: String
     public let posterURL: URL?
     public let backgroundURL: URL?
+    /// The title's wordmark art, when the meta response carried one.
+    ///
+    /// Optional, and decoded with `decodeIfPresent`, so cached payloads written
+    /// before the field existed still read back. The Library hero had no way to
+    /// show a wordmark at all because this was dropped on the floor: the meta
+    /// response that fills a Library card already contains `logo`, and
+    /// `AppleLibraryMetadataResolver.liveLookup` simply did not copy it across
+    /// (owner 2026-09-20: "wordmarks not loading on (library) ap tv").
+    public let logoURL: URL?
     public let summary: String?
     public let releaseInfo: String?
     public let rating: Double?
@@ -65,6 +123,15 @@ public struct AppleCatalogItem: Identifiable, Codable, Equatable, Sendable {
     public let director: String?
     public let writers: [String]?
     public let year: Int?
+    /// The title's IMDb id when the add-on keys it by another scheme
+    /// (`tmdb:…`) but sends `imdb_id` too, so search can merge the TMDB and
+    /// Cinemeta rows for one title (full test 2026-10-01).
+    public let imdbID: String?
+    /// Search-ranking signals the add-on's answer already carried (Cinemeta
+    /// sends `runtime` "155 min" and `popularity`); nil when it sent none.
+    /// Used only to order search results — no lookup of their own.
+    public let runtimeMinutes: Int?
+    public let popularity: Double?
 
     public init(
         mediaID: String,
@@ -81,8 +148,14 @@ public struct AppleCatalogItem: Identifiable, Codable, Equatable, Sendable {
         cast: [String]? = nil,
         director: String? = nil,
         writers: [String]? = nil,
-        year: Int? = nil
+        year: Int? = nil,
+        logoURL: URL? = nil,
+        imdbID: String? = nil,
+        runtimeMinutes: Int? = nil,
+        popularity: Double? = nil
     ) {
+        self.runtimeMinutes = runtimeMinutes.flatMap { (1 ... 3_000).contains($0) ? $0 : nil }
+        self.popularity = popularity.flatMap { $0.isFinite && $0 >= 0 ? $0 : nil }
         let normalizedType = String(type.trimmingCharacters(in: .whitespacesAndNewlines).lowercased().prefix(40))
         let normalizedMediaID = String(mediaID.trimmingCharacters(in: .whitespacesAndNewlines).prefix(300))
         id = "\(normalizedType):\(normalizedMediaID)"
@@ -96,6 +169,7 @@ public struct AppleCatalogItem: Identifiable, Codable, Equatable, Sendable {
             .trimmingCharacters(in: .whitespacesAndNewlines).prefix(200))
         self.posterURL = posterURL
         self.backgroundURL = backgroundURL
+        self.logoURL = logoURL
         self.summary = AppleHTMLEntities.decoded(summary)?.trimmedAndLimited(to: 4_000)
         self.releaseInfo = releaseInfo?.trimmedAndLimited(to: 100)
         self.rating = rating.flatMap { $0.isFinite && (0 ... 10).contains($0) ? $0 : nil }
@@ -111,6 +185,8 @@ public struct AppleCatalogItem: Identifiable, Codable, Equatable, Sendable {
         self.director = cleanDirector.isEmpty ? nil : String(cleanDirector.prefix(80))
         self.writers = Self.cleanedList(writers, limit: 8, maximumLength: 80)
         self.year = year.flatMap { (1_870 ... 2_200).contains($0) ? $0 : nil }
+        let cleanIMDbID = imdbID?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        self.imdbID = cleanIMDbID.flatMap { AppleStremioMetadataClient.isIMDBIdentifier($0) ? $0 : nil }
     }
 
     /// Rehydrates a cached item through the memberwise initialiser.
@@ -138,8 +214,25 @@ public struct AppleCatalogItem: Identifiable, Codable, Equatable, Sendable {
             cast: try container.decodeIfPresent([String].self, forKey: .cast),
             director: try container.decodeIfPresent(String.self, forKey: .director),
             writers: try container.decodeIfPresent([String].self, forKey: .writers),
-            year: try container.decodeIfPresent(Int.self, forKey: .year)
+            year: try container.decodeIfPresent(Int.self, forKey: .year),
+            logoURL: try container.decodeIfPresent(URL.self, forKey: .logoURL),
+            imdbID: try container.decodeIfPresent(String.self, forKey: .imdbID),
+            runtimeMinutes: try container.decodeIfPresent(Int.self, forKey: .runtimeMinutes),
+            popularity: try container.decodeIfPresent(Double.self, forKey: .popularity)
         )
+    }
+
+    /// What VoiceOver reads for the item: its name, or for a poster-only
+    /// entry that came without one, its type and id.
+    public var accessibilityTitle: String {
+        guard name.isEmpty else { return name }
+        let kind = switch type {
+        case "movie": "Movie"
+        case "series": "Show"
+        case "tv": "TV"
+        default: type.capitalized
+        }
+        return "\(kind) \(mediaID)"
     }
 
     private static func cleanedList(_ values: [String]?, limit: Int, maximumLength: Int) -> [String]? {
@@ -170,7 +263,40 @@ public struct AppleCatalogItem: Identifiable, Codable, Equatable, Sendable {
             cast: cast,
             director: director,
             writers: writers,
-            year: year
+            year: year,
+            logoURL: logoURL,
+            imdbID: imdbID,
+            runtimeMinutes: runtimeMinutes,
+            popularity: popularity
+        )
+    }
+
+    /// Returns a copy whose hero art has been upgraded in place.
+    ///
+    /// Everything else — identity included — stays put, so swapping in a
+    /// textless backdrop after first paint cannot change a view's identity and
+    /// so cannot move focus on tvOS.
+    public func withHeroArtwork(backgroundURL: URL?, logoURL: URL?) -> AppleCatalogItem {
+        AppleCatalogItem(
+            mediaID: mediaID,
+            type: type,
+            name: name,
+            posterURL: posterURL,
+            backgroundURL: backgroundURL ?? self.backgroundURL,
+            summary: summary,
+            releaseInfo: releaseInfo,
+            rating: rating,
+            contentRating: contentRating,
+            formatBadges: formatBadges,
+            genres: genres,
+            cast: cast,
+            director: director,
+            writers: writers,
+            year: year,
+            logoURL: logoURL ?? self.logoURL,
+            imdbID: imdbID,
+            runtimeMinutes: runtimeMinutes,
+            popularity: popularity
         )
     }
 
@@ -192,7 +318,11 @@ public struct AppleCatalogItem: Identifiable, Codable, Equatable, Sendable {
             cast: cast ?? (details.cast.isEmpty ? nil : details.cast),
             director: director ?? details.director,
             writers: writers ?? (details.writers.isEmpty ? nil : details.writers),
-            year: year ?? details.year
+            year: year ?? details.year,
+            logoURL: logoURL ?? details.logoURL,
+            imdbID: imdbID,
+            runtimeMinutes: runtimeMinutes,
+            popularity: popularity
         )
     }
 }
@@ -204,6 +334,9 @@ public struct AppleCatalogSection: Identifiable, Codable, Equatable, Sendable {
     public let sourceConfigurationID: String
     public let catalog: AppleStremioCatalog
     public let items: [AppleCatalogItem]
+    /// The heading Discover draws, once `AppleCatalogShelfPolicy.visibleSections`
+    /// has made it unique among the rows shown. Not persisted.
+    public internal(set) var shelfTitle: String?
 
     public init(source: AppleSource, catalog: AppleStremioCatalog, items: [AppleCatalogItem]) {
         id = "\(source.id.uuidString):\(catalog.type):\(catalog.id)"
@@ -211,7 +344,9 @@ public struct AppleCatalogSection: Identifiable, Codable, Equatable, Sendable {
         sourceName = String(source.name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(100))
         sourceConfigurationID = AppleCatalogDiscoveryPolicy.sourceConfigurationID(for: source)
         self.catalog = catalog
-        self.items = Array(items.prefix(AppleCatalogDiscoveryPolicy.maximumItemsPerCatalog))
+        // One page is at most `maximumItemsPerCatalog`; further pages
+        // (`AppleCatalogPaging`) grow the shelf up to its own cap.
+        self.items = Array(items.prefix(AppleCatalogPaging.maximumItems))
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -226,11 +361,12 @@ public struct AppleCatalogSection: Identifiable, Codable, Equatable, Sendable {
         sourceConfigurationID = try container.decodeIfPresent(String.self, forKey: .sourceConfigurationID) ?? ""
         catalog = try container.decode(AppleStremioCatalog.self, forKey: .catalog)
         items = Array((try container.decode([AppleCatalogItem].self, forKey: .items))
-            .prefix(AppleCatalogDiscoveryPolicy.maximumItemsPerCatalog))
+            .prefix(AppleCatalogPaging.maximumItems))
     }
 }
 
-public enum AppleStremioCatalogError: Swift.Error, Equatable, LocalizedError, Sendable {
+#if OPENSTREAM_ADDONS
+public enum AppleMediaCatalogError: Swift.Error, Equatable, LocalizedError, Sendable {
     case invalidSource
     case nonHTTPResponse
     case insecureRedirect
@@ -250,10 +386,13 @@ public enum AppleStremioCatalogError: Swift.Error, Equatable, LocalizedError, Se
     }
 }
 
-public struct AppleStremioCatalogClient: Sendable {
+public struct AppleMediaCatalogClient: Sendable {
     public typealias Loader = @Sendable (URLRequest) async throws -> (Data, URLResponse)
 
-    private static let maximumResponseBytes = 2_000_000
+    /// TMDB's series "tmdb.top" shelf is ~12 MB because each entry carries
+    /// its full episode list. The body is walked entry by entry
+    /// (`AppleJSONArrayElementScanner`), so only shelf fields are kept.
+    static let maximumResponseBytes = 16_000_000
     private let loader: Loader
 
     public init(loader: @escaping Loader = AppleStremioCatalogClient.liveLoader) {
@@ -261,11 +400,11 @@ public struct AppleStremioCatalogClient: Sendable {
     }
 
     public func load(source: AppleSource, catalog: AppleStremioCatalog) async throws -> [AppleCatalogItem] {
-        guard source.kind == .stremio,
+        guard source.isAddon,
               source.isEnabled,
               source.resources.contains(where: { $0.caseInsensitiveCompare("catalog") == .orderedSame }),
               !catalog.requiresInput,
-              ["movie", "series"].contains(catalog.type),
+              AppleCatalogDiscoveryPolicy.isShelfType(catalog.type),
               !catalog.id.isEmpty,
               source.catalogs.contains(where: { $0.type == catalog.type && $0.id == catalog.id }) else {
             throw AppleStremioCatalogError.invalidSource
@@ -274,13 +413,33 @@ public struct AppleStremioCatalogClient: Sendable {
         return try await load(url: url, source: source, catalog: catalog)
     }
 
+    /// One further page of a catalog that declares `skip`, with the number of
+    /// entries the add-on sent (before the shelf's own filtering), which is
+    /// what tells a short last page from a full one.
+    public func loadPage(
+        source: AppleSource,
+        catalog: AppleStremioCatalog,
+        skip: Int
+    ) async throws -> AppleCatalogPage {
+        guard source.isAddon,
+              source.isEnabled,
+              source.resources.contains(where: { $0.caseInsensitiveCompare("catalog") == .orderedSame }),
+              !catalog.requiresInput,
+              AppleCatalogDiscoveryPolicy.isShelfType(catalog.type),
+              source.catalogs.contains(where: { $0.type == catalog.type && $0.id == catalog.id }) else {
+            throw AppleStremioCatalogError.invalidSource
+        }
+        let url = try Self.endpoint(source: source, catalog: catalog, skip: skip)
+        return try await loadPage(url: url, source: source, catalog: catalog)
+    }
+
     public func search(
         source: AppleSource,
         catalog: AppleStremioCatalog,
         query: String
     ) async throws -> [AppleCatalogItem] {
         let value = String(query.trimmingCharacters(in: .whitespacesAndNewlines).prefix(200))
-        guard source.kind == .stremio,
+        guard source.isAddon,
               source.isEnabled,
               source.resources.contains(where: { $0.caseInsensitiveCompare("catalog") == .orderedSame }),
               catalog.supportsSearch,
@@ -299,6 +458,14 @@ public struct AppleStremioCatalogClient: Sendable {
         source: AppleSource,
         catalog: AppleStremioCatalog
     ) async throws -> [AppleCatalogItem] {
+        try await loadPage(url: url, source: source, catalog: catalog).items
+    }
+
+    private func loadPage(
+        url: URL,
+        source: AppleSource,
+        catalog: AppleStremioCatalog
+    ) async throws -> AppleCatalogPage {
         var request = URLRequest(url: url)
         request.timeoutInterval = 15
         request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -311,22 +478,34 @@ public struct AppleStremioCatalogClient: Sendable {
             throw AppleStremioCatalogError.requestFailed(http.statusCode)
         }
         guard data.count <= Self.maximumResponseBytes else { throw AppleStremioCatalogError.responseTooLarge }
-        guard let payload = try? JSONDecoder().decode(CatalogPayload.self, from: data) else {
-            throw AppleStremioCatalogError.invalidCatalog
-        }
+        let metas = try Self.decodeMetas(data)
 
+        // An entry with neither a name nor a poster can still be filled in:
+        // from the add-on's own meta, or for an IMDb id from Cinemeta's art
+        // and meta (TorrentFreaks Top-10 lists bare `{type, id}` entries).
+        let servesMeta = source.resources.contains { $0.caseInsensitiveCompare("meta") == .orderedSame }
         var seen = Set<String>()
         var items: [AppleCatalogItem] = []
-        items.reserveCapacity(min(payload.metas.count, AppleCatalogDiscoveryPolicy.maximumItemsPerCatalog))
-        for meta in payload.metas {
+        items.reserveCapacity(min(metas.count, AppleCatalogDiscoveryPolicy.maximumItemsPerCatalog))
+        for meta in metas {
             let mediaID = meta.id.trimmingCharacters(in: .whitespacesAndNewlines)
             let name = meta.name.trimmingCharacters(in: .whitespacesAndNewlines)
             let type = (meta.type?.trimmingCharacters(in: .whitespacesAndNewlines).nonEmptyCatalogString ?? catalog.type)
                 .lowercased()
             let identity = "\(type):\(mediaID)"
-            guard ["movie", "series"].contains(type),
+            // A movie or series catalog keeps only titles; any other
+            // catalog (tv, anime, channel, custom) keeps what it lists.
+            let typeFits = AppleCatalogDiscoveryPolicy.isTitleType(catalog.type)
+                ? AppleCatalogDiscoveryPolicy.isTitleType(type)
+                : AppleCatalogDiscoveryPolicy.isShelfType(type)
+            // An entry with a poster but no name (Cartoon Network, Viva Max)
+            // is a poster-only tile; one with neither is kept only when meta
+            // can fill it in, else it has nothing to draw.
+            let posterURL = webURL(meta.poster)
+            guard typeFits,
                   !mediaID.isEmpty,
-                  !name.isEmpty,
+                  !name.isEmpty || posterURL != nil || servesMeta
+                    || AppleStremioMetadataClient.isIMDBIdentifier(mediaID),
                   seen.insert(identity).inserted else {
                 continue
             }
@@ -334,7 +513,7 @@ public struct AppleStremioCatalogClient: Sendable {
                 mediaID: mediaID,
                 type: type,
                 name: name,
-                posterURL: webURL(meta.poster),
+                posterURL: posterURL,
                 backgroundURL: webURL(meta.background),
                 summary: meta.description,
                 releaseInfo: meta.releaseInfo,
@@ -345,34 +524,48 @@ public struct AppleStremioCatalogClient: Sendable {
                 cast: meta.cast,
                 director: meta.director,
                 writers: meta.writers,
-                year: meta.year
+                year: meta.year,
+                imdbID: meta.imdbID,
+                runtimeMinutes: meta.runtimeMinutes,
+                popularity: meta.popularity
             ))
             if items.count == AppleCatalogDiscoveryPolicy.maximumItemsPerCatalog { break }
         }
-        return items
+        return AppleCatalogPage(items: items, receivedCount: metas.count)
     }
 
     public static func endpoint(source: AppleSource, catalog: AppleStremioCatalog) throws -> URL {
         try endpoint(source: source, catalog: catalog, searchQuery: nil)
     }
 
+    /// A further page: `…/catalog/movie/top/skip=100.json`. Only for a catalog
+    /// that declares the `skip` extra; `skip` 0 is the first page's URL.
+    public static func endpoint(source: AppleSource, catalog: AppleStremioCatalog, skip: Int) throws -> URL {
+        guard skip == 0 || catalog.supportsSkip, skip >= 0 else { throw AppleStremioCatalogError.invalidSource }
+        return try endpoint(source: source, catalog: catalog, searchQuery: nil, skip: skip)
+    }
+
     public static func searchEndpoint(
         source: AppleSource,
         catalog: AppleStremioCatalog,
-        query: String
+        query: String,
+        skip: Int = 0
     ) throws -> URL {
         let value = String(query.trimmingCharacters(in: .whitespacesAndNewlines).prefix(200))
-        guard catalog.supportsSearch, !value.isEmpty else { throw AppleStremioCatalogError.invalidSource }
-        return try endpoint(source: source, catalog: catalog, searchQuery: value)
+        guard catalog.supportsSearch, !value.isEmpty, skip >= 0, skip == 0 || catalog.supportsSkip else {
+            throw AppleStremioCatalogError.invalidSource
+        }
+        return try endpoint(source: source, catalog: catalog, searchQuery: value, skip: skip)
     }
 
     private static func endpoint(
         source: AppleSource,
         catalog: AppleStremioCatalog,
-        searchQuery: String?
+        searchQuery: String?,
+        skip: Int = 0
     ) throws -> URL {
         let base = source.transportURL
-        guard ["movie", "series"].contains(catalog.type),
+        guard AppleCatalogDiscoveryPolicy.isShelfType(catalog.type),
               !catalog.id.isEmpty,
               base.host?.isEmpty == false,
               base.scheme?.lowercased() == "https"
@@ -391,7 +584,11 @@ public struct AppleStremioCatalogClient: Sendable {
         guard !encodedType.isEmpty, !encodedID.isEmpty else { throw AppleStremioCatalogError.invalidSource }
         var path = components.percentEncodedPath
         if !path.hasSuffix("/") { path += "/" }
-        let extraPath = searchQuery.map { "/search=\(encodePathSegment($0))" } ?? ""
+        // Extra args in the SDK's order, `&`-joined: `/search=x&skip=100`.
+        var extras: [String] = []
+        if let searchQuery { extras.append("search=\(encodePathSegment(searchQuery))") }
+        if skip > 0 { extras.append("skip=\(skip)") }
+        let extraPath = extras.isEmpty ? "" : "/" + extras.joined(separator: "&")
         components.percentEncodedPath = "\(path)catalog/\(encodedType)/\(encodedID)\(extraPath).json"
         guard let url = components.url else { throw AppleStremioCatalogError.invalidSource }
         return url
@@ -424,36 +621,25 @@ public struct AppleStremioCatalogClient: Sendable {
         return url
     }
 
-    private struct CatalogPayload: Decodable {
-        let metas: [Meta]
-
-        private enum CodingKeys: String, CodingKey { case metas }
-
-        init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            metas = try container.decode(MetaList.self, forKey: .metas).values
+    /// The response's `metas`, decoded one entry at a time: at most 400
+    /// entries are looked at and 200 kept, and each entry is decoded into
+    /// the shelf fields alone, so an inlined episode list is never built.
+    static func decodeMetas(_ data: Data) throws -> [Meta] {
+        guard let ranges = AppleJSONArrayElementScanner.elements(ofTopLevelKey: "metas", in: data, limit: 400) else {
+            throw AppleStremioCatalogError.invalidCatalog
         }
-
-        private struct MetaList: Decodable {
-            let values: [Meta]
-
-            init(from decoder: Decoder) throws {
-                var container = try decoder.unkeyedContainer()
-                var result: [Meta] = []
-                var inspected = 0
-                while !container.isAtEnd,
-                      inspected < 400,
-                      result.count < AppleCatalogDiscoveryPolicy.maximumItemsPerCatalog * 2 {
-                    inspected += 1
-                    let entry = try container.superDecoder()
-                    if let value = try? Meta(from: entry) { result.append(value) }
-                }
-                values = result
-            }
+        let decoder = JSONDecoder()
+        let base = data.startIndex
+        var result: [Meta] = []
+        for range in ranges {
+            let entry = data[(base + range.lowerBound) ..< (base + range.upperBound)]
+            if let value = try? decoder.decode(Meta.self, from: entry) { result.append(value) }
+            if result.count == AppleCatalogDiscoveryPolicy.maximumItemsPerCatalog * 2 { break }
         }
+        return result
     }
 
-    private struct Meta: Decodable {
+    struct Meta: Decodable {
         let id: String
         let type: String?
         let name: String
@@ -469,10 +655,14 @@ public struct AppleStremioCatalogClient: Sendable {
         let director: String?
         let writers: [String]?
         let year: Int?
+        /// `imdb_id` when `id` is another scheme; nil when it is the id.
+        let imdbID: String?
+        let runtimeMinutes: Int?
+        let popularity: Double?
 
         private enum CodingKeys: String, CodingKey {
             case id, imdbID = "imdb_id", type, name, poster, background, description, releaseInfo, imdbRating, contentRating, badges, formats
-            case genre, genres, cast, director, writer, year
+            case genre, genres, cast, director, writer, year, runtime, popularity
         }
 
         init(from decoder: Decoder) throws {
@@ -481,8 +671,9 @@ public struct AppleStremioCatalogClient: Sendable {
             // other catalog add-ons commonly return the canonical `id` key.
             id = try container.decodeIfPresent(String.self, forKey: .id)
                 ?? (try container.decode(String.self, forKey: .imdbID))
+            imdbID = try? container.decode(String.self, forKey: .imdbID)
             type = try? container.decode(String.self, forKey: .type)
-            name = try container.decode(String.self, forKey: .name)
+            name = (try? container.decode(String.self, forKey: .name)) ?? ""
             poster = try? container.decode(String.self, forKey: .poster)
             background = try? container.decode(String.self, forKey: .background)
             description = try? container.decode(String.self, forKey: .description)
@@ -509,6 +700,16 @@ public struct AppleStremioCatalogClient: Sendable {
             } else {
                 year = AppleStremioMetadataClient.leadingYear(releaseInfo)
             }
+            if let value = try? container.decode(Int.self, forKey: .runtime) {
+                runtimeMinutes = value
+            } else {
+                runtimeMinutes = AppleSearchProminence.runtimeMinutes(try? container.decode(String.self, forKey: .runtime))
+            }
+            if let value = try? container.decode(Double.self, forKey: .popularity) {
+                popularity = value
+            } else {
+                popularity = (try? container.decode(String.self, forKey: .popularity)).flatMap(Double.init)
+            }
         }
 
         /// Add-ons send `cast`/`director`/`writer` as an array of names, or as a
@@ -524,6 +725,7 @@ public struct AppleStremioCatalogClient: Sendable {
     }
 }
 
+#endif
 public struct AppleCatalogCacheSnapshot: Equatable, Sendable {
     public let sections: [AppleCatalogSection]
     public let updatedAt: Date
@@ -558,6 +760,7 @@ public struct AppleCatalogSourceRefreshReport: Identifiable, Equatable, Sendable
     }
 }
 
+#if OPENSTREAM_ADDONS
 public actor AppleCatalogCache {
     private struct StoredCache: Codable {
         let updatedAt: Date
@@ -641,7 +844,9 @@ public actor AppleCatalogCache {
         try fileManager.removeItem(at: fileURL)
     }
 }
+#endif
 
+#if OPENSTREAM_ADDONS
 @MainActor
 @Observable
 public final class AppleCatalogStore {
@@ -658,6 +863,10 @@ public final class AppleCatalogStore {
     private var cachedRequestIDs = Set<String>()
     private var activeRefreshTask: Task<[CatalogFetchResult], Never>?
     private var activeRefreshTaskGeneration: UInt64?
+    /// Per shelf (`AppleCatalogSection.id`): its page size and whether the
+    /// add-on has run out. Cleared whenever the shelves are replaced.
+    @ObservationIgnored private var paging: [String: AppleCatalogPaging.State] = [:]
+    @ObservationIgnored private var pagesInFlight: Set<String> = []
 
     public init(
         client: AppleStremioCatalogClient = AppleStremioCatalogClient(),
@@ -693,6 +902,7 @@ public final class AppleCatalogStore {
             return
         }
         sections = snapshot.sections
+        paging = [:]
         contentRevision &+= 1
         cacheIsFresh = snapshot.isFresh
         cachedRequestIDs = Set(snapshot.sections.map(Self.requestID(for:)))
@@ -787,6 +997,7 @@ public final class AppleCatalogStore {
         }
 
         sections = updated
+        paging = [:]
         contentRevision &+= 1
         partialErrors = errors
         sourceRefreshReports = sources.compactMap { source in
@@ -803,6 +1014,42 @@ public final class AppleCatalogStore {
         let isComplete = successfulRequests == requests.count
         cacheIsFresh = isComplete && updated.contains(where: { !$0.items.isEmpty })
         try? await cache.save(updated, isComplete: isComplete)
+    }
+
+    /// Loads the next page of a shelf whose catalog declares `skip`, when its
+    /// row or See All list nears the end. At most one page per shelf at a
+    /// time; nothing happens once the add-on has run out.
+    public func loadNextPage(sectionID: String, sources: [AppleSource]) async {
+        guard !pagesInFlight.contains(sectionID),
+              let section = sections.first(where: { $0.id == sectionID }),
+              let source = sources.first(where: { $0.id == section.sourceID }) else { return }
+        let state = paging[sectionID] ?? AppleCatalogPaging.State(pageSize: section.items.count)
+        // The add-on's catalog as stored now: a shelf cached before the
+        // launch's manifest refresh still holds the old copy without `skip`.
+        let catalog = AppleCatalogPaging.liveCatalog(section.catalog, in: source)
+        guard let skip = AppleCatalogPaging.nextSkip(
+            catalog: catalog, loadedCount: section.items.count, state: state) else { return }
+        let generation = refreshGeneration
+        pagesInFlight.insert(sectionID)
+        defer { pagesInFlight.remove(sectionID) }
+        appleTrace("catalog page \(section.catalog.type)/\(section.catalog.id) skip=\(skip)")
+        let page: AppleCatalogPage
+        do {
+            page = try await client.loadPage(source: source, catalog: catalog, skip: skip)
+        } catch {
+            // A failed page is not the end of the catalog; the next scroll retries.
+            return
+        }
+        guard generation == refreshGeneration,
+              let index = sections.firstIndex(where: { $0.id == sectionID }),
+              sections[index].items.count == section.items.count else { return }
+        let merged = AppleCatalogPaging.merge(sections[index].items, page: page, pageSize: state.pageSize)
+        paging[sectionID] = AppleCatalogPaging.State(pageSize: state.pageSize, isExhausted: merged.isExhausted)
+        appleTrace("catalog page \(section.catalog.type)/\(section.catalog.id) +\(merged.items.count - section.items.count) → \(merged.items.count)\(merged.isExhausted ? " end" : "")")
+        guard merged.items.count != section.items.count else { return }
+        var next = AppleCatalogSection(source: source, catalog: catalog, items: merged.items)
+        next.shelfTitle = sections[index].shelfTitle
+        sections[index] = next
     }
 
     private func cancelActiveRefresh() async {
@@ -896,6 +1143,22 @@ public final class AppleCatalogStore {
     }
 }
 
+#else
+@MainActor
+@Observable
+public final class AppleCatalogStore {
+    public let sections: [AppleCatalogSection] = []
+    public let contentRevision: UInt64 = 0
+    public let partialErrors: [String] = []
+    public let sourceRefreshReports: [AppleCatalogSourceRefreshReport] = []
+    public let isLoading = false
+    public init() {}
+    public func loadCachedSections(sources: [AppleSource], maximumCatalogs: Int = 8, now: Date = .now) async {}
+    public func refresh(sources: [AppleSource], maximumCatalogs: Int = 8, force: Bool = false) async {}
+    public func loadNextPage(sectionID: String, sources: [AppleSource]) async {}
+}
+
+#endif
 private extension String {
     var nonEmptyCatalogString: String? { isEmpty ? nil : self }
 
@@ -904,3 +1167,11 @@ private extension String {
         return value.isEmpty ? nil : String(value.prefix(maximumCharacters))
     }
 }
+
+#if OPENSTREAM_ADDONS
+public typealias AppleStremioCatalogError = AppleMediaCatalogError
+#endif
+
+#if OPENSTREAM_ADDONS
+public typealias AppleStremioCatalogClient = AppleMediaCatalogClient
+#endif

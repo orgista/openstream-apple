@@ -56,6 +56,20 @@ public enum AppleChapterMarkers: Sendable {
 
     /// The opening sequence, or nil when the stream has no chapter that names
     /// one. `duration` is the programme's runtime; nil skips the fraction test.
+    /// Chapter starts as fractions of the runtime, for marks on the
+    /// scrubber. The first chapter's start is the scrubber's own left end and
+    /// gets no mark; starts outside the runtime and duplicates are dropped.
+    /// Empty until the runtime is known.
+    public static func scrubberFractions(chapters: [AppleChapter], duration: Double?) -> [Double] {
+        guard let duration, duration.isFinite, duration > 0 else { return [] }
+        var seen = Set<Int>()
+        return chapters
+            .map { $0.start / duration }
+            .filter { $0.isFinite && $0 > 0.001 && $0 < 0.999 }
+            .sorted()
+            .filter { seen.insert(Int(($0 * 10_000).rounded())).inserted }
+    }
+
     public static func intro(in chapters: [AppleChapter], duration: Double? = nil) -> AppleChapter? {
         chapters.first { chapter in
             guard introTitles.contains(normalized(chapter.title)) else { return false }

@@ -37,7 +37,7 @@ import Testing
     let suite = "openstream-import-external-\(UUID())"
     let defaults = try #require(UserDefaults(suiteName: suite))
     defer { defaults.removePersistentDomain(forName: suite) }
-    let external = AppleSource(kind: .library, name: "Imports", url: URL(fileURLWithPath: "/Volumes/External/Imports"))
+    let external = AppleSource(kind: .library, name: "Imports", url: URL(fileURLWithPath: "/fixture/External/Imports"))
     let bookmarked = AppleSource(kind: .library, name: "Imports",
         url: URL(fileURLWithPath: "/private/var/mobile/Containers/Data/Application/\(UUID())/Documents/Imports"),
         bookmarkData: Data([1]))
@@ -120,7 +120,7 @@ import Testing
       "catalogs":[
         {"type":"movie","id":"popular","name":"Popular"},
         {"type":"series","id":"shows"},
-        {"type":"music","id":"ignored"}
+        {"type":"music","id":"tracks"}
       ]
     }
     """#.utf8)
@@ -135,7 +135,8 @@ import Testing
     #expect(first.manifestID == "org.example.addon")
     #expect(first.logoURL == URL(string: "https://img.example/addon.png"))
     #expect(first.resources == ["catalog", "stream"])
-    #expect(first.catalogs.map(\.type) == ["movie", "series"])
+    // Other catalog types are Discover shelves too (add-on sweep 2026-09-30).
+    #expect(first.catalogs.map(\.type) == ["movie", "series", "music"])
     #expect(first.lastValidatedAt != nil)
     #expect(first.validationSummary == "Manifest validated")
     #expect(first.capabilities == ["Catalog", "Stream"])
@@ -196,12 +197,14 @@ import Testing
     #expect(manifest.name == "Example")
     #expect(manifest.version?.count == 40)
     #expect(manifest.resources == ["catalog", "stream"])
-    #expect(manifest.catalogs.count == AppleStremioManifest.maximumCatalogs)
+    // Every catalog is kept now (add-on sweep 2026-09-30): the search one,
+    // the twenty numbered ones and the book one.
+    #expect(manifest.catalogs.count == 22)
     #expect(manifest.catalogs[0].id == "search")
     #expect(manifest.catalogs[0].name?.count == 100)
     #expect(manifest.catalogs[0].requiresInput)
     #expect(manifest.catalogs[0].supportsSearch)
-    #expect(!manifest.catalogs.contains(where: { $0.type == "book" }))
+    #expect(manifest.catalogs.last?.type == "book")
 
     let roundTrip = try JSONDecoder().decode(
         [AppleStremioCatalog].self,
@@ -217,7 +220,7 @@ import Testing
     }
 
     let attempts = Attempts()
-    let data = Data(#"{"id":"retry.example","name":"Retry"}"#.utf8)
+    let data = Data(#"{"id":"retry.example","name":"Retry","resources":["stream"]}"#.utf8)
     let retrying = AppleManifestClient(
         loader: { url in
             let attempt = await attempts.next()

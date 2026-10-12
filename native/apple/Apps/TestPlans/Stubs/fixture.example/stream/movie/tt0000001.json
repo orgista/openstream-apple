@@ -1,0 +1,9 @@
+{
+  "streams": [
+    {
+      "name": "Stub 1080p",
+      "title": "Fixture MP4 (H.264/AAC)",
+      "url": "http://127.0.0.1:8767/media/mp4-h264-aac.mp4"
+    }
+  ]
+}

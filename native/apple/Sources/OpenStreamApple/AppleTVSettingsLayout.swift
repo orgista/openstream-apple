@@ -8,6 +8,7 @@ import Foundation
 public enum AppleTVSettingsSection: String, CaseIterable, Identifiable, Sendable {
     case sources
     case channels
+    case restrictions
     case liveTV
     case discover
     case services
@@ -24,6 +25,7 @@ public enum AppleTVSettingsSection: String, CaseIterable, Identifiable, Sendable
         switch self {
         case .sources: "Sources"
         case .channels: "Channel Manager"
+        case .restrictions: "Restrictions"
         case .liveTV: "Live TV"
         case .discover: "Discover"
         case .services: "Services"
@@ -38,6 +40,7 @@ public enum AppleTVSettingsSection: String, CaseIterable, Identifiable, Sendable
         switch self {
         case .sources: "rectangle.stack.badge.plus"
         case .channels: "list.star"
+        case .restrictions: "lock.shield"
         case .liveTV: "dot.radiowaves.left.and.right"
         case .discover: "square.grid.2x2"
         case .services: "puzzlepiece.extension"

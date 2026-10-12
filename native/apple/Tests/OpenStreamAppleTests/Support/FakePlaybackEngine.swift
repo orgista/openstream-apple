@@ -22,12 +22,20 @@ final class FakePlaybackEngine: ApplePlaybackEngine {
     var phase: ApplePlaybackEnginePhase = .idle
     var route: ApplePlaybackPresentationRoute { scriptedRoute }
     var position: Double = 0
+    /// Scripted when a test needs the picture clock apart from the scrub clock.
+    var scriptedPresentationTime: Double?
+    var presentationTime: Double { scriptedPresentationTime ?? position }
     var duration: Double? = nil
     var audioTracks: [ApplePlaybackTrack] = []
     var subtitleTracks: [ApplePlaybackTrack] = []
     var subtitleCues: [AppleSubtitleCue] = []
+    var activeSubtitleTrackID: Int?
+    var activeAudioTrackID: Int?
     var failure: ApplePlaybackFailure? = nil
     var avPlayer: AVPlayer? { nil }
+    /// The real seekable span the transport reads for every live decision.
+    /// Scripted here because no AVPlayer exists in a unit test.
+    var seekableRange: AppleSeekableRange? = nil
 
     private var continuations: [AsyncStream<ApplePlaybackEngineEvent>.Continuation] = []
 
@@ -79,6 +87,8 @@ final class FakePlaybackEngine: ApplePlaybackEngine {
 
     func selectSubtitleTrack(id: Int?) {
         selectedSubtitle.append(id)
+        activeSubtitleTrackID = id
+        emit(.tracks)
     }
 
     func addExternalSubtitleTracks(_ tracks: [AppleExternalSubtitleTrack]) {

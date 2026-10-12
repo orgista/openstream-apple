@@ -82,7 +82,7 @@ public struct AppleWebUploadHandler: Sendable {
 
     public init(maxBytes: Int = 8 * 1024 * 1024 * 1024, directory: URL? = nil) {
         self.maxBytes = maxBytes
-        self.directory = directory ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appending(path: "Imports", directoryHint: .isDirectory)
+        self.directory = directory ?? AppleStorageLocation.documents.appending(path: "Imports", directoryHint: .isDirectory)
     }
 
     public func handleUpload(body: Data, fileNameHeader: String?, contentType: String?) async throws -> (status: Int, responseBody: String) {

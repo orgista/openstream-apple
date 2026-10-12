@@ -1,0 +1,47 @@
+{
+  "configurations": [
+    {
+      "id": "14370616-31DD-4D90-ABA1-49B8F8E2F92C",
+      "name": "Stubbed",
+      "options": {}
+    }
+  ],
+  "defaultOptions": {
+    "commandLineArgumentEntries": [
+      {
+        "argument": "-OpenStreamMuteAudio YES"
+      },
+      {
+        "argument": "-OpenStreamTrace YES"
+      }
+    ],
+    "environmentVariableEntries": [
+      {
+        "key": "OPENSTREAM_TEST_M3U",
+        "value": "$(OPENSTREAM_TEST_M3U)"
+      },
+      {
+        "key": "OPENSTREAM_STUB_DIR",
+        "value": "$(SRCROOT)/TestPlans/Stubs"
+      }
+    ],
+    "language": "en",
+    "region": "US",
+    "targetForVariableExpansion": {
+      "containerPath": "container:OpenStreamApps.xcodeproj",
+      "identifier": "1850CF1B4C5A4C7616364333",
+      "name": "OpenStreamTVUITests"
+    },
+    "testTimeoutsEnabled": true
+  },
+  "testTargets": [
+    {
+      "target": {
+        "containerPath": "container:OpenStreamApps.xcodeproj",
+        "identifier": "1850CF1B4C5A4C7616364333",
+        "name": "OpenStreamTVUITests"
+      }
+    }
+  ],
+  "version": 1
+}

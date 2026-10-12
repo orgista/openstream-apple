@@ -1,0 +1,39 @@
+{
+ "subtitles": [
+  {
+   "id": "5776828622157890360",
+   "url": "https://fixture.example/stravo/subtitle/cc90e2ca7341722907d81f38f9763c5a.srt",
+   "lang": "pt"
+  },
+  {
+   "id": "8704168379948712280",
+   "url": "https://fixture.example/stravo/subtitle/475cffc193cb400de4a7e71fd6372949.srt",
+   "lang": "ms"
+  },
+  {
+   "id": "3191762436047134616",
+   "url": "https://fixture.example/stravo/subtitle/d74536929a477138c95b04b1bc6769c3.srt",
+   "lang": "Indonesian"
+  },
+  {
+   "id": "5947965407997969208",
+   "url": "https://fixture.example/stravo/subtitle/951866b8334105904dad2bf08921ed5c.srt",
+   "lang": "fr"
+  },
+  {
+   "id": "3029632849461887320",
+   "url": "https://fixture.example/stravo/subtitle/2f76564bc0cb2e9cbb0fe8052f8747c3.srt",
+   "lang": "es"
+  },
+  {
+   "id": "7418390686334437376",
+   "url": "https://fixture.example/stravo/subtitle/7bd6a5dec4904a720923a9bd68be8698.srt",
+   "lang": "en"
+  },
+  {
+   "id": "1093085009692483480",
+   "url": "https://fixture.example/stravo/subtitle/38b361490de15252252ef0f6d6f2e925.srt",
+   "lang": "ar"
+  }
+ ]
+}

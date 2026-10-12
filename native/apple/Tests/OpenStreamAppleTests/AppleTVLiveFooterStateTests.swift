@@ -4,6 +4,36 @@ import Testing
 
 @Suite("Apple TV live footer state")
 struct AppleTVLiveFooterStateTests {
+    @Test func swipeUpWithEmptyTracksArmsLiveCaptions() {
+        var state = AppleTVLiveFooterState()
+        #expect(state.apply(.swipeUp) == .toggleCaptions)
+        #expect(state.togglePendingCaptions() == "Captions on")
+        #expect(state.takeArmedCaptionTrack(in: []) == nil)
+        #expect(state.captionsArmed)
+        #expect(state.phase == .hidden)
+        #expect(state.togglePendingCaptions() == "Captions off")
+        #expect(state.captionsArmed == false)
+    }
+
+    @Test func trackArrivalWhileArmedSelects608Once() {
+        var state = AppleTVLiveFooterState()
+        let track = ApplePlaybackTrack(id: 99_608, title: "Closed Captions", codec: "cea608")
+        _ = state.togglePendingCaptions()
+        #expect(state.takeArmedCaptionTrack(in: [ApplePlaybackTrack(id: 2, title: "Other")]) == nil)
+        #expect(state.captionsArmed)
+        #expect(state.takeArmedCaptionTrack(in: [track]) == track.id)
+        #expect(state.takeArmedCaptionTrack(in: [track]) == nil)
+        _ = state.togglePendingCaptions()
+        state.cancelPendingCaptions()
+        #expect(state.takeArmedCaptionTrack(in: [track]) == nil)
+        _ = state.togglePendingCaptions()
+        _ = state.togglePendingCaptions()
+        #expect(state.takeArmedCaptionTrack(in: [track]) == nil)
+        _ = state.togglePendingCaptions()
+        state.reset()
+        #expect(state.takeArmedCaptionTrack(in: [track]) == nil)
+    }
+
     @Test func freshPlayerStartsHiddenAndMenuDoesNotExit() {
         let state = AppleTVLiveFooterState()
         #expect(state.phase == .hidden)
@@ -31,7 +61,8 @@ struct AppleTVLiveFooterStateTests {
         #expect(state.apply(.swipeDown) == .none)
         #expect(state.apply(.swipeUp) == .hide)
         #expect(!state.isVisible)
-        #expect(state.apply(.swipeUp) == .none)
+        #expect(state.apply(.swipeUp) == .toggleCaptions)
+        #expect(!state.isVisible)
     }
 
     @Test func menuAfterSwipeUpExits() {
@@ -59,9 +90,9 @@ struct AppleTVLiveFooterStateTests {
         #expect(state.apply(.select) == .show)
     }
 
-    @Test func swipeUpOnAFreshPlayerIsIgnored() {
+    @Test func swipeUpOnAFreshPlayerTogglesCaptionsWithoutTouchingTheFooter() {
         var state = AppleTVLiveFooterState()
-        #expect(state.apply(.swipeUp) == .none)
+        #expect(state.apply(.swipeUp) == .toggleCaptions)
         #expect(state.phase == .hidden)
         // Still fresh: the next Menu shows the footer instead of exiting.
         #expect(state.apply(.menu) == .show)
@@ -148,8 +179,8 @@ struct AppleTVGuideRailCellModelTests {
     @Test func railPlayWidthFillsTheRailApartFromTheColumnGap() {
         let metrics = AppleTVGuideMetrics.standard
         #expect(metrics.railPlayWidth == metrics.railWidth - metrics.cellGap)
-        #expect(metrics.railPlayWidth == 254)
-        #expect(metrics.railWidth == 260)
+        #expect(metrics.railPlayWidth == 336)
+        #expect(metrics.railWidth == 340)
     }
 
     @Test func footerCardsFitInsideTheFooterRow() {

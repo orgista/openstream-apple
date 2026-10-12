@@ -10,7 +10,7 @@ struct ApplePlaybackInfoView: View {
 
     private var engineKindDisplayName: String {
         if settings.engineFellBackToNative {
-            return "Native (OpenStream Engine failed to start)"
+            return "Native (oStream Engine failed to start)"
         }
         return settings.playbackEngine.displayName
     }
@@ -128,7 +128,7 @@ private extension OpenStreamSupport {
 private extension ApplePlaybackEngineKind {
     var displayName: String {
         switch self {
-        case .openStream: "OpenStream Engine"
+        case .openStream: "oStream Engine"
         case .native: "Native (AVPlayer)"
         }
     }

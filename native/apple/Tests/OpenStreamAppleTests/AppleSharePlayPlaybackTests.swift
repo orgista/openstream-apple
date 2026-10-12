@@ -65,8 +65,11 @@ import Testing
         let binding = AppleSharePlayPlaybackBinding(owner: owner, identifier: "openstream.live.fixture", createsDelegatingCoordinator: false)
         let now = CMClockGetTime(CMClockGetHostTimeClock()).seconds
         await receive(.play(.init(itemTime: 10, hostTime: now, rate: 1)), on: binding)
+        // The group's clock keeps running while the command waits for the main
+        // actor, so the target is 10 s plus however long that took — never more.
+        let elapsed = CMClockGetTime(CMClockGetHostTimeClock()).seconds - now
         #expect(engine.rate == 1)
-        #expect(engine.position >= 10 && engine.position < 11)
+        #expect(engine.position >= 10 && engine.position <= 10 + elapsed)
         await receive(.pause(prepare: false, rate: 1), on: binding)
         #expect(engine.rate == 0)
         await receive(.seek(25, prepare: false, rate: 1), on: binding)
@@ -139,10 +142,21 @@ import Testing
         owner.stop()
     }
 
-    @MainActor @Test func expiredCommandIsAcknowledgedOnceAndCannotResumeAfterLeaving() async throws {
+    @MainActor @Test(.timeLimit(.minutes(1)))
+    func expiredCommandIsAcknowledgedOnceAndCannotResumeAfterLeaving() async throws {
         let engine = SharePlayTestEngine()
         var finishSeek: CheckedContinuation<Void, Never>?
-        engine.seekHandler = { _ in await withCheckedContinuation { finishSeek = $0 } }
+        // Signalled when the seek starts, and finished once the command is
+        // acknowledged, so the test waits for the command itself instead of a
+        // wall-clock budget that a busy main actor can use up before the
+        // command has even been received.
+        let (seekStarted, seekSignal) = AsyncStream.makeStream(of: Void.self)
+        engine.seekHandler = { _ in
+            await withCheckedContinuation {
+                finishSeek = $0
+                seekSignal.yield()
+            }
+        }
         let owner = ApplePlaybackCoordinator(engine: engine)
         let binding = AppleSharePlayPlaybackBinding(owner: owner, identifier: "fixture", createsDelegatingCoordinator: false)
         let counter = SharePlayCompletionCounter()
@@ -155,14 +169,19 @@ import Testing
                 }
             }
         }
-        let seekDeadline = ContinuousClock.now.advanced(by: .seconds(1))
-        while finishSeek == nil, ContinuousClock.now < seekDeadline { await Task.yield() }
+        Task { await command.value; seekSignal.finish() }
+        for await _ in seekStarted { break }
         let finish = try #require(finishSeek)
         await command.value
         #expect(counter.value == 1)
         binding.invalidate(keepPlaying: true)
         finish.resume()
-        try await Task.sleep(for: .milliseconds(30))
+        // The seek writes the position as it returns; the rest of the command
+        // runs in the same main-actor job, so once it is set the command is done.
+        let clock = ContinuousClock()
+        let settleDeadline = clock.now + .seconds(5)
+        while engine.position < 20, clock.now < settleDeadline { try await Task.sleep(for: .milliseconds(10)) }
+        #expect(engine.position >= 20)
         #expect(counter.value == 1)
         #expect(engine.rate == 0)
         owner.stop()

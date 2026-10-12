@@ -43,6 +43,20 @@ enum AppleTVBillboardMetrics {
     static let pillGlyphSize: CGFloat = 28
     static let pillGlyphSpacing: CGFloat = 12
     static let pillGap: CGFloat = 24
+    /// The invisible paging stops beside the Discover hero's buttons
+    /// (`AppleTVHeroPaging`): wide enough to be a focus target, no wider.
+    static let pagingStopWidth: CGFloat = 2
+    /// The hero's buttons sit in a focus section this wide (the screen inside
+    /// the safe-zone gutters), so Down from any tab reaches them before the
+    /// first row. The billboard's own section starts under the tab bar, and
+    /// Down from Discover skipped it for a Continue Watching card (N41 survey).
+    static var actionsFocusWidth: CGFloat { screenSize.width - 2 * copyLeadingInset }
+
+    // Discover's outlined rating, after the Apple TV app (N12, same shape as
+    // the iPhone and Mac heroes at tvOS sizes).
+    static let ratingFontSize: CGFloat = 20
+    static let ratingHorizontalPadding: CGFloat = 9
+    static let ratingVerticalPadding: CGFloat = 2
 
     // Rotation indicator: one segment per billboard, the current one filling
     // over `AppleHeroRotation.interval` so a change is visibly coming
@@ -58,7 +72,7 @@ enum AppleTVBillboardMetrics {
     // Rows (`AppleMediaShelf` on tvOS). The horizontal safe area already
     // insets rows by 80, so cards start on the copy's column with no extra inset.
     static let rowHorizontalInset: CGFloat = 0
-    static let rowTitleFontSize: CGFloat = 31
+    static let rowTitleFontSize: CGFloat = 38
     static let rowTitleSpacing: CGFloat = 16
     static let cardGap: CGFloat = 24
     static let rowVerticalBleed: CGFloat = 20

@@ -51,6 +51,39 @@ public enum AppleVideoFitting: Sendable {
         return max(0, container.height - rect.maxY)
     }
 
+    /// Where a bitmap subtitle object (PGS/DVB) goes inside `container`.
+    ///
+    /// The composition canvas is laid onto the picture width-aligned and
+    /// centred, then the object keeps its authored rect on that canvas at the
+    /// same scale. Width-aligned is what makes a 2.39:1 rip right: its canvas
+    /// is still 1920×1080 while the picture is 1920×800, so the canvas
+    /// overhangs the picture into the letterbox, exactly where the disc put
+    /// the dialogue. An unknown canvas (`.zero`) is the picture itself. An
+    /// object the overhang would push past the container's top or bottom edge
+    /// is slid back inside it, never resized.
+    public static func bitmapSubtitleFrame(
+        rect: CGRect,
+        canvasSize: CGSize,
+        container: CGSize,
+        videoSize: CGSize?
+    ) -> CGRect {
+        let video = fittedRect(container: container, videoSize: videoSize)
+        guard video.width > 0 else { return .zero }
+        var canvas = video
+        if canvasSize.width > 0, canvasSize.height > 0 {
+            let height = canvasSize.height * video.width / canvasSize.width
+            canvas = CGRect(x: video.minX, y: video.midY - height / 2, width: video.width, height: height)
+        }
+        let height = rect.height * canvas.height
+        let y = canvas.minY + rect.minY * canvas.height
+        return CGRect(
+            x: canvas.minX + rect.minX * canvas.width,
+            y: min(max(y, 0), max(0, container.height - height)),
+            width: rect.width * canvas.width,
+            height: height
+        )
+    }
+
     static func aspectRatio(of size: CGSize?) -> CGFloat? {
         guard let size, size.width > 0, size.height > 0 else { return nil }
         return size.width / size.height

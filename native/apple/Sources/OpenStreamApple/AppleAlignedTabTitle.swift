@@ -2,45 +2,44 @@ import SwiftUI
 
 /// How a tab root is titled on each platform.
 enum AppleTabTitleStyle: Equatable, Sendable {
-    /// iPhone and iPad: a leading toolbar item shares the bar row with the icons.
-    case leadingToolbarItem
+    /// iPhone and iPad: the stock inline-large navigation title (title shares the
+    /// toolbar row, collapses with scrolling).
+    case largeNavigationTitle
     /// Apple TV: no page title under the tab bar (the stock TV app has none).
     case hidden
     /// Mac and Vision Pro: the stock inline-large navigation title.
     case inlineLargeNavigationTitle
+    /// Live tab on iPhone and iPad: inline, no large title row.
+    case inline
 }
 
-/// Owner item 9 (2026-09-03): the tab title shares the bar row with the
-/// trailing toolbar icons and sits at the leading edge (the way the Live TV
-/// reference does it) instead of on its own line beneath them. On iPhone the
-/// system inline title is always centered, so the title is drawn as a leading
-/// toolbar item and the navigation title is left empty (pushed screens then
-/// show a plain "Back" button). On Apple TV tab roots carry no title at all
-/// (rework plan task 3); pushed tvOS pages draw their own `TVPageHeader`.
+/// Uses a native navigation title so iOS does not turn plain text into toolbar chrome.
 struct AppleAlignedTabTitle: ViewModifier {
     let title: String
+    let isLive: Bool
 
-    static func style(for platform: AppleUIPlatform) -> AppleTabTitleStyle {
+    static func style(for platform: AppleUIPlatform, isLive: Bool = false) -> AppleTabTitleStyle {
         switch platform {
-        case .iOS: .leadingToolbarItem
-        case .tvOS: .hidden
-        case .visionOS, .macOS: .inlineLargeNavigationTitle
+        case .iOS: return isLive ? .inline : .largeNavigationTitle
+        case .tvOS: return .hidden
+        case .visionOS, .macOS: return .inlineLargeNavigationTitle
         }
     }
 
     func body(content: Content) -> some View {
         #if os(iOS)
-        content
-            .navigationTitle("")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Text(title)
-                        .font(.title.bold())
-                        .foregroundStyle(.primary)
-                        .accessibilityAddTraits(.isHeader)
-                }
-            }
+        if isLive {
+            legacyNavigationBackground(content)
+                .navigationTitle(title)
+                .navigationBarTitleDisplayMode(.inline)
+        } else {
+            // `.inlineLarge` puts the large title in the toolbar row instead of a
+            // second row beneath it, so "Discover" and "Live" sit right under the
+            // status bar (owner, 2026-09-18: "Live is too low… Discover is too low").
+            legacyNavigationBackground(content)
+                .navigationTitle(title)
+                .toolbarTitleDisplayMode(.inlineLarge)
+        }
         #elseif os(tvOS)
         content
         #else
@@ -49,8 +48,21 @@ struct AppleAlignedTabTitle: ViewModifier {
             .toolbarTitleDisplayMode(.inlineLarge)
         #endif
     }
+
+    #if os(iOS)
+    @ViewBuilder
+    private func legacyNavigationBackground(_ content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content
+        } else {
+            content
+                .toolbarBackground(Color(uiColor: .systemBackground), for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+        }
+    }
+    #endif
 }
 
 extension View {
-    func appleAlignedTabTitle(_ title: String) -> some View { modifier(AppleAlignedTabTitle(title: title)) }
+    func appleAlignedTabTitle(_ title: String, isLive: Bool = false) -> some View { modifier(AppleAlignedTabTitle(title: title, isLive: isLive)) }
 }

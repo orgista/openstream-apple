@@ -2,11 +2,12 @@ import SwiftUI
 
 /// "Also available on Netflix" under a title.
 ///
-/// Deliberately a line of text, not a row of buttons. The owner's rule is that
-/// the app stays the way you watch things — "in general prefer to stay in the
-/// app and just a very subtle also available to stream on (platform)" — so this
-/// must not read as a second Play. It sits with the synopsis, in secondary
-/// text, and competes with nothing.
+/// Deliberately a line of text with small provider logos, not a row of
+/// buttons. The owner's rule is that the app stays the way you watch things —
+/// "in general prefer to stay in the app and just a very subtle also
+/// available to stream on (platform)" — so this must not read as a second
+/// Play: no buttons, no taps. It sits directly under the primary action
+/// buttons, in secondary text, and competes with nothing.
 ///
 /// It renders only when the viewer has opted in *and* a service they subscribe
 /// to actually carries the title; `AppleWatchProviderPolicy` decides both.
@@ -15,12 +16,35 @@ struct AppleWatchProviderRow: View {
 
     var body: some View {
         if !providers.isEmpty {
+            // JustWatch's credit lives once, in About (owner 2026-10-08).
+            providerLine
+        }
+    }
+
+    private var providerLine: some View {
+        HStack(spacing: logoSpacing) {
+            ForEach(AppleWatchProviderPolicy.logos(providers)) { provider in
+                if let logoURL = provider.logoURL {
+                    AppleRemoteImage(url: logoURL, contentMode: .fit)
+                        .frame(width: logoSize, height: logoSize)
+                        .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                }
+            }
             Text(AppleWatchProviderRow.sentence(for: providers))
                 .font(font)
                 .foregroundStyle(AppleDesignTokens.textSecondary)
-                .lineLimit(2)
-                .accessibilityIdentifier("detail.alsoAvailableOn")
+                .lineLimit(1)
         }
+        // One combined label — "Also available on Netflix" — never the
+        // logos' own alt text or a second element VoiceOver could tap.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(AppleWatchProviderRow.sentence(for: providers))
+        .accessibilityIdentifier("detail.alsoAvailableOn")
+        #if os(tvOS)
+        // A quiet line, not a fifth thing the remote can land on beside
+        // Play and the icon row.
+        .focusable(false)
+        #endif
     }
 
     private var font: Font {
@@ -28,6 +52,22 @@ struct AppleWatchProviderRow: View {
         .system(size: AppleTVDetailMetrics.badgeFontSize)
         #else
         .footnote
+        #endif
+    }
+
+    private var logoSize: CGFloat {
+        #if os(tvOS)
+        28
+        #else
+        18
+        #endif
+    }
+
+    private var logoSpacing: CGFloat {
+        #if os(tvOS)
+        8
+        #else
+        6
         #endif
     }
 

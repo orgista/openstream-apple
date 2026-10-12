@@ -1,9 +1,85 @@
 import Foundation
+import Synchronization
+#if DEBUG
+import os
+#endif
 
 /// One immutable projection per lineup/filter change. SwiftUI reads these
 /// arrays directly instead of normalizing every channel during each render.
+
+final class AppleLiveChannelMatchCache: Sendable {
+    static let shared = AppleLiveChannelMatchCache()
+
+    private struct State {
+        var matches = [String: AppleChannelLineupEntry?]()
+        var lastEntries: [AppleChannelLineupEntry] = []
+        /// Bumped on every lineup change, so matches computed (outside the lock)
+        /// against an older lineup are dropped instead of cached under the new one.
+        var generation = 0
+    }
+
+    private let state = Mutex(State())
+    
+    func match(channels: [AppleIPTVChannel], entries: [AppleChannelLineupEntry]) -> [String: AppleChannelLineupEntry] {
+        let (computedGeneration, cachedResult, toCompute) = state.withLock { state in
+            if entries != state.lastEntries {
+                state.matches.removeAll()
+                state.lastEntries = entries
+                state.generation += 1
+            }
+            var result = [String: AppleChannelLineupEntry](minimumCapacity: channels.count)
+            var toCompute = [(String, String)]()
+            for channel in channels {
+                let key = "\(channel.id)|\(channel.name)"
+                if let cached = state.matches[key] {
+                    if let entry = cached { result[channel.id] = entry }
+                } else {
+                    toCompute.append((channel.id, channel.name))
+                }
+            }
+            return (state.generation, result, toCompute)
+        }
+        var result = cachedResult
+        
+        if toCompute.isEmpty { return result }
+        
+        let count = toCompute.count
+        #if DEBUG
+        AppleLiveChannelSnapshot.debugMatchCallsCounter?.calls.withLock { $0 += count }
+        #endif
+        
+        var computed = [(String, AppleChannelLineupEntry?)]()
+        computed.reserveCapacity(toCompute.count)
+        let lineupIndex = AppleChannelLineupIndex(entries)
+        for (id, name) in toCompute {
+            let entry = lineupIndex.match(name)
+            computed.append(("\(id)|\(name)", entry))
+            if let e = entry { result[id] = e }
+        }
+        
+        state.withLock { state in
+            guard state.generation == computedGeneration else { return }
+            for (k, v) in computed {
+                state.matches[k] = v
+            }
+        }
+        
+        return result
+    }
+}
+
 struct AppleLiveChannelSnapshot: Sendable {
-    /// How many lineup numbers the Premier Guide must match before All is
+#if DEBUG
+    final class DebugCounter: Sendable {
+        let calls = OSAllocatedUnfairLock<Int>(initialState: 0)
+    }
+    @TaskLocal static var debugMatchCallsCounter: DebugCounter?
+    /// A private cache for a test that counts matches, so other suites
+    /// building with other lineups in parallel cannot clear it mid-test.
+    @TaskLocal static var debugMatchCache: AppleLiveChannelMatchCache?
+#endif
+
+    /// How many lineup numbers the Complete Guide must match before All is
     /// allowed to show only the lineup.
     ///
     /// Eight is far below the owner's real provider (a few hundred of 9,376) and
@@ -12,9 +88,9 @@ struct AppleLiveChannelSnapshot: Sendable {
     /// channel name with it" with room on both sides.
     static let minimumLineupMatches = 8
 
-    /// The group `AppleChannelProjection.premierGuideGroups` gives the curated
+    /// The group `AppleChannelProjection.completeGuideGroups` gives the curated
     /// lineup; anything it could not match lands in its sibling "Other" group.
-    static let premierGroupName = "Premier Guide"
+    static let completeGroupName = "Complete Guide"
 
     /// The most channels the guide will ever draw. Owner, 2026-09-17: "no one
     /// ever needs 3k channels… note to the user if they try to add more than
@@ -58,41 +134,53 @@ struct AppleLiveChannelSnapshot: Sendable {
         switch package {
         case .custom: selected = custom.selected(from: all)
         case .everything: selected = all.filter { !AppleChannelVisibilityPolicy.isPlaceholder($0) }
-        case .premierGuide: selected = AppleChannelVisibilityPolicy.deduplicatedEastChannels(all)
+        case .completeGuide: selected = AppleChannelVisibilityPolicy.deduplicatedEastChannels(all)
         }
-        let index = AppleChannelLineupIndex(entries)
 
         // One fuzzy match per channel, reused by the category list, the
-        // category filter and the Premier Guide ordering. These were three
+        // category filter and the Complete Guide ordering. These were three
         // separate passes over the whole lineup — `categoryByID`, then
-        // `premierGuideGroups` (which also re-deduplicated an already
+        // `completeGuideGroups` (which also re-deduplicated an already
         // deduplicated list), then the grouping below — and on the owner's
         // 9376 channels they cost **761 ms** of the Live tab's start-up
         // (measured 2026-09-15).
-        var entryByChannelID = [String: AppleChannelLineupEntry](minimumCapacity: selected.count)
-        for channel in selected where entryByChannelID[channel.id] == nil {
-            if let entry = index.match(channel.name) { entryByChannelID[channel.id] = entry }
-        }
+        #if DEBUG
+        let matchCache = debugMatchCache ?? AppleLiveChannelMatchCache.shared
+        #else
+        let matchCache = AppleLiveChannelMatchCache.shared
+        #endif
+        let entryByChannelID = matchCache.match(channels: selected, entries: entries)
 
-        var categoryByID = [String: String](minimumCapacity: entryByChannelID.count)
+        var categoryByID = [String: String](minimumCapacity: selected.count)
         for (id, entry) in entryByChannelID {
             categoryByID[id] = entry.category == "Local" ? "Locals" : entry.category
         }
+        // A channel the lineup does not know keeps the playlist's own group
+        // (M3U `group-title`, Xtream category) when that group names one of
+        // the guide's categories. Categories came from lineup matches only,
+        // so a provider whose channels are not US networks (the fixture's
+        // "News" / "Sports" panel, most foreign lists) showed All and
+        // Favorites and nothing else (Apple TV full pass, 2026-10-02).
+        for channel in selected where categoryByID[channel.id] == nil {
+            if let category = AppleLiveCategoryPolicy.category(forPlaylistGroup: channel.group) {
+                categoryByID[channel.id] = category
+            }
+        }
         let available = Set(categoryByID.values)
-        let order = ["News", "Sports", "Entertainment", "Kids", "Movies", "Premium", "Lifestyle", "Music", "International", "Locals"]
+        let order = AppleLiveCategoryPolicy.order
         let categories = ["All", "Favorites"] + order.filter { available.contains($0) }
         let channels: [AppleIPTVChannel]
         if category == "All" {
-            if package == .premierGuide {
-                // Premier Guide is the curated lineup — not the lineup plus
-                // everything that failed to match it. `premierGuideGroups`
+            if package == .completeGuide {
+                // Complete Guide is the curated lineup — not the lineup plus
+                // everything that failed to match it. `completeGuideGroups`
                 // also returns an "Other" group, and flattening both put the
                 // whole provider list back into the guide: 4749 of the owner's
                 // 9376 channels, where the phone shows a few hundred (owner
-                // 2026-09-14: "reduce the live line up to the premier safe
-                // thing we did with iPhone and android"). Unmatched channels
+                // 2026-09-14: use the curated lineup on every platform).
+                // Unmatched channels
                 // stay reachable through Search and the Everything package.
-                // Same ordering `premierGuideGroups` produced — one channel per
+                // Same ordering `completeGuideGroups` produced — one channel per
                 // lineup number, by number then name — built from the matches
                 // already in hand.
                 var seenNumbers = Set<Int>()
@@ -128,5 +216,34 @@ struct AppleLiveChannelSnapshot: Sendable {
         let shown = Array(channels.prefix(Self.maximumDisplayedChannels))
         return .init(channels: shown, channelIDs: shown.map(\.id), categories: categories,
                      hiddenCount: max(0, channels.count - shown.count))
+    }
+}
+
+/// The guide's category chips, and how a playlist group reads as one of them.
+enum AppleLiveCategoryPolicy {
+    static let order = ["News", "Sports", "Entertainment", "Kids", "Movies", "Premium", "Lifestyle", "Music", "International", "Locals"]
+
+    /// Keywords per chip, matched as whole words of the group name ("US| NEWS
+    /// HD" is News). Groups that name no chip stay under All only, which keeps
+    /// a panel with thousands of groups from flooding the chip row.
+    private static let keywords: [(category: String, words: Set<String>)] = [
+        ("News", ["news", "noticias", "nachrichten"]),
+        ("Sports", ["sport", "sports", "deportes", "football", "soccer", "nfl", "nba", "nhl", "mlb"]),
+        ("Kids", ["kids", "kid", "children", "cartoon", "cartoons", "family", "infantil"]),
+        ("Movies", ["movie", "movies", "cinema", "film", "films", "cine"]),
+        ("Music", ["music", "musica", "musique"]),
+        ("Entertainment", ["entertainment", "general", "variety"]),
+        ("Lifestyle", ["lifestyle", "documentary", "documentaries", "docs"]),
+        ("Premium", ["premium"]),
+        ("Locals", ["local", "locals"]),
+        ("International", ["international", "world"]),
+    ]
+
+    static func category(forPlaylistGroup group: String) -> String? {
+        let words = Set(group.lowercased()
+            .split(whereSeparator: { !$0.isLetter })
+            .map(String.init))
+        guard !words.isEmpty else { return nil }
+        return keywords.first { !$0.words.isDisjoint(with: words) }?.category
     }
 }

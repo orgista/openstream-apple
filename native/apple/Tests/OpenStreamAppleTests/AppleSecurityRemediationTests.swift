@@ -18,34 +18,35 @@ private final class RemediationCredentialStore: AppleCredentialStoring {
     }
 }
 
-private func networkShareViewSource() throws -> String {
-    let testFile = URL(fileURLWithPath: #filePath)
-    let projectRoot = testFile
+private func networkShareSetupSources() throws -> String {
+    let directory = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()
         .deletingLastPathComponent()
         .deletingLastPathComponent()
-    let settingsPath = projectRoot
         .appending(path: "Sources")
         .appending(path: "OpenStreamApple")
-        .appending(path: "AppleSourcesSettingsView.swift")
+    return try ["AppleNetworkShareSetup.swift", "AppleNetworkShareSetupViews.swift"]
+        .map { try String(contentsOf: directory.appending(path: $0), encoding: .utf8) }
+        .joined(separator: "\n")
+}
 
-    let source = try String(contentsOf: settingsPath, encoding: .utf8)
-    let start = try #require(source.range(of: "private struct AppleAddNetworkShareView"))
-    let remainder = source[start.lowerBound...]
-    let end = remainder.range(of: "\n@MainActor\n", range: start.upperBound..<source.endIndex)?.lowerBound
-        ?? source.endIndex
-    return String(source[start.lowerBound..<end])
+private struct UnusedShareClient: AppleNetworkShareClient {
+    func listShares(host: String, port: Int, credentials: AppleSMBCredentials) async throws -> [AppleSMBShare] { [] }
+    func listDirectory(url: URL, credentials: AppleSMBCredentials, recursive: Bool) async throws -> [AppleSMBDirectoryEntry] { [] }
+    func read(url: URL, credentials: AppleSMBCredentials, range: Range<UInt64>) async throws -> Data { Data() }
 }
 
 @MainActor
 @Test func networkShareDefaultsAreEmptyAndNoProductionPresetExists() throws {
-    let source = try networkShareViewSource()
+    let setup = AppleNetworkShareSetup(client: UnusedShareClient())
+    #expect(setup.address.isEmpty)
+    #expect(setup.username.isEmpty)
+    #expect(setup.password.isEmpty)
+    #expect(setup.domain.isEmpty)
+    #expect(setup.account == .guest)
+    #expect(setup.fixedServer == nil)
 
-    #expect(source.contains("@State private var host = \"\""))
-    #expect(source.contains("@State private var share = \"\""))
-    #expect(source.contains("@State private var path = \"\""))
-    #expect(source.contains("@State private var username = \"\""))
-    #expect(source.contains("@State private var password = \"\""))
+    let source = try networkShareSetupSources()
     #expect(!source.contains("fillTestSMBConfiguration"))
     #expect(!source.contains("Something to Test"))
 }

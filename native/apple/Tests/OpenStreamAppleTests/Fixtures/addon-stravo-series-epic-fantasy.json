@@ -1,0 +1,427 @@
+{
+ "metas": [
+  {
+   "id": "mx:5074096615720375064:the-lord-of-the-rings-the-rings-of-power-oWxADnOpP26",
+   "awards": null,
+   "type": "series",
+   "name": "The Lord of the Rings: The Rings of Power",
+   "poster": "https://fixture.example/stravo/image/2026/09/29/5aad7dd8d87f5e0ec17986e0d1d13d74.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/image/2023/10/08/0dcfc30ac213c944dac5f6825fbf0ffa.webp",
+   "description": "Epic drama set thousands of years before the events of J.R.R. Tolkien's 'The Hobbit' and 'The Lord of the Rings' follows an ensemble cast of characters, both familiar and new, as they confront the long-feared re-emergence of evil to Middle-earth.",
+   "releaseInfo": "2022",
+   "imdbRating": "6.8",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Drama"
+   ],
+   "country": "United States",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  },
+  {
+   "id": "mx:3819281169544270880:the-witcher-qdCxXLAl8y4",
+   "awards": null,
+   "type": "series",
+   "name": "The Witcher",
+   "poster": "https://fixture.example/stravo/image/2026/09/13/6e9aa837b7a45988c2f0c0f70757a124.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/image/2023/02/17/7de2371189aa5d6daeae890d4d2088c4.webp",
+   "description": "Geralt of Rivia, a solitary monster hunter, struggles to find his place in a world where people often prove more wicked than beasts.",
+   "releaseInfo": "2019",
+   "imdbRating": "7.8",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Drama"
+   ],
+   "country": "Poland",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  },
+  {
+   "id": "mx:4559764298909865576:the-pendragon-cycle-rise-of-the-merlin-sq4QXvFLPq5",
+   "awards": null,
+   "type": "series",
+   "name": "The Pendragon Cycle: Rise of the Merlin",
+   "poster": "https://fixture.example/stravo/image/2026/09/17/da25e5d1fe41080140874bb521d2acb1.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/media/vone/2025/10/24/363d5f56b1aac3ecbd83759dde0134c0.jpg",
+   "description": "Showcases a retelling of the Arthurian legend set in a Roman-occupied Britain where barbarian invaders threaten to lay claim to the island.",
+   "releaseInfo": "2026",
+   "imdbRating": "6.2",
+   "genres": [
+    "Drama",
+    "Fantasy"
+   ],
+   "country": "United States",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  },
+  {
+   "id": "mx:2726173097488438040:the-sandman-48fHwaUTnf3",
+   "awards": null,
+   "type": "series",
+   "name": "The Sandman",
+   "poster": "https://fixture.example/stravo/image/2026/09/24/5a6fbf0df794caca56edc36d7a2ac96d.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/image/2024/03/19/783fef37612af6d3bfcc41d1749f3d39.webp",
+   "description": "Upon escaping after decades of imprisonment by a mortal wizard, Dream, the personification of dreams, sets about to reclaim his lost equipment.",
+   "releaseInfo": "2022",
+   "imdbRating": "7.6",
+   "genres": [
+    "Drama",
+    "Fantasy",
+    "Horror"
+   ],
+   "country": "United Kingdom",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  },
+  {
+   "id": "mx:4017865228431018840:the-witcher-blood-origin-ISmyxuERNM4",
+   "awards": null,
+   "type": "series",
+   "name": "The Witcher: Blood Origin",
+   "poster": "https://fixture.example/stravo/image/2026/01/26/e5d6dac6fda578fde7d19c8863a5eca0.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/image/2024/06/13/ddab872f1722093d356ef2175bdcfdea.webp",
+   "description": "More than a thousand years before the events of \"The Witcher,\" seven outcasts in an Elven world join forces in a quest against an all-powerful empire.",
+   "releaseInfo": "2022",
+   "imdbRating": "5.0",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Drama"
+   ],
+   "country": "Poland",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  },
+  {
+   "id": "mx:8966281867964076560:supernatural-q7TxFpiFlGa",
+   "awards": null,
+   "type": "series",
+   "name": "Supernatural",
+   "poster": "https://fixture.example/stravo/image/2026/01/27/78de42a6b5c7f47fcc8c68a732da32c1.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/image/2024/04/15/7a9a57cf6fd5221f37a5d4e4140f45c0.webp",
+   "description": "Two brothers follow their father's footsteps as hunters, fighting evil supernatural beings of many kinds, including monsters, demons, and gods that roam the earth.",
+   "releaseInfo": "2005",
+   "imdbRating": "8.4",
+   "genres": [
+    "Drama",
+    "Fantasy",
+    "Horror"
+   ],
+   "country": "United States",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  },
+  {
+   "id": "mx:9145491416351658776:outlander-MMYLF0LrATa",
+   "awards": null,
+   "type": "series",
+   "name": "Outlander",
+   "poster": "https://fixture.example/stravo/image/2026/09/30/ea1f280c63759acf4c7decef11f817c8.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/image/2023/07/06/0178d3a07b578cae7a5849052a621f40.webp",
+   "description": "Honeymooning in 1945 Scotland, a combat nurse is suddenly transported back to the 1700s.",
+   "releaseInfo": "2014",
+   "imdbRating": "8.3",
+   "genres": [
+    "Adventure",
+    "Drama",
+    "Fantasy"
+   ],
+   "country": "United States",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  },
+  {
+   "id": "mx:7828436465754735880:outlander-blood-of-my-blood-KPufy1Yjik9",
+   "awards": null,
+   "type": "series",
+   "name": "Outlander: Blood of My Blood",
+   "poster": "https://fixture.example/stravo/image/2026/09/09/ffca9a97b073bba43a3d8c689757d9ea.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/media/vone/2025/07/23/76a64fa80584932202fac4c4728cf5b4.jpg",
+   "description": "This prequel to the Outlander series focuses on the lives and courtship of the parents of Jamie Fraser: Brian Fraser and Ellen Mackenzie as well as Claire Beauchamp's parents, Henry Beauchamp and Julia Moriston.",
+   "releaseInfo": "2025",
+   "imdbRating": "8.1",
+   "genres": [
+    "Drama",
+    "Fantasy",
+    "Romance"
+   ],
+   "country": "United States",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  },
+  {
+   "id": "mx:2190807691784770592:lucifer-UQASHYbVPB2",
+   "awards": null,
+   "type": "series",
+   "name": "Lucifer",
+   "poster": "https://fixture.example/stravo/image/2026/01/27/9fd9113b6be06b254bef10a8bea06eb1.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/media/vone/2024/03/19/57a6d508dc68df94cd4084c8a1893352.jpg",
+   "description": "Lucifer Morningstar has decided he's had enough of being the dutiful servant in Hell and decides to spend some time on Earth to better understand humanity. He settles in Los Angeles - the City of Angels.",
+   "releaseInfo": "2016",
+   "imdbRating": "8.0",
+   "genres": [
+    "Crime",
+    "Drama",
+    "Fantasy"
+   ],
+   "country": "United States",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  },
+  {
+   "id": "mx:5783166321533800240:once-upon-a-time-CPejvbIXcT6",
+   "awards": null,
+   "type": "series",
+   "name": "Once Upon a Time",
+   "poster": "https://fixture.example/stravo/image/2026/01/27/2ad12e181b9a6ff5e9899fc3c34dd0d3.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/image/2022/09/07/8fab946ff72ec34b456e4fe17676adc8.webp",
+   "description": "A young woman with a troubled past is drawn to a small town in Maine where fairy tales are to be believed.",
+   "releaseInfo": "2011",
+   "imdbRating": "7.7",
+   "genres": [
+    "Adventure",
+    "Fantasy",
+    "Romance"
+   ],
+   "country": "United States",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  },
+  {
+   "id": "mx:1216407338207298384:one-piece-netflix-qL3bmkP9Rr1",
+   "awards": null,
+   "type": "series",
+   "name": "One Piece",
+   "poster": "https://fixture.example/stravo/image/2026/09/28/895e07575bc50f06e34c1d8e91bfc8aa.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/image/2023/09/14/44daba5ab026040f06be65ab763768ff.webp",
+   "description": "With his straw hat and ragtag crew, young pirate Monkey D. Luffy goes on an epic voyage for treasure.",
+   "releaseInfo": "2023",
+   "imdbRating": "8.3",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Comedy"
+   ],
+   "country": "United Kingdom",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  },
+  {
+   "id": "mx:1358939779294970704:teen-wolf-wKJrLSqXnC1",
+   "awards": null,
+   "type": "series",
+   "name": "Teen Wolf",
+   "poster": "https://fixture.example/stravo/image/2026/01/27/8c2361ea97cd52332b9540a731ee26d3.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/image/2023/08/13/4193c0add21f0d55efc0b919c8cfdb0f.webp",
+   "description": "An average high school student and his best friend get caught up in some trouble causing him to receive a werewolf bite. As a result they find themselves in the middle of all sorts of dramas in Beacon Hills.",
+   "releaseInfo": "2011",
+   "imdbRating": "7.7",
+   "genres": [
+    "Action",
+    "Drama",
+    "Fantasy"
+   ],
+   "country": "United States",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  },
+  {
+   "id": "mx:9028867555875774472:wednesday-urChTxajYKa",
+   "awards": null,
+   "type": "series",
+   "name": "Wednesday",
+   "poster": "https://fixture.example/stravo/image/2026/09/30/bbc79a6b50904390d017dbd95e9db4b1.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/media/vone/2024/03/19/6a554759f422cb5b7c4d3b64a78c7f3a.jpg",
+   "description": "Follows Wednesday Addams' years as a student, when she attempts to master her emerging psychic ability, thwart a killing spree, and solve the mystery that embroiled her parents.",
+   "releaseInfo": "2022",
+   "imdbRating": "8.0",
+   "genres": [
+    "Comedy",
+    "Crime",
+    "Fantasy"
+   ],
+   "country": "United States",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  },
+  {
+   "id": "mx:1858194474363405136:the-acolyte-YiuUiL7ygd2",
+   "awards": null,
+   "type": "series",
+   "name": "The Acolyte",
+   "poster": "https://fixture.example/stravo/image/2026/09/29/e6723de360a1802722cd15842d4f3f10.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/image/2024/05/27/1bd4a587bf2e30bfc49a4788e9928782.webp",
+   "description": "An investigation into a shocking crime spree pits a respected Jedi Master against a dangerous warrior from his past. As more clues emerge, they travel down a dark path where sinister forces reveal all is not what it seems…",
+   "releaseInfo": "2024",
+   "imdbRating": "4.3",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Fantasy"
+   ],
+   "country": "United States",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  },
+  {
+   "id": "mx:1414183037004383720:wednesday-hindi-kIx7IplYsG1",
+   "awards": null,
+   "type": "series",
+   "name": "Wednesday",
+   "poster": "https://fixture.example/stravo/image/2026/09/30/6b9847c21ebe0794b8d4bdff0fe04608.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/media/vone/2024/03/19/6a554759f422cb5b7c4d3b64a78c7f3a.jpg",
+   "description": "Follows Wednesday Addams' years as a student, when she attempts to master her emerging psychic ability, thwart a killing spree, and solve the mystery that embroiled her parents.",
+   "releaseInfo": "2022",
+   "imdbRating": "8.0",
+   "genres": [
+    "Comedy",
+    "Crime",
+    "Fantasy"
+   ],
+   "country": "United States",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  },
+  {
+   "id": "mx:2604012957596013336:shadow-and-bone-4eavUoepm63",
+   "awards": null,
+   "type": "series",
+   "name": "Shadow and Bone",
+   "poster": "https://fixture.example/stravo/image/2026/01/27/addcdf2bd69e5b2e7415a9c7b053c9b3.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/image/2023/05/12/ad4c664a87db5496dcf17cab11cea4ab.webp",
+   "description": "Dark forces conspire against orphan mapmaker Alina Starkov when she unleashes an extraordinary power that could change the fate of her war-torn world.",
+   "releaseInfo": "2021",
+   "imdbRating": "7.5",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Drama"
+   ],
+   "country": "United States",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  },
+  {
+   "id": "mx:2683563877996056360:legend-of-the-seeker-AQBTTXyKec3",
+   "awards": null,
+   "type": "series",
+   "name": "Legend of the Seeker",
+   "poster": "https://fixture.example/stravo/image/2026/01/27/4f70fe071fca89f739edaff69a714f2f.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/image/2022/09/07/0ece4c11bf806486a4bef3b2ed678f93.webp",
+   "description": "After the mysterious murder of his father, a son's search for answers begins a momentous fight against tyranny.",
+   "releaseInfo": "2008",
+   "imdbRating": "7.6",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Drama"
+   ],
+   "country": "United States",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  },
+  {
+   "id": "mx:2957785453807684072:willow-cERHnAHGuw3",
+   "awards": null,
+   "type": "movie",
+   "name": "Willow",
+   "poster": "https://fixture.example/stravo/image/2026/01/27/ce662c16b06f4d7e24882f768436e5ac.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/image/2024/03/19/22b8918c6ce6a2449fd6054f82de6deb.webp",
+   "description": "A young dwarf farmer is chosen to undertake a perilous journey in order to protect a special baby from an evil queen. Along the way, he teams up with a disgraced swordsman to defeat the evil sorceress.",
+   "releaseInfo": "1988",
+   "imdbRating": "7.2",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Drama"
+   ],
+   "country": "United States",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  },
+  {
+   "id": "mx:5848715751628100640:the-outpost-KFh40Fab3Y6",
+   "awards": null,
+   "type": "series",
+   "name": "The Outpost",
+   "poster": "https://fixture.example/stravo/image/2022/11/03/14c5599d1a39311c7208cf05fcf432be.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/image/2023/02/17/0a840fe5f253713ded4e6d6224c3784d.webp",
+   "description": "Talon, the lone survivor of the Blackbloods, sets off to track her family's killers, and discovers her supernatural powers, which she must learn to harness.",
+   "releaseInfo": "2018",
+   "imdbRating": "6.5",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Drama"
+   ],
+   "country": "United States",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  },
+  {
+   "id": "mx:7799944270651479072:sweet-tooth-QI3N2XiPbi9",
+   "awards": null,
+   "type": "series",
+   "name": "Sweet Tooth",
+   "poster": "https://fixture.example/stravo/image/2026/09/08/bcd96c7b0d31fd02c4f821019cdd8f0a.jpg",
+   "posterShape": "poster",
+   "background": "https://fixture.example/stravo/image/2023/05/12/06f9878d20be28219a9dc5d5389f4e86.webp",
+   "description": "A boy who is half human and half deer survives in a post-apocalyptic world with other hybrids.",
+   "releaseInfo": "2021",
+   "imdbRating": "7.7",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Drama"
+   ],
+   "country": "United States",
+   "runtime": null,
+   "videos": [],
+   "links": []
+  }
+ ],
+ "hasMore": true,
+ "cacheMaxAge": 14400,
+ "staleRevalidate": 3600,
+ "staleError": 3600
+}

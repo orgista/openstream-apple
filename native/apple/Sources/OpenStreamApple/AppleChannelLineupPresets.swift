@@ -1,6 +1,6 @@
 // AppleChannelLineupPresets.swift
 // OpenStreamApple
-// Done / hooks needed: AppleChannelLineupPresets.match(channelName:in:) inside the Channel Manager's "Premier Guide" preset
+// Done / hooks needed: AppleChannelLineupPresets.match(channelName:in:) inside the Channel Manager's "Complete Guide" preset
 import Foundation
 
 public struct AppleChannelLineupEntry: Codable, Sendable, Equatable {
@@ -49,33 +49,30 @@ public struct AppleChannelLineupEntry: Codable, Sendable, Equatable {
     }
 }
 
-private struct LineupFile: Codable, Sendable {
+struct LineupFile: Codable, Sendable {
     let channels: [AppleChannelLineupEntry]
     let markets: [String: String]
 }
 
+/// Complete Guide organises channels from the viewer's own playlist.
+/// Bundled in every build; it never supplies sources or stream URLs.
 public enum AppleChannelLineupPresets {
-    private static let bundle = Bundle.module
+    static let resourceBundle = Bundle.module
+
+    public static var isAvailable: Bool { !((try? completeUS()) ?? []).isEmpty }
 
     private static let cachedFile: Result<LineupFile, any Error> = Result { try readFile() }
     private static func loadFile() throws -> LineupFile { try cachedFile.get() }
 
-    private static func readFile() throws -> LineupFile {
-        let url: URL
-        if let bundleURL = bundle.url(forResource: "premier-us-extended", withExtension: "json") {
-            url = bundleURL
-        } else if let bundleURL = bundle.url(forResource: "premier-us-extended", withExtension: "json", subdirectory: "ChannelLineup") {
-            url = bundleURL
-        } else {
-            let thisFile = URL(fileURLWithPath: #filePath)
-            url = thisFile.deletingLastPathComponent().appendingPathComponent("Resources/ChannelLineup/premier-us.json")
+    static func readFile() throws -> LineupFile {
+        guard let url = resourceBundle.url(forResource: "complete-us", withExtension: "json", subdirectory: "ChannelLineup") else {
+            throw CocoaError(.fileNoSuchFile)
         }
-        let data = try Data(contentsOf: url)
-        return try JSONDecoder().decode(LineupFile.self, from: data)
+        return try JSONDecoder().decode(LineupFile.self, from: Data(contentsOf: url))
     }
 
-    public static func premierUS() throws -> [AppleChannelLineupEntry] {
-        return try loadFile().channels
+    public static func completeUS() throws -> [AppleChannelLineupEntry] {
+        try loadFile().channels
     }
 
     public static func match(channelName: String, in entries: [AppleChannelLineupEntry]) -> AppleChannelLineupEntry? {

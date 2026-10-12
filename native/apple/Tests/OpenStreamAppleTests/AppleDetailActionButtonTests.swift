@@ -6,7 +6,7 @@ import Testing
     let layouts: [(AppleDetailLayout, CGFloat, CGFloat)] = [
         (.portraitPhone, 390, 174),
         (.portraitIPad, 834, 180),
-        (.landscapeIPad, 1_192, 140),
+        (.landscapeIPad, 1_192, 180),
     ]
 
     #expect(AppleDetailMetrics.actionButtonHeight == 36)
@@ -75,6 +75,20 @@ import Testing
             "a \(width) pt portrait viewport is a tablet and should use the fixed pill"
         )
     }
+}
+
+/// At the accessibility sizes the hero's buttons stack, and the tablet's
+/// fixed pill broke "Resume S1, E2" and "Details" inside the word on the
+/// iPad at AX XL (N49). Stacked, they take the column like the phone's.
+@Test(arguments: [390.0, 834.0, 1_024.0])
+func featuredHeroActionsFillTheColumnAtAccessibilitySizes(width: Double) {
+    #expect(AppleFeaturedActions.buttonMaxWidth(portraitViewportWidth: width, isAccessibilitySize: true) == .infinity)
+}
+
+@Test func featuredHeroActionsKeepTheTabletPillAtStandardSizes() {
+    #expect(AppleFeaturedActions.buttonMaxWidth(portraitViewportWidth: 834, isAccessibilitySize: false)
+        == AppleDetailMetrics.portraitIPadActionButtonWidth)
+    #expect(AppleFeaturedActions.buttonMaxWidth(portraitViewportWidth: 390, isAccessibilitySize: false) == .infinity)
 }
 
 /// The detail page's content column in portrait used to be the *action row*

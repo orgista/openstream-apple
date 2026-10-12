@@ -1,7 +1,7 @@
 import Foundation
 
 /// Quality order, preserving provider order when quality is equal.
-public enum AppleStremioCandidateRanking {
+public enum AppleMediaCandidateRanking {
     public static func rank(_ candidates: [AppleStremioHTTPPlaybackCandidate]) -> [AppleStremioHTTPPlaybackCandidate] {
         ordered(candidates, preferCompatibleWhenUnknown: true)
     }
@@ -11,9 +11,34 @@ public enum AppleStremioCandidateRanking {
     /// candidate that does not contradict it, however good its resolution.
     public static func rankForAutomaticPlayback(
         _ candidates: [AppleStremioHTTPPlaybackCandidate],
-        episode: (season: Int, episode: Int)? = nil
+        episode: (season: Int, episode: Int)? = nil,
+        title: String? = nil,
+        year: Int? = nil
     ) -> [AppleStremioHTTPPlaybackCandidate] {
-        ordered(candidates, preferCompatibleWhenUnknown: false, episode: episode)
+        ordered(candidates, preferCompatibleWhenUnknown: false, episode: episode, title: title, year: year)
+    }
+
+    /// Per candidate, whether its name is for another title or another
+    /// edition of it (`AppleStremioTitleMatch.mismatches`). All false
+    /// without a title.
+    static func titleMismatches(
+        _ candidates: [AppleStremioHTTPPlaybackCandidate],
+        title: String?,
+        year: Int? = nil,
+        season: Int? = nil
+    ) -> [Bool] {
+        guard let title, !title.isEmpty else { return candidates.map { _ in false } }
+        let texts = candidates.map { candidate in
+            [candidate.filename ?? "", candidate.title, candidate.sourceURL.lastPathComponent].joined(separator: " ")
+        }
+        return AppleStremioTitleMatch.mismatches(texts, title: title, year: year, season: season)
+    }
+
+    /// Whether this candidate is named for a different title altogether.
+    static func contradictsTitle(_ candidate: AppleStremioHTTPPlaybackCandidate, title: String) -> Bool {
+        let text = [candidate.filename ?? "", candidate.title,
+                    candidate.sourceURL.lastPathComponent].joined(separator: " ")
+        return AppleStremioTitleMatch.contradicts(text, title: title)
     }
 
     /// Whether this candidate names an episode other than the one being played.
@@ -31,11 +56,22 @@ public enum AppleStremioCandidateRanking {
     private static func ordered(
         _ candidates: [AppleStremioHTTPPlaybackCandidate],
         preferCompatibleWhenUnknown: Bool,
-        episode: (season: Int, episode: Int)? = nil
+        episode: (season: Int, episode: Int)? = nil,
+        title: String? = nil,
+        year: Int? = nil
     ) -> [AppleStremioHTTPPlaybackCandidate] {
-        candidates.enumerated().sorted { lhs, rhs in
+        let mismatched = titleMismatches(candidates, title: title, year: year, season: episode?.season)
+        let placeholders = candidates.map(AppleStreamPlaceholderPolicy.isPlaceholder)
+        return candidates.enumerated().sorted { lhs, rhs in
+            // A provider's error clip ("only rar is available") is never the
+            // title, so it sorts below everything that might be.
+            let lp = placeholders[lhs.offset], rp = placeholders[rhs.offset]
+            if lp != rp { return !lp }
             // Demoted rather than dropped: if every candidate contradicts, the
             // viewer still gets something to play rather than nothing.
+            // A different show is worse than a different episode, so it sorts first.
+            let lw = mismatched[lhs.offset], rw = mismatched[rhs.offset]
+            if lw != rw { return !lw }
             if let episode {
                 let lw = contradictsEpisode(lhs.element, season: episode.season, episode: episode.episode)
                 let rw = contradictsEpisode(rhs.element, season: episode.season, episode: episode.episode)
@@ -93,9 +129,13 @@ extension AppleStremioHTTPPlaybackCandidate {
         title: String?,
         resume: Double?,
         addonMediaID: String? = nil,
-        addonMediaType: String? = nil
+        addonMediaType: String? = nil,
+        expectedRuntime: Double? = nil,
+        subtitle: String? = nil,
+        releaseYear: Int? = nil,
+        artworkURL: URL? = nil
     ) -> ApplePlaybackRequest {
-        ApplePlaybackRequest(
+        var request = ApplePlaybackRequest(
             url: sourceURL,
             headers: requestHeaders,
             isLive: false,
@@ -103,14 +143,22 @@ extension AppleStremioHTTPPlaybackCandidate {
             mediaID: mediaID,
             title: title ?? self.title,
             sourceName: sourceName.map { "via \($0)" },
-            sourceKind: .stremio,
+            sourceKind: .catalog,
             hints: ApplePlaybackRequest.Hints(
                 notWebReady: requiresGateway,
                 proxyHeaders: requestHeaders,
                 filename: filename,
                 addonMediaID: addonMediaID,
-                addonMediaType: addonMediaType
+                addonMediaType: addonMediaType,
+                serviceKey: serviceKey,
+                expectedRuntime: expectedRuntime
             )
         )
+        request.subtitle = subtitle
+        request.releaseYear = releaseYear
+        request.artworkURL = artworkURL
+        return request
     }
 }
+
+public typealias AppleStremioCandidateRanking = AppleMediaCandidateRanking

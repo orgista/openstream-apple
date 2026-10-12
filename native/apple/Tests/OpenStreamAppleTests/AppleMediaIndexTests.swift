@@ -50,11 +50,11 @@ import Testing
         kind: .video,
         title: "Amélie Holiday Cut",
         aliases: ["Le Fabuleux Destin"],
-        artworkURL: URL(fileURLWithPath: "/Volumes/Private/poster.jpg"),
+        artworkURL: URL(fileURLWithPath: "/fixture/Private/poster.jpg"),
         availability: [.init(
             instanceID: sourceID,
             capability: .direct,
-            itemReference: "/Volumes/Private/Movies/Amelie.mp4"
+            itemReference: "/fixture/Private/Movies/Amelie.mp4"
         )],
         isPrivate: true
     )
@@ -63,7 +63,7 @@ import Testing
     #expect(await repository.search("amelie holiday").map(\.id) == [record.id])
     #expect(await repository.search("fabuleux").map(\.id) == [record.id])
     let persisted = try String(decoding: Data(contentsOf: url), as: UTF8.self)
-    #expect(!persisted.contains("/Volumes/Private"))
+    #expect(!persisted.contains("/fixture/Private"))
 }
 
 @Test func mediaIndexSearchAppliesItsLimitInStableTitleOrderAcrossReloads() async throws {
@@ -352,6 +352,45 @@ import Testing
     #expect(decoded.topPicks == [item])
 }
 
+/// N43: the Top Shelf draws a progress bar under a started title, as the
+/// Apple TV app does; only Continue Watching carries one.
+@Test func topShelfSnapshotCarriesProgressForContinueWatchingOnly() async throws {
+    let root = FileManager.default.temporaryDirectory
+        .appending(path: "openstream-topshelf-progress-test-\(UUID().uuidString)", directoryHint: .isDirectory)
+    try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: root) }
+    let instanceID = UUID()
+    let records = [0.3, nil].enumerated().map { index, progress in
+        AppleMediaRecord(
+            canonicalID: "tt\(String(format: "%07d", index))",
+            kind: .movie,
+            title: "Movie \(index)",
+            availability: [.init(instanceID: instanceID, capability: .resolvable,
+                                 itemReference: "https://fixture.example/\(index).mkv")],
+            isFavorite: true,
+            progress: progress,
+            isPrivate: false
+        )
+    }
+    let writer = AppleTopShelfSnapshotWriter(containerProvider: { root })
+    try await writer.write(records: records, enabled: true)
+
+    let data = try Data(contentsOf: root.appending(path: AppleTopShelfSnapshotWriter.filename))
+    let snapshot = try JSONDecoder().decode(AppleTopShelfSnapshot.self, from: data)
+    #expect(snapshot.continueWatching.map(\.progress) == [0.3])
+    #expect(snapshot.favorites.allSatisfy { $0.progress == nil })
+    #expect(snapshot.recentlyAdded.allSatisfy { $0.progress == nil })
+}
+
+@Test func topShelfSnapshotDecodesItemsWrittenBeforeProgressAsNoProgress() throws {
+    let legacyJSON = """
+    {"version":1,"generatedAt":0,"continueWatching":[{"id":"a","title":"A","kind":"movie",\
+    "displayURL":"openstream://media/a?action=display"}],"recentlyAdded":[],"favorites":[]}
+    """
+    let decoded = try JSONDecoder().decode(AppleTopShelfSnapshot.self, from: Data(legacyJSON.utf8))
+    #expect(decoded.continueWatching.first?.progress == nil)
+}
+
 @Test func topShelfSnapshotDecodesLegacyPayloadsMissingTopPicksAsEmpty() throws {
     let legacyJSON = """
     {"version":1,"generatedAt":0,"continueWatching":[],"recentlyAdded":[],"favorites":[]}
@@ -455,4 +494,75 @@ import Testing
     try await repository.replace(instanceID: source, with: records)
     #expect(await repository.search("Title", limit: 1, eligibility: .systemDiscovery).map(\.title) == ["Title Z"])
     #expect(await repository.search("Title", limit: 1, eligibility: .playableVideo).map(\.title) == ["Title Z"])
+}
+
+/// The content page reads its record through `record(id:)` in its body; the
+/// lookup has to be observed so the Download button appears once the index
+/// loads, even though the keyed table beside the array is not (F-e).
+@MainActor
+@Test func recordLookupByIDObservesTheIndex() async throws {
+    let url = FileManager.default.temporaryDirectory.appending(path: "record-lookup-\(UUID()).json")
+    defer { try? FileManager.default.removeItem(at: url) }
+    let store = AppleMediaIndexStore(repository: AppleMediaIndexRepository(fileURL: url))
+    let record = AppleMediaRecord(canonicalID: "tt7654321", kind: .series, title: "A Series",
+        availability: [.init(instanceID: UUID(), capability: .resolvable, itemReference: "series|tt7654321")])
+    let flag = RecordLookupChangeFlag()
+    withObservationTracking {
+        _ = store.record(id: record.id)
+    } onChange: {
+        Task { @MainActor in flag.changed = true }
+    }
+    try await store.upsert(record)
+    for _ in 0..<50 where !flag.changed { try await Task.sleep(for: .milliseconds(20)) }
+    #expect(flag.changed)
+    #expect(store.record(id: record.id)?.title == "A Series")
+}
+
+/// A download is matched to its record by its media id: the record id itself,
+/// or `<record id>:<episode id>` for an episode. The keyed lookup has to give
+/// the same answer the scan over `records` gave, earliest record first.
+@MainActor
+@Test func recordLookupByDownloadMediaIDMatchesTheScanItReplaced() async throws {
+    let url = FileManager.default.temporaryDirectory.appending(path: "record-prefix-\(UUID()).json")
+    defer { try? FileManager.default.removeItem(at: url) }
+    let store = AppleMediaIndexStore(repository: AppleMediaIndexRepository(fileURL: url))
+    let instance = UUID()
+    let series = AppleMediaRecord(canonicalID: "tt1000001", kind: .series, title: "A Series",
+        availability: [.init(instanceID: instance, capability: .resolvable, itemReference: "series|tt1000001")])
+    let movie = AppleMediaRecord(canonicalID: "tt1000002", kind: .movie, title: "A Movie",
+        availability: [.init(instanceID: instance, capability: .resolvable, itemReference: "movie|tt1000002")])
+    try await store.replace(instanceID: instance, with: [series, movie])
+    let scan = { (mediaID: String) in
+        store.records.first { mediaID == $0.id || mediaID.hasPrefix($0.id + ":") }?.id
+    }
+    for mediaID in [series.id, movie.id, "\(series.id):\(series.id):1:2", "\(movie.id)", "\(series.id)x:1:2",
+                    "tt9999999:1:1", "", ":", series.id + ":"] {
+        #expect(store.record(matchingMediaID: mediaID)?.id == scan(mediaID), "\(mediaID)")
+    }
+    #expect(store.record(matchingMediaID: "\(series.id):tt1000001:1:2")?.title == "A Series")
+    #expect(store.record(matchingMediaID: "\(series.id)x:1:2") == nil)
+}
+
+@MainActor
+@Test func recordLookupByDownloadMediaIDObservesTheIndex() async throws {
+    let url = FileManager.default.temporaryDirectory.appending(path: "record-prefix-observe-\(UUID()).json")
+    defer { try? FileManager.default.removeItem(at: url) }
+    let store = AppleMediaIndexStore(repository: AppleMediaIndexRepository(fileURL: url))
+    let record = AppleMediaRecord(canonicalID: "tt1000003", kind: .series, title: "Another Series",
+        availability: [.init(instanceID: UUID(), capability: .resolvable, itemReference: "series|tt1000003")])
+    let flag = RecordLookupChangeFlag()
+    withObservationTracking {
+        _ = store.record(matchingMediaID: record.id + ":tt1000003:1:1")
+    } onChange: {
+        Task { @MainActor in flag.changed = true }
+    }
+    try await store.upsert(record)
+    for _ in 0..<50 where !flag.changed { try await Task.sleep(for: .milliseconds(20)) }
+    #expect(flag.changed)
+    #expect(store.record(matchingMediaID: record.id + ":tt1000003:1:1")?.title == "Another Series")
+}
+
+@MainActor
+private final class RecordLookupChangeFlag {
+    var changed = false
 }

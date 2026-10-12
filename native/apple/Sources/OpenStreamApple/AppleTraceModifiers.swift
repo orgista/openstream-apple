@@ -54,3 +54,20 @@ public func appleTrace(_ detail: @autoclosure () -> String) {
 public func appleTraceFailure(_ detail: @autoclosure () -> String) {
     AppleInteractionTrace.record(.failure, detail())
 }
+
+/// An error's type and case for the trace, without its values: a case's
+/// payload and an `NSError`'s description can carry a path, a host or a name.
+/// `AppleKeychainStoreError.unexpectedStatus (… #0)`, `CocoaError (NSCocoaErrorDomain #513)`.
+public func appleErrorLabel(_ error: any Error) -> String {
+    let type = String(describing: Swift.type(of: error))
+    let bridged = error as NSError
+    let code = "\(bridged.domain) #\(bridged.code)"
+    let mirror = Mirror(reflecting: error)
+    guard mirror.displayStyle == .enum else { return "\(type) (\(code))" }
+    // A case with a payload reflects as one child labelled with the case
+    // name; a case without one prints as its name, unless the type prints
+    // itself (and so might print a value).
+    if let name = mirror.children.first?.label { return "\(type).\(name) (\(code))" }
+    if error is any CustomStringConvertible { return "\(type) (\(code))" }
+    return "\(type).\(String(describing: error)) (\(code))"
+}

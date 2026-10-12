@@ -39,12 +39,17 @@ struct AppleDetailReadinessTests {
             AppleTitleLogoPolicy.resolvedState(validated: true, loadResult: nil, elapsed: 2)
                 == .hidden
         )
+        // N62 widened it again to five seconds.
         #expect(
-            AppleTitleLogoPolicy.resolvedState(validated: nil, loadResult: nil, elapsed: 3)
+            AppleTitleLogoPolicy.resolvedState(validated: nil, loadResult: nil, elapsed: 4)
+                == .hidden
+        )
+        #expect(
+            AppleTitleLogoPolicy.resolvedState(validated: nil, loadResult: nil, elapsed: 5)
                 == .text
         )
         #expect(
-            AppleTitleLogoPolicy.resolvedState(validated: true, loadResult: nil, elapsed: 4)
+            AppleTitleLogoPolicy.resolvedState(validated: true, loadResult: nil, elapsed: 6)
                 == .text
         )
         // A wordmark that arrives inside the grace window never flashes text.
@@ -83,4 +88,24 @@ struct AppleDetailReadinessTests {
         #expect(OpenStreamTabReselection.popsToRoot(current: .home, selected: .library) == false)
         #expect(OpenStreamTabReselection.popsToRoot(current: .settings, selected: .live) == false)
     }
+
+    @Test
+    func episodesSectionOnlyClaimsNoEpisodesAfterTheLoadFinished() {
+        // Before the fetch starts, while it runs, and after a superseded load
+        // cleared the flag: placeholders, never the "not available" text.
+        #expect(AppleEpisodeListPresentation.resolve(episodeCount: 0, isLoading: false, hasFinishedLoading: false) == .loading)
+        #expect(AppleEpisodeListPresentation.resolve(episodeCount: 0, isLoading: true, hasFinishedLoading: false) == .loading)
+        #expect(AppleEpisodeListPresentation.resolve(episodeCount: 0, isLoading: true, hasFinishedLoading: true) == .loading)
+        // Finished (or failed) with nothing: now the text is honest.
+        #expect(AppleEpisodeListPresentation.resolve(episodeCount: 0, isLoading: false, hasFinishedLoading: true) == .unavailable)
+        #expect(AppleEpisodeListPresentation.resolve(episodeCount: 12, isLoading: false, hasFinishedLoading: true) == .episodes)
+    }
+}
+
+/// Apple TV full pass 2026-10-02: a fast tab-bar run ending in Select left the
+/// chosen tab empty until the viewer moved off and back.
+@Test func tabMountWatchdogRemountsOnlyATabThatNeverAppeared() {
+    #expect(OpenStreamTabMountWatchdog.needsRemount(selected: OpenStreamTab.search, mounted: [OpenStreamTab.home]))
+    #expect(!OpenStreamTabMountWatchdog.needsRemount(selected: OpenStreamTab.search, mounted: [.search]))
+    #expect(OpenStreamTabMountWatchdog.grace < .seconds(2))
 }

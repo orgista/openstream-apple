@@ -13,7 +13,7 @@ public struct AppleCustomChannelPackage: Codable, Equatable, Sendable {
     }
 
     func selected(from values: [AppleIPTVChannel]) -> [AppleIPTVChannel] {
-        let base = Set(AppleChannelProjection.premierGuideGroups(from: values, entries: (try? AppleChannelLineupPresets.premierUS()) ?? []).flatMap(\.channels)
+        let base = Set(AppleChannelProjection.completeGuideGroups(from: values, entries: (try? AppleChannelLineupPresets.completeUS()) ?? []).flatMap(\.channels)
             .filter { !AppleChannelVisibilityPolicy.isPlaceholder($0) && !AppleChannelVisibilityPolicy.is24x7($0) }.map(\.id))
         return values.filter { channel in
             guard groups[channel.group] != false else { return false }

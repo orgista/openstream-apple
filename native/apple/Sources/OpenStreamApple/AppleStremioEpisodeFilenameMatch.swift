@@ -16,7 +16,7 @@ import Foundation
 /// A name that states no episode at all — a season pack — is *not* a
 /// contradiction: those are legitimate and the file index inside the torrent
 /// decides which episode plays.
-public enum AppleStremioEpisodeFilenameMatch {
+public enum AppleMediaEpisodeFilenameMatch {
     private static let patterns = [
         #"(?i)\bs(\d{1,2})\s*[._-]?\s*e(\d{1,3})\b"#,   // S01E02, s1.e2, S01 E02
         #"(?i)\b(\d{1,2})x(\d{1,3})\b"#,                 // 1x02
@@ -50,3 +50,5 @@ public enum AppleStremioEpisodeFilenameMatch {
         return !found.contains { $0.season == season && $0.episode == episode }
     }
 }
+
+public typealias AppleStremioEpisodeFilenameMatch = AppleMediaEpisodeFilenameMatch

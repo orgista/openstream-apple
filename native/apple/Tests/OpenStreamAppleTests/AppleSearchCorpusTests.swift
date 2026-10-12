@@ -11,7 +11,9 @@ import Testing
 ///
 /// Owner asked for a real sample rather than a handful of cases: "search for at
 /// least 200 shows and movies all from different eras".
-@MainActor
+///
+/// Not `@MainActor`: the matcher is `nonisolated`, and a second of matching on
+/// the main thread held up every main-actor test running beside it.
 @Suite("Search corpus, 1927–2025")
 struct AppleSearchCorpusTests {
     private static let corpus: [(String, Int, AppleMediaKind)] = [

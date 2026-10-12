@@ -35,9 +35,21 @@ public struct AppleBrandPrimaryButtonStyle: ButtonStyle {
     }
 
     private struct StyledBody: View {
+        @Environment(\.isEnabled) private var isEnabled
         @Environment(\.isFocused) private var isFocused
         @Environment(\.accessibilityReduceMotion) private var reduceMotion
         let configuration: ButtonStyleConfiguration
+
+        /// A Mac form's primary action is a free-standing button
+        /// (`AppleFormActionBar`), and a disabled one — Add Catalog with no
+        /// URL yet — looked exactly like a live one.
+        private var disabledOpacity: Double {
+            #if os(macOS)
+            isEnabled ? 1 : 0.4
+            #else
+            1
+            #endif
+        }
 
         var body: some View {
             configuration.label
@@ -54,9 +66,9 @@ public struct AppleBrandPrimaryButtonStyle: ButtonStyle {
                 }
                 .shadow(color: .white.opacity(isFocused ? 0.42 : 0), radius: 16)
                 .scaleEffect(reduceMotion ? 1 : (isFocused ? 1.06 : 1))
-                .opacity(configuration.isPressed ? 0.7 : 1)
+                .opacity((configuration.isPressed ? 0.7 : 1) * disabledOpacity)
                 .contentShape(appleBrandButtonShape)
-                .appleVisionHover()
+                .appleHoverAffordance()
                 .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: isFocused)
         }
     }
@@ -104,7 +116,7 @@ public struct AppleBrandSecondaryButtonStyle: ButtonStyle {
                 .scaleEffect(reduceMotion ? 1 : (isFocused ? 1.06 : 1))
                 .opacity(configuration.isPressed ? 0.72 : 1)
                 .contentShape(appleBrandButtonShape)
-                .appleVisionHover()
+                .appleHoverAffordance()
                 .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: isFocused)
         }
     }
@@ -171,10 +183,12 @@ public struct AppleTVNavigationLabel: View {
                 // edge, underneath the glyph. The fixed slot is the same thing
                 // the tvOS branch above does, and for the same reason.
                 HStack(alignment: .firstTextBaseline,
-                       spacing: AppleTVNavigationLabel.iconSpacing) {
+                       spacing: AppleTVNavigationLabel.isMacPlatform
+                           ? AppleTVNavigationLabel.macIconSpacing : AppleTVNavigationLabel.iconSpacing) {
                     Image(systemName: systemImage)
                         .foregroundStyle(.primary)
-                        .frame(width: iconSlot, alignment: .leading)
+                        .frame(width: AppleTVNavigationLabel.isMacPlatform ? AppleTVNavigationLabel.macIconSlotWidth : iconSlot,
+                               alignment: AppleTVNavigationLabel.isMacPlatform ? .center : .leading)
                         .accessibilityHidden(true)
                     Text(title)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -184,9 +198,28 @@ public struct AppleTVNavigationLabel: View {
                 Label {
                     Text(title)
                 } icon: {
+                    // Decorative: the title carries the row's meaning. Left
+                    // visible, VoiceOver read the symbol's name with it
+                    // ("rectangle.stack.badge.plus", "Icloud Upload"; iOS 18.6
+                    // regression 2026-10-01).
                     Image(systemName: systemImage)
                         .foregroundStyle(.primary)
+                        .accessibilityHidden(true)
                 }
+                // The row reads as its title alone.
+                .accessibilityRepresentation { Text(title) }
+                // The same style again, on the outside.
+                //
+                // On macOS a `Label` inside a `List` row re-tints its icon
+                // after the icon closure has been evaluated, so the
+                // `.foregroundStyle(.primary)` above lost and every glyph in
+                // the Sources list drew in the system accent — measured
+                // rgb(92,121,245) against a white-tinted app (macOS sweep,
+                // 2026-09-21), which breaks the owner's "nothing blue except
+                // the brand mark" rule. Applied out here it wins, and it is a
+                // no-op on iOS and visionOS, where the title is `.primary`
+                // already and the icon was never re-tinted.
+                .foregroundStyle(.primary)
             }
         } else {
             Text(title)
@@ -196,12 +229,29 @@ public struct AppleTVNavigationLabel: View {
 
     /// Whether to take the icon column over from `Label`.
     ///
-    /// Only at accessibility sizes: at ordinary sizes the stock label is
-    /// correct and matches every other iOS settings screen, so it is left
-    /// alone.
-    public static func usesFixedIconColumn(for size: DynamicTypeSize) -> Bool {
-        size.isAccessibilitySize
+    /// On iOS and visionOS only at accessibility sizes: at ordinary sizes the
+    /// stock label is correct and matches every other iOS settings screen, so
+    /// it is left alone. On the Mac always: a macOS `Label` sizes its icon
+    /// column to each glyph, so titles started wherever their symbol ended —
+    /// "Metadata" (photo.on.rectangle.angled) sat 4 pt right of "Sources" and
+    /// "Radarr & Sonarr" 1 pt left, in the same list (N54, 1440 pt window).
+    /// System Settings centres its glyphs in one column; so does this.
+    public static func usesFixedIconColumn(for size: DynamicTypeSize, isMac: Bool = isMacPlatform) -> Bool {
+        isMac || size.isAccessibilitySize
     }
+
+    public static var isMacPlatform: Bool {
+        #if os(macOS)
+        true
+        #else
+        false
+        #endif
+    }
+
+    /// The Mac's column: the stock label's glyph-to-title distance (27 pt,
+    /// measured on the Settings list) kept, with the glyph centred in it.
+    public static let macIconSlotWidth: CGFloat = 20
+    public static let macIconSpacing: CGFloat = 7
 
     /// Widest tvOS body-size symbol in the settings rows is ~42 pt.
     public static let iconSlotWidth: CGFloat = 48
@@ -247,3 +297,43 @@ public struct AppleBrandToggleStyle: ToggleStyle {
 public extension ToggleStyle where Self == AppleBrandToggleStyle {
     static var brandSwitch: AppleBrandToggleStyle { AppleBrandToggleStyle() }
 }
+
+#if os(tvOS)
+/// Apple TV draws a Toggle as a row that turns white when focused, and the
+/// settings forms' white tint drew its title white on that fill: the focused
+/// Enabled and catalog rows read as a blank capsule with only "On" left
+/// (full test 2026-10-01). The title is black while focused, white otherwise,
+/// as `AppleTVFocusReadableText` does for buttons. The inner Toggle takes the
+/// platform style, so this style is not applied to itself again.
+public struct AppleTVReadableToggleStyle: ToggleStyle {
+    public init() {}
+
+    public func makeBody(configuration: Configuration) -> some View {
+        Toggle(isOn: configuration.$isOn) {
+            AppleTVFocusReadableLabel { configuration.label }
+        }
+        .toggleStyle(.automatic)
+    }
+}
+
+public extension ToggleStyle where Self == AppleTVReadableToggleStyle {
+    static var tvReadable: AppleTVReadableToggleStyle { AppleTVReadableToggleStyle() }
+}
+
+/// Any label inside a focusable tvOS row: black on the white focus fill,
+/// white (or secondary when disabled) otherwise.
+struct AppleTVFocusReadableLabel<Content: View>: View {
+    @Environment(\.isFocused) private var isFocused
+    @Environment(\.isEnabled) private var isEnabled
+    private let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    var body: some View {
+        content
+            .foregroundStyle(isFocused ? Color.black : (isEnabled ? Color.white : Color.secondary))
+    }
+}
+#endif

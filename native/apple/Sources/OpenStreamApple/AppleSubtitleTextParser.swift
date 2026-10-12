@@ -1,3 +1,4 @@
+import Compression
 import Foundation
 
 /// Parses a downloaded subtitle file (SubRip or WebVTT) into the same cue type
@@ -18,14 +19,16 @@ public enum AppleSubtitleTextParser {
     static let maximumInflatedBytes = 32_000_000
 
 
-    public static func cues(from data: Data) -> [AppleSubtitleCue] {
+    /// `language` is the file's declared language (the add-on's `lang`), the
+    /// best hint for a legacy code page (`AppleSubtitleTextEncoding`).
+    public static func cues(from data: Data, language: String? = nil) -> [AppleSubtitleCue] {
         let payload = decompressedIfNeeded(data)
-        guard let text = decodeText(payload) else { return [] }
+        guard let text = decodeText(payload, language: language) else { return [] }
         return cues(from: text)
     }
 
     public static func cues(from text: String) -> [AppleSubtitleCue] {
-        let normalized = text
+        let normalized = musicNotesRestored(utf8MojibakeRepaired(text))
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
         let lines = normalized.components(separatedBy: "\n")
@@ -61,6 +64,49 @@ public enum AppleSubtitleTextParser {
             )
         }
         return cues
+    }
+
+    // MARK: - Repairs
+
+    /// UTF-8 that was read as Latin-1 and written out as UTF-8 again: "Â£"
+    /// where "£" was meant, "Ã©" for "é". One of the two OpenSubtitles files
+    /// for A Different World S1E1 is this (2026-10-01). Re-read as Latin-1
+    /// bytes, such text is valid UTF-8 again; real text with an "Â" or "Ã"
+    /// in it almost never is, and any character Latin-1 cannot hold leaves
+    /// the text as it was.
+    static func utf8MojibakeRepaired(_ text: String) -> String {
+        guard text.contains(where: { $0 == "Â" || $0 == "Ã" }),
+              let bytes = text.data(using: .isoLatin1, allowLossyConversion: false),
+              let repaired = String(data: bytes, encoding: .utf8) else { return text }
+        return repaired
+    }
+
+    /// Captions taken from US broadcast line 21 carry "♪" as CEA-608's
+    /// special character 0x37, right beside "£" (0x36), and caption
+    /// extractors have written it out as "£". The file itself says "£": both
+    /// OpenSubtitles files for A Different World S1E1 open "£ I know my
+    /// parents love me £" (iOS 18.6 regression 2026-10-01, screens 28–31).
+    /// A "£" with no amount beside it is that note; "£5", "5 £" and "£ 20"
+    /// stay money.
+    static func musicNotesRestored(_ text: String) -> String {
+        guard text.contains("£") else { return text }
+        let characters = Array(text)
+        var result = ""
+        result.reserveCapacity(text.unicodeScalars.count)
+        for (index, character) in characters.enumerated() {
+            guard character == "£" else { result.append(character); continue }
+            result.append(isAmountBeside(characters, at: index) ? "£" : "♪")
+        }
+        return result
+    }
+
+    private static func isAmountBeside(_ characters: [Character], at index: Int) -> Bool {
+        var after = index + 1
+        while after < characters.count, characters[after] == " " { after += 1 }
+        if after < characters.count, characters[after].isNumber { return true }
+        var before = index - 1
+        while before >= 0, characters[before] == " " { before -= 1 }
+        return before >= 0 && characters[before].isNumber
     }
 
     // MARK: - Timing
@@ -117,12 +163,10 @@ public enum AppleSubtitleTextParser {
         AppleHTMLEntities.decoded(value)
     }
 
-    /// UTF-8 first, then the legacy single-byte encodings older SubRip files
-    /// still use. A byte-order mark is dropped by the UTF-8 decoder.
-    static func decodeText(_ data: Data) -> String? {
-        if let utf8 = String(data: data, encoding: .utf8) { return utf8 }
-        if let cp1252 = String(data: data, encoding: .windowsCP1252) { return cp1252 }
-        return String(data: data, encoding: .isoLatin1)
+    /// Unicode with or without a byte-order mark, then the legacy code page
+    /// of the declared language (`AppleSubtitleTextEncoding`).
+    static func decodeText(_ data: Data, language: String? = nil) -> String? {
+        AppleSubtitleTextEncoding.decode(data, language: language)
     }
 
     // MARK: - gzip
@@ -152,8 +196,46 @@ public enum AppleSubtitleTextParser {
         if flags & 0x02 != 0 { offset += 2 } // FHCRC
         guard offset < data.endIndex - 8 else { return data }
         let deflated = Data(data[offset ..< (data.endIndex - 8)])
-        guard let inflated = try? (deflated as NSData).decompressed(using: .zlib),
-              inflated.length <= maximumInflatedBytes else { return data }
-        return inflated as Data
+        guard let inflated = inflate(deflated, limit: maximumInflatedBytes) else { return data }
+        return inflated
+    }
+
+    /// Raw DEFLATE, streamed in chunks so a tiny zip bomb stops at `limit`
+    /// instead of inflating to gigabytes first. Nil when the payload is
+    /// corrupt or would exceed the limit.
+    static func inflate(_ deflated: Data, limit: Int) -> Data? {
+        let chunkSize = 64 * 1024
+        let destination = UnsafeMutablePointer<UInt8>.allocate(capacity: chunkSize)
+        defer { destination.deallocate() }
+        let stream = UnsafeMutablePointer<compression_stream>.allocate(capacity: 1)
+        defer { stream.deallocate() }
+        guard compression_stream_init(stream, COMPRESSION_STREAM_DECODE, COMPRESSION_ZLIB) == COMPRESSION_STATUS_OK else {
+            return nil
+        }
+        defer { compression_stream_destroy(stream) }
+        var output = Data()
+        return deflated.withUnsafeBytes { (raw: UnsafeRawBufferPointer) -> Data? in
+            guard let base = raw.bindMemory(to: UInt8.self).baseAddress else { return nil }
+            stream.pointee.src_ptr = base
+            stream.pointee.src_size = raw.count
+            while true {
+                stream.pointee.dst_ptr = destination
+                stream.pointee.dst_size = chunkSize
+                let pending = stream.pointee.src_size
+                let status = compression_stream_process(stream, Int32(COMPRESSION_STREAM_FINALIZE.rawValue))
+                let produced = chunkSize - stream.pointee.dst_size
+                guard output.count + produced <= limit else { return nil }
+                output.append(destination, count: produced)
+                switch status {
+                case COMPRESSION_STATUS_OK:
+                    // No output and no input consumed: stuck on a truncated stream.
+                    if produced == 0, stream.pointee.src_size == pending { return nil }
+                case COMPRESSION_STATUS_END:
+                    return output
+                default:
+                    return nil
+                }
+            }
+        }
     }
 }

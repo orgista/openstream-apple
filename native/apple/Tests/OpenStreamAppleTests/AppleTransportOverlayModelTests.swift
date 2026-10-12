@@ -56,7 +56,6 @@ import Testing
         engine.duration = 100
         let coordinator = makeCoordinator(engine: engine, request: makeRequest())
         let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: false)
-        model.dvrWindowSeconds = nil
         #expect(model.isScrubbable)
         coordinator.stop()
     }
@@ -65,17 +64,81 @@ import Testing
         let engine = FakePlaybackEngine()
         let coordinator = makeCoordinator(engine: engine, request: makeRequest(isLive: true))
         let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: true)
-        model.dvrWindowSeconds = nil
         #expect(!model.isScrubbable)
+        #expect(!model.canSkip)
         coordinator.stop()
     }
 
     @Test func liveWithDvrIsScrubbable() {
         let engine = FakePlaybackEngine()
+        engine.seekableRange = AppleSeekableRange(start: 0, end: 30)
         let coordinator = makeCoordinator(engine: engine, request: makeRequest(isLive: true, dvrWindowSeconds: 30))
         let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: true)
-        model.dvrWindowSeconds = 30
         #expect(model.isScrubbable)
+        #expect(model.canSkip)
+        coordinator.stop()
+    }
+
+    /// The request's 1800 s hint is not a window. A channel whose player
+    /// reports eight seconds of rewind gets no scrubber and no skip buttons.
+    @Test func liveWhosePlayerReportsANarrowWindowIsNotScrubbable() {
+        let engine = FakePlaybackEngine()
+        engine.seekableRange = AppleSeekableRange(start: 3_600, end: 3_608)
+        let coordinator = makeCoordinator(engine: engine, request: makeRequest(isLive: true, dvrWindowSeconds: 1_800))
+        let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: true)
+        #expect(!model.isScrubbable)
+        #expect(!model.canSkip)
+        coordinator.stop()
+    }
+
+    // MARK: - The live edge
+
+    @Test func liveWithoutDvrIsAlwaysAtTheLiveEdge() {
+        let engine = FakePlaybackEngine()
+        engine.position = 0
+        let coordinator = makeCoordinator(engine: engine, request: makeRequest(isLive: true))
+        let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: true)
+        #expect(model.isAtLiveEdge)
+        coordinator.stop()
+    }
+
+    @Test func liveWithDvrIsAtTheEdgeAtTheEndOfItsWindow() {
+        let engine = FakePlaybackEngine()
+        engine.position = 600
+        engine.seekableRange = AppleSeekableRange(start: 0, end: 600)
+        let coordinator = makeCoordinator(engine: engine, request: makeRequest(isLive: true, dvrWindowSeconds: 600))
+        let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: true)
+        #expect(model.isAtLiveEdge)
+        coordinator.stop()
+    }
+
+    /// A seek lands a moment off the edge and the edge itself moves, so the
+    /// badge holds within the tolerance and drops outside it.
+    @Test func liveWithDvrLeavesTheEdgeOnceTheViewerScrubsBack() {
+        let engine = FakePlaybackEngine()
+        engine.position = 600 - AppleTransportOverlayModel.liveEdgeTolerance + 1
+        engine.seekableRange = AppleSeekableRange(start: 0, end: 600)
+        let coordinator = makeCoordinator(engine: engine, request: makeRequest(isLive: true, dvrWindowSeconds: 600))
+        let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: true)
+        #expect(model.isAtLiveEdge)
+        coordinator.stop()
+
+        let behind = FakePlaybackEngine()
+        behind.position = 590
+        behind.seekableRange = AppleSeekableRange(start: 0, end: 600)
+        let secondCoordinator = makeCoordinator(engine: behind, request: makeRequest(isLive: true, dvrWindowSeconds: 600))
+        let scrubbedBack = AppleTransportOverlayModel(coordinator: secondCoordinator, isLive: true)
+        #expect(!scrubbedBack.isAtLiveEdge)
+        secondCoordinator.stop()
+    }
+
+    @Test func vodIsNeverAtALiveEdge() {
+        let engine = FakePlaybackEngine()
+        engine.duration = 100
+        engine.position = 100
+        let coordinator = makeCoordinator(engine: engine, request: makeRequest())
+        let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: false)
+        #expect(!model.isAtLiveEdge)
         coordinator.stop()
     }
 
@@ -83,7 +146,6 @@ import Testing
         let engine = FakePlaybackEngine()
         let coordinator = makeCoordinator(engine: engine, request: makeRequest(isLive: true))
         let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: true)
-        model.dvrWindowSeconds = nil
         #expect(model.positionText.isEmpty)
         coordinator.stop()
     }
@@ -131,6 +193,58 @@ import Testing
         model.selectSubtitle(1)
         #expect(engine.selectedSubtitle == [1])
         coordinator.stop()
+    }
+
+    @Test func liveCaptionsArrivingAfterPresentationSelectTheCurrentTrack() async throws {
+        let engine = FakePlaybackEngine()
+        let request = makeRequest(isLive: true)
+        let coordinator = makeCoordinator(engine: engine, request: request, route: .avPlayer)
+        let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: true)
+        model.preferredSubtitleLanguages = ["en"]
+        model.subtitleLanguagesAreExplicit = true
+        defer { coordinator.stop() }
+        #expect(model.visibleSubtitleTracks.isEmpty)
+
+        // The broadcast legible group can arrive after the full-screen host exists.
+        await Task.yield()
+        engine.subtitleTracks = [ApplePlaybackTrack(id: 17, title: "English", language: "en", codec: "cc")]
+        engine.emit(.tracks)
+        for _ in 0..<20 where model.visibleSubtitleTracks.isEmpty {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        let track = try #require(model.visibleSubtitleTracks.first)
+        #expect(track.id == 17)
+        model.selectSubtitle(track.id)
+        #expect(engine.selectedSubtitle == [17])
+
+        // A channel switch must not retain the first channel's menu indices.
+        engine.subtitleTracks = [ApplePlaybackTrack(id: 23, title: "English", language: "en", codec: "cc")]
+        engine.emit(.tracks)
+        for _ in 0..<20 where model.visibleSubtitleTracks.first?.id != 23 {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        let replacement = try #require(model.visibleSubtitleTracks.first)
+        #expect(replacement.id == 23)
+        model.selectSubtitle(replacement.id)
+        model.selectSubtitle(nil)
+        #expect(engine.selectedSubtitle == [17, 23, nil])
+    }
+
+    @Test func engineOffAfterAutoSelectionClearsTheOverlayCheck() async throws {
+        let engine = FakePlaybackEngine()
+        engine.activeSubtitleTrackID = 99608
+        let coordinator = makeCoordinator(engine: engine, request: makeRequest(isLive: true))
+        let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: true)
+        defer { coordinator.stop() }
+        #expect(model.selectedSubtitleID == 99608)
+        await Task.yield()
+        engine.activeSubtitleTrackID = nil
+        engine.emit(.tracks)
+        for _ in 0..<20 where model.selectedSubtitleID != nil {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(model.selectedSubtitleID == nil)
+        #expect(!model.isCCActive)
     }
 
     @Test func ccStateFlagReflectsSubtitleSelection() {
@@ -186,6 +300,44 @@ import Testing
         #expect(!model.showsOverlay)
         // On `.avPlayer` routes no custom waiting view is ever shown, even while waiting.
         #expect(!model.showsWaitingIndicator)
+        coordinator.stop()
+    }
+
+    /// Full test 2026-09-30: the Audio & Subtitles menu closed itself after
+    /// 2-3 s because the auto-hide removed the chrome it hangs from.
+    @Test func anOpenMenuHoldsTheControlsPastTheAutoHide() async {
+        let engine = FakePlaybackEngine()
+        let coordinator = makeCoordinator(engine: engine, request: makeRequest(), route: .surface)
+        let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: false)
+        await coordinator.begin(makeRequest())
+        engine.emit(.phase(.playing))
+        #expect(await waitUntil { if case .playing = coordinator.phase { true } else { false } })
+        // A menu reports every row; two rows open, both must close.
+        model.menuItemAppeared()
+        model.menuItemAppeared()
+        try? await Task.sleep(for: .milliseconds(3600))
+        #expect(model.controlsVisible)
+        #expect(model.menuIsOpen)
+        model.menuItemDisappeared()
+        #expect(model.menuIsOpen)
+        model.menuItemDisappeared()
+        #expect(!model.menuIsOpen)
+        #expect(await waitUntil { !model.controlsVisible })
+        coordinator.stop()
+    }
+
+    @Test func aFocusedSkipIntroHoldsTheControlsPastTheAutoHide() async {
+        let engine = FakePlaybackEngine()
+        let coordinator = makeCoordinator(engine: engine, request: makeRequest(), route: .surface)
+        let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: false)
+        await coordinator.begin(makeRequest())
+        engine.emit(.phase(.playing))
+        #expect(await waitUntil { if case .playing = coordinator.phase { true } else { false } })
+        model.focusedPromptHoldsControls = true
+        try? await Task.sleep(for: .milliseconds(3600))
+        #expect(model.controlsVisible)
+        model.focusedPromptHoldsControls = false
+        #expect(await waitUntil { !model.controlsVisible })
         coordinator.stop()
     }
 
@@ -260,9 +412,96 @@ import Testing
         let engine = FakePlaybackEngine()
         let coordinator = makeCoordinator(engine: engine, request: makeRequest(isLive: true))
         let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: true)
-        model.dvrWindowSeconds = nil
         await model.skip(by: 10)
         #expect(engine.seeks.isEmpty)
+        coordinator.stop()
+    }
+
+    /// The regression this whole change exists for: a live channel whose
+    /// player reports a real 90 s window, sitting at the edge. Skipping back
+    /// used to clamp `position - 10` against a fictional 1800 s window and
+    /// hand AVPlayer a time it silently swallowed. It must now land inside the
+    /// reported range, and the badge must stop saying LIVE.
+    @Test func skipBackOnLiveWithARealWindowSeeksInsideIt() async {
+        let engine = FakePlaybackEngine()
+        engine.position = 3_690
+        engine.seekableRange = AppleSeekableRange(start: 3_600, end: 3_690)
+        let coordinator = makeCoordinator(engine: engine, request: makeRequest(isLive: true, dvrWindowSeconds: 1_800))
+        let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: true)
+        #expect(model.isAtLiveEdge)
+        await model.skip(by: -10)
+        #expect(engine.seeks == [3_680])
+        coordinator.stop()
+    }
+
+    /// Skipping back at the floor of the window has nowhere to go and must not
+    /// issue a seek that only stalls the picture.
+    @Test func skipBackAtTheFloorOfTheWindowIssuesNoSeek() async {
+        let engine = FakePlaybackEngine()
+        engine.position = 3_600
+        engine.seekableRange = AppleSeekableRange(start: 3_600, end: 3_690)
+        let coordinator = makeCoordinator(engine: engine, request: makeRequest(isLive: true, dvrWindowSeconds: 1_800))
+        let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: true)
+        await model.skip(by: -10)
+        #expect(engine.seeks.isEmpty)
+        coordinator.stop()
+    }
+
+    /// The LIVE badge seeks to the real edge, not to `dvrWindowSeconds`.
+    @Test func liveBadgeSeeksToTheEndOfTheRealWindow() async {
+        let engine = FakePlaybackEngine()
+        engine.position = 3_620
+        engine.seekableRange = AppleSeekableRange(start: 3_600, end: 3_690)
+        let coordinator = makeCoordinator(engine: engine, request: makeRequest(isLive: true, dvrWindowSeconds: 1_800))
+        let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: true)
+        #expect(!model.isAtLiveEdge)
+        await model.seekToLiveEdge()
+        #expect(engine.seeks == [3_690])
+        coordinator.stop()
+    }
+
+    /// The scrubber spans the real window, so the thumb sits where the
+    /// playhead actually is inside it instead of pinned at 1.0.
+    @Test func liveProgressAndDurationReadTheRealWindow() {
+        let engine = FakePlaybackEngine()
+        engine.position = 3_645
+        engine.seekableRange = AppleSeekableRange(start: 3_600, end: 3_690)
+        let coordinator = makeCoordinator(engine: engine, request: makeRequest(isLive: true, dvrWindowSeconds: 1_800))
+        let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: true)
+        #expect(abs(model.progress - 0.5) < 0.001)
+        #expect(model.durationText == "1:30")
+        coordinator.stop()
+    }
+
+    /// A live scrub is a fraction of the real window, on the window's own axis.
+    @Test func liveScrubTargetsTheRealWindow() async {
+        let engine = FakePlaybackEngine()
+        engine.position = 3_690
+        engine.seekableRange = AppleSeekableRange(start: 3_600, end: 3_690)
+        let coordinator = makeCoordinator(engine: engine, request: makeRequest(isLive: true, dvrWindowSeconds: 1_800))
+        let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: true)
+        await model.scrub(to: 0.25)
+        #expect(engine.seeks == [3_622.5])
+        coordinator.stop()
+    }
+
+    // MARK: - Cue clock
+
+    @Test func overlayCuesFollowPresentationTimeWhileScrubClockIsHeld() async throws {
+        let engine = FakePlaybackEngine()
+        engine.position = 100
+        engine.subtitleCues = [
+            AppleSubtitleCue(id: 1, startTime: 99, endTime: 101, body: .text("HELD SCRUB CLOCK")),
+            AppleSubtitleCue(id: 2, startTime: 103, endTime: 105, body: .text("ON SCREEN NOW")),
+        ]
+        let coordinator = makeCoordinator(engine: engine, request: makeRequest(isLive: true))
+        let model = AppleTransportOverlayModel(coordinator: coordinator, isLive: true)
+        await coordinator.begin(makeRequest(isLive: true))
+        engine.scriptedPresentationTime = 104
+        engine.emit(.position(100))
+        for _ in 0..<50 where model.cueTime != 104 { try await Task.sleep(for: .milliseconds(20)) }
+        #expect(model.position == 100)
+        #expect(model.activeSubtitleCues.map(\.id) == [2])
         coordinator.stop()
     }
 

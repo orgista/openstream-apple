@@ -1,21 +1,23 @@
 import Foundation
 import Observation
 
-/// Backing model for `AppleTransportOverlay` on `.surface` routes. It mirrors
+/// Backing model for `AppleTransportOverlay` on surface and full-screen Live routes. It mirrors
 /// the engine's position/duration/tracks through `events` into observable
 /// stored properties, applies the transport policy table (scrubbability, time
 /// formatting, live/DVR behaviour), and owns the 3-second control auto-hide
 /// timer. The view stays declarative; this type owns the state.
 ///
-/// Per T7e the overlay exists only on `.surface` routes; on `.avPlayer`
-/// routes the system player UI owns every control, so `showsOverlay` is
-/// `false` and no custom waiting indicator is ever shown.
+/// VOD uses this transport on `.surface`; full-screen Live also uses it on
+/// `.avPlayer`. Stock and inline players share `AppleSubtitleCueLayer` and
+/// use `AppleStockPlayerSubtitles` when they own their controls.
 ///
 /// Policy table (see T5 spec):
 /// - VOD with a known duration → scrubber enabled, `m:ss` / `h:mm:ss` times.
-/// - live without a DVR window → scrubber hidden, "LIVE" badge, empty times.
-/// - live with a DVR window (`dvrWindowSeconds > 0`) → scrubber over the DVR
-///   window; the "LIVE" badge is tappable to seek back to the live edge.
+/// - live the player reports no usable rewind for → scrubber and skip buttons
+///   hidden, "LIVE" badge, empty times.
+/// - live with a real seekable range (`liveSeekableRange`, wider than
+///   `AppleLiveSeekPolicy.minimumUsefulSpan`) → scrubber over that range; the
+///   "LIVE" badge is tappable to seek back to the live edge.
 @MainActor
 @Observable
 public final class AppleTransportOverlayModel {
@@ -26,11 +28,15 @@ public final class AppleTransportOverlayModel {
     /// the view passes `request.isLive`.
     public let isLive: Bool
 
-    /// DVR window in seconds for live streams. The view sets this from
-    /// `request.effectiveDVRWindowSeconds` after construction (kept out of
-    /// `init` so the initializer signature stays `(coordinator:, isLive:)`).
-    /// `nil` (or `0`) means "no DVR window".
-    public var dvrWindowSeconds: Double? = nil
+    /// What the stream can ACTUALLY be seeked within, mirrored from the engine
+    /// on every position tick. Nil until the player reports one, and nil for a
+    /// live-edge-only source that can never rewind.
+    ///
+    /// Every live seek and every live readout is computed from this, not from
+    /// `dvrWindowSeconds`: that number is the load hint, identical (1800) for
+    /// every live channel, and clamping against it is why skip-back on a live
+    /// channel moved nothing a viewer could see (owner, GUI audit 2026-09-19).
+    public private(set) var liveSeekableRange: AppleSeekableRange? = nil
 
     /// Presentation route. Seeded from the coordinator in `init` and updated
     /// when the engine emits a `.route` event; drives whether the overlay and
@@ -39,26 +45,34 @@ public final class AppleTransportOverlayModel {
 
     /// Starts the next episode. Set by whatever presented the player and knows
     /// the season; nil for a movie, a live channel or the last episode.
-    public var nextEpisode: (() -> Void)? = nil
+    public var nextEpisode: (() -> Void)? = nil { didSet { syncEndHandOff() } }
     /// The next episode's `displayTitle`, for the card to name it. Set
     /// alongside `nextEpisode`; one without the other offers nothing.
-    public var nextEpisodeTitle: String? = nil
+    public var nextEpisodeTitle: String? = nil { didSet { syncEndHandOff() } }
     /// The viewer's "Auto Play Next Episode" setting. With it off the card
     /// still appears and still works — only the unattended start stops.
-    public var autoPlayNextEpisode: Bool = true
+    public var autoPlayNextEpisode: Bool = true { didSet { syncEndHandOff() } }
     /// Set when the viewer dismisses the card, which also stops the
     /// auto-advance for the rest of the episode. Cleared on the next load.
-    public private(set) var nextEpisodeDismissed = false
+    public private(set) var nextEpisodeDismissed = false { didSet { syncEndHandOff() } }
     /// Guards against firing the advance twice: the position observer ticks
     /// four times a second and the end can be reported more than once.
-    @ObservationIgnored private var hasAdvancedToNextEpisode = false
+    /// Held by the coordinator, like `pendingAudioPick`: SwiftUI can build
+    /// more than one model for the same player, and each one fired the advance
+    /// (2-3 starts per episode on the iPhone 27 sim).
+    private var hasAdvancedToNextEpisode: Bool {
+        get { coordinator.hasAdvancedToNextEpisode }
+        set { coordinator.hasAdvancedToNextEpisode = newValue }
+    }
 
     /// The stream's opening sequence, from its own chapter markers. Nil for
     /// content that carries none, which is most of it — see
     /// `AppleChapterMarkers`.
     public var introChapter: AppleChapter? = nil
     /// Sticky for the rest of the item: seeking back into the opening after
-    /// skipping must not put the button up again.
+    /// skipping must not put the button up again. It ends with the item —
+    /// see `clearIntroForNewItem()`, because this model outlives a load
+    /// whenever the viewer switches source or channel inside the player.
     public private(set) var hasSkippedIntro = false
 
     /// Whether the Skip Intro button belongs on screen right now.
@@ -81,9 +95,55 @@ public final class AppleTransportOverlayModel {
         await coordinator.userSeek(to: destination)
     }
 
+    /// Re-derives the opening from the engine's markers and whatever runtime is
+    /// known now. Idempotent and write-guarded, so calling it from both
+    /// `.tracks` and `.duration` costs no extra Observation invalidation.
+    private func refreshIntroChapter() {
+        let all = coordinator.engine.chapters
+        if chapters != all { chapters = all }
+        let found = AppleChapterMarkers.intro(in: all, duration: duration)
+        if introChapter != found { introChapter = found }
+    }
+
+    /// Every chapter the stream carries, for the scrubber marks and the
+    /// Chapters menu. The engine reported them and nothing showed them
+    /// (full test 2026-09-30: 16 for Top Gun: Maverick).
+    public private(set) var chapters: [AppleChapter] = []
+
+    /// Where the chapter marks sit on the scrubber, as fractions of it.
+    public var chapterMarkFractions: [Double] {
+        AppleChapterMarkers.scrubberFractions(chapters: chapters, duration: duration)
+    }
+
+    /// Seeks to a chapter's start through the scrubber's path.
+    public func jump(to chapter: AppleChapter) async {
+        bumpActivity()
+        appleTrace("chapter → \(chapter.title) at \(Int(chapter.start))s")
+        await coordinator.userSeek(to: max(0, chapter.start))
+    }
+
+    /// Re-reads the engine's real seekable span. Write-guarded: the position
+    /// observer ticks four times a second and an unchanged range must not
+    /// invalidate every Observation reader of this model.
+    private func refreshSeekableRange() {
+        // Live only. A VOD item's seekable range grows as it buffers, and
+        // mirroring that at four ticks a second would invalidate every
+        // Observation reader of this model — the track menu included — for a
+        // value nothing on a VOD screen reads.
+        let found = isLive ? coordinator.engine.seekableRange : nil
+        if liveSeekableRange != found { liveSeekableRange = found }
+    }
+
+    /// Drops the opening and the sticky skip when the engine leaves the item.
+    private func clearIntroForNewItem() {
+        if introChapter != nil { introChapter = nil }
+        if hasSkippedIntro { hasSkippedIntro = false }
+    }
+
     /// The end-of-episode card, or nil when there is nothing to offer yet.
     public var nextEpisodePrompt: AppleNextEpisodePrompt? {
-        guard nextEpisode != nil else { return nil }
+        // A provider's error clip is not the episode ending.
+        guard nextEpisode != nil, !coordinator.isPlaceholderPlayback else { return nil }
         return AppleNextEpisodePolicy.prompt(
             position: position,
             duration: duration,
@@ -100,10 +160,21 @@ public final class AppleTransportOverlayModel {
         bumpActivity()
     }
 
+    /// Tells the player whether `.ended` hands over to the next episode
+    /// (stay open) or closes it.
+    private func syncEndHandOff() {
+        coordinator.handsOffAtEnd = AppleNextEpisodePolicy.handsOffAtEnd(
+            hasNext: nextEpisode != nil && nextEpisodeTitle != nil, isLive: isLive,
+            isDismissed: nextEpisodeDismissed, isEnabled: autoPlayNextEpisode)
+    }
+
     /// Starts the next episode now, from the card.
     public func playNextEpisode() {
         guard let nextEpisode else { return }
         hasAdvancedToNextEpisode = true
+        // This one stays on screen until the next is ready; it must not keep
+        // talking over the wait.
+        coordinator.userPause()
         nextEpisode()
     }
 
@@ -116,19 +187,29 @@ public final class AppleTransportOverlayModel {
     public private(set) var position: Double = 0
     public private(set) var duration: Double? = nil
     public private(set) var audioTracks: [ApplePlaybackTrack] = []
-    /// Every embedded track, unfiltered. `visibleSubtitleTracks` is what the
+    /// The audio track playing: the engine's report, else the last pick.
+    public private(set) var selectedAudioID: Int?
+    /// The audio track the viewer picked that the engine has not reported
+    /// yet. An audio switch rebuilds the pipeline, and until it lands the
+    /// engine still reports the old track; adopting that put the check back
+    /// on English after Spanish was chosen (Apple TV verification 2026-10-01).
+    /// Held by the coordinator: the overlay can be rebuilt mid-switch.
+    private var pendingAudioID: Int? {
+        get { coordinator.pendingAudioPick }
+        set { coordinator.pendingAudioPick = newValue }
+    }
+    /// Every embedded track, unfiltered. `menuSubtitleTracks` is what the
     /// captions menu lists.
     public private(set) var subtitleTracks: [ApplePlaybackTrack] = []
 
-    /// The viewer's chosen subtitle languages, used to shorten the menu.
-    /// Empty means "no preference", which lists every track.
+    /// The viewer's chosen subtitle languages; the menu lists only these.
+    /// Empty means the device's primary language
+    /// (`AppleSubtitleTrackFilter.effectiveLanguages`).
     public var preferredSubtitleLanguages: [String] = []
     /// See `AetherPlaybackEngine.subtitleLanguagesAreExplicit`.
     public var subtitleLanguagesAreExplicit = false
 
-    /// The captions menu's list: the tracks in the viewer's languages. Falls
-    /// back to every track only when the languages were inferred from the
-    /// device rather than picked.
+    /// The tracks in the viewer's languages, best first.
     public var visibleSubtitleTracks: [ApplePlaybackTrack] {
         AppleSubtitleTrackFilter.visible(
             subtitleTracks,
@@ -136,10 +217,19 @@ public final class AppleTransportOverlayModel {
             isExplicitChoice: subtitleLanguagesAreExplicit)
     }
 
+    /// The manual choices in the viewer's languages, SDH and forced variants included.
+    public var menuSubtitleTracks: [ApplePlaybackTrack] {
+        AppleSubtitleTrackFilter.menu(subtitleTracks, preferredLanguages: preferredSubtitleLanguages,
+                                      activeTrackID: selectedSubtitleID)
+    }
+
     /// Decoded cues for the active subtitle track, mirrored from the engine for
-    /// the overlay to render on `.surface`. Empty on `.avPlayer` routes where the
-    /// system player's captions menu renders the track.
+    /// the overlay to render on either video route.
     public private(set) var subtitleCues: [AppleSubtitleCue] = []
+
+    /// The engine's `presentationTime`: the frame on screen, which cues follow.
+    /// Kept apart from `position`, the scrub clock, which the engine can hold.
+    public private(set) var cueTime: Double = 0
 
     /// The subtitle track the user selected through the overlay, tracked locally
     /// so the CC button reflects the selection immediately (before the engine
@@ -150,7 +240,27 @@ public final class AppleTransportOverlayModel {
 
     private var observationTask: Task<Void, Never>?
     private var hideTask: Task<Void, Never>?
-    private let hideDelay: Duration = .seconds(3)
+    /// Three seconds of stillness hides the chrome. A UI test cannot read a
+    /// button's frame and its neighbour's inside that window — the second query
+    /// lands after the timer — so the crawler and the live photo tests launch
+    /// with `-OpenStreamHoldPlayerChrome YES` and the timer stands down.
+    /// iPhone and iPad Live hold it four seconds, as the system player does.
+    private var hideDelay: Duration {
+        if Self.chromeIsHeldOpen { return .seconds(600) }
+        #if os(iOS)
+        if isLive { return .seconds(AppleLiveSystemChromePolicy.autoHideSeconds) }
+        #endif
+        return .seconds(3)
+    }
+
+    static let chromeIsHeldOpen: Bool = {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-OpenStreamHoldPlayerChrome")
+            || UserDefaults.standard.bool(forKey: "OpenStreamHoldPlayerChrome")
+        #else
+        return false
+        #endif
+    }()
 
     public init(coordinator: ApplePlaybackCoordinator, isLive: Bool) {
         self.coordinator = coordinator
@@ -158,11 +268,18 @@ public final class AppleTransportOverlayModel {
         // Seed from the engine's current synchronous state so the first render
         // is correct before any event has been emitted.
         self.position = coordinator.engine.position
+        self.cueTime = coordinator.engine.presentationTime
         self.duration = coordinator.engine.duration
         self.audioTracks = coordinator.engine.audioTracks
+        // A switch can outlive this overlay: the route leaves `.surface`
+        // while the pipeline rebuilds and a new overlay is built after it.
+        self.selectedAudioID = AppleTrackSelectionPolicy.audio(
+            engineActive: coordinator.engine.activeAudioTrackID,
+            pending: coordinator.pendingAudioPick, current: nil)
         self.subtitleTracks = coordinator.engine.subtitleTracks
+        self.chapters = coordinator.engine.chapters
         self.introChapter = AppleChapterMarkers.intro(
-            in: (coordinator.engine as? NativePlaybackEngine)?.chapters ?? [],
+            in: coordinator.engine.chapters,
             duration: coordinator.engine.duration
         )
         // The same persisted list the coordinator reads when no host hands it
@@ -174,14 +291,19 @@ public final class AppleTransportOverlayModel {
         self.preferredSubtitleLanguages = chosen ?? []
         self.subtitleLanguagesAreExplicit = chosen != nil
         self.route = coordinator.route
+        self.liveSeekableRange = isLive ? coordinator.engine.seekableRange : nil
+        // The engine may already have auto-selected a track from the viewer's
+        // captions preference before the overlay existed. Without this the CC
+        // key would open reading "off" over a picture with captions on it.
+        self.selectedSubtitleID = coordinator.engine.activeSubtitleTrackID
         startObserving()
         scheduleAutoHide()
     }
 
     // MARK: - Overlay visibility
 
-    /// The custom overlay exists only on `.surface` routes. On `.avPlayer`
-    /// routes the system player UI owns every control.
+    /// Whether VOD needs the custom transport. Live hosts can also mount it
+    /// on `.avPlayer` in place of AVKit's controls.
     public var showsOverlay: Bool { route == .surface }
 
     /// `true` when the centered spinning waiting indicator should be shown.
@@ -189,14 +311,24 @@ public final class AppleTransportOverlayModel {
     /// (`.resolving` / `.loading`) or while it is buffering / reconnecting
     /// (`.waiting`). On `.avPlayer` routes the system player shows its own
     /// spinner, so this is always `false`.
+    ///
+    /// A live channel shows it on either route: a stalled channel otherwise
+    /// sat on its last frame under a Play glyph (iPad v2 re-run).
     public var showsWaitingIndicator: Bool {
-        guard route == .surface else { return false }
+        guard route == .surface || isLive else { return false }
         switch coordinator.phase {
         case .resolving, .loading, .waiting:
             return true
         default:
             return false
         }
+    }
+
+    /// A live channel that stalled and is being reconnected: the overlay
+    /// says so under the spinner instead of offering Play.
+    public var showsReconnecting: Bool {
+        guard isLive, case .waiting = coordinator.phase else { return false }
+        return true
     }
 
     /// Text for the waiting indicator's accessibility label. The spinner has
@@ -216,9 +348,41 @@ public final class AppleTransportOverlayModel {
     /// `true` when the scrubber should be shown and accept input.
     public var isScrubbable: Bool {
         if isLive {
-            return (dvrWindowSeconds ?? 0) > 0
+            // The window the player proves it holds, not the one the request
+            // asked for. A sliding-window IPTV playlist with three segments in
+            // it gets no scrubber, because there is nothing to scrub.
+            return AppleLiveSeekPolicy.offersDVR(liveSeekableRange)
         }
         // VOD: scrubbable once a positive duration is known.
+        return (duration ?? 0) > 0
+    }
+
+    /// How far behind the live edge the viewer still counts as being at it.
+    /// A seek lands a fraction of a second off, and a stream's own edge moves
+    /// while the seek is in flight.
+    public static let liveEdgeTolerance: Double = 5
+
+    /// `true` while a live stream is playing at its edge — always true for a
+    /// live stream with no DVR window, because there is nowhere else to be.
+    ///
+    /// The LIVE badge is drawn from this. Without it, skipping back ten
+    /// seconds on a channel with a DVR window changed nothing a viewer could
+    /// see: the badge stayed red, the thumb moved a tenth of a percent, and
+    /// live carries no time readout (button crawl, 2026-09-19).
+    public var isAtLiveEdge: Bool {
+        guard isLive else { return false }
+        return AppleLiveSeekPolicy.isAtLiveEdge(
+            position: position,
+            in: liveSeekableRange,
+            tolerance: Self.liveEdgeTolerance
+        )
+    }
+
+    /// `true` when the ±10 s skip buttons belong on screen: they move the
+    /// picture. A live channel with no rewind gets none rather than two that
+    /// look enabled and swallow the tap.
+    public var canSkip: Bool {
+        if isLive { return AppleLiveSeekPolicy.offersDVR(liveSeekableRange) }
         return (duration ?? 0) > 0
     }
 
@@ -232,10 +396,8 @@ public final class AppleTransportOverlayModel {
     /// stream it is the window length; empty for plain live.
     public var durationText: String {
         if isLive {
-            if let window = dvrWindowSeconds, window > 0 {
-                return Self.timeText(window)
-            }
-            return ""
+            guard let range = liveSeekableRange, AppleLiveSeekPolicy.offersDVR(range) else { return "" }
+            return Self.timeText(range.span)
         }
         guard let duration, duration > 0 else { return "" }
         return Self.timeText(duration)
@@ -245,18 +407,11 @@ public final class AppleTransportOverlayModel {
     /// DVR window for live-with-DVR). `0` when not scrubbable.
     public var progress: Double {
         guard isScrubbable, position >= 0 else { return 0 }
-        let span = scrubSpan
-        guard span > 0 else { return 0 }
-        return min(1, max(0, position / span))
-    }
-
-    /// Total seconds the scrubber spans — duration for VOD, DVR window for
-    /// live-with-DVR. Used by `progress` and `scrub(to:)`.
-    private var scrubSpan: Double {
         if isLive {
-            return dvrWindowSeconds ?? 0
+            return AppleLiveSeekPolicy.progress(position: position, in: liveSeekableRange)
         }
-        return duration ?? 0
+        guard let duration, duration > 0 else { return 0 }
+        return min(1, max(0, position / duration))
     }
 
     // MARK: - Actions
@@ -273,43 +428,58 @@ public final class AppleTransportOverlayModel {
     /// Seek to `fraction` of the scrubbed window (`0...1`).
     public func scrub(to fraction: Double) async {
         bumpActivity()
-        let span = scrubSpan
-        guard span > 0 else { return }
-        let clamped = min(1, max(0, fraction))
-        let target = clamped * span
+        let target: Double
+        if isLive {
+            guard let live = AppleLiveSeekPolicy.scrubTarget(fraction: fraction, in: liveSeekableRange) else { return }
+            target = live
+        } else {
+            guard let duration, duration > 0 else { return }
+            target = min(1, max(0, fraction)) * duration
+        }
         await coordinator.userSeek(to: target)
     }
 
     /// Seek back to the live edge of the DVR window. Bound to the "LIVE" badge.
     public func seekToLiveEdge() async {
-        guard isLive, let window = dvrWindowSeconds, window > 0 else { return }
+        guard isLive, let range = liveSeekableRange, AppleLiveSeekPolicy.offersDVR(range) else { return }
         bumpActivity()
-        await coordinator.userSeek(to: window)
+        await coordinator.userSeek(to: range.end)
     }
 
     public func selectAudio(_ id: Int) {
         bumpActivity()
+        pendingAudioID = id
         coordinator.engine.selectAudioTrack(id: id)
+        selectedAudioID = id
     }
 
     public func selectSubtitle(_ id: Int?) {
         bumpActivity()
-        selectedSubtitleID = id
         coordinator.engine.selectSubtitleTrack(id: id)
+        selectedSubtitleID = coordinator.engine.activeSubtitleTrackID
     }
 
-    /// True when a subtitle track is selected. The CC button shows filled while
-    /// this is set; "Off" clears it. Local to the overlay's own selection so the
-    /// flag is the immediate, testable signal a track was picked.
-    public var isCCActive: Bool { selectedSubtitleID != nil }
+    /// True when a subtitle track is selected; "Off" clears it. Seeded from
+    /// the engine's own selection and then driven by the overlay, so it is
+    /// the immediate, testable signal that captions are on screen (the
+    /// Audio & Subtitles bubble fills while it is set).
+    public var isCCActive: Bool { AppleCaptionsToggle.isOn(selected: selectedSubtitleID) }
 
-    /// The cue active at the current position, for the overlay to render on
-    /// `.surface`. nil when no track is selected, no cue overlaps the position,
-    /// or the route is `.avPlayer` (cues are empty there — the system captions
-    /// menu renders the track).
-    public var activeSubtitleCue: AppleSubtitleCue? {
-        guard !subtitleCues.isEmpty else { return nil }
-        return subtitleCues.first { position >= $0.startTime && position < $0.endTime }
+    /// The cues active at the frame on screen on either video route. Empty
+    /// when no track is selected or no cue overlaps the position. Stock and
+    /// inline players use the same policy through `AppleStockPlayerSubtitles`.
+    public var activeSubtitleCues: [AppleSubtitleCue] {
+        AppleSubtitleCueLayerPolicy.activeCues(in: subtitleCues, at: cueTime,
+                                               timing: coordinator.subtitleTiming)
+    }
+
+    /// The per-play subtitle delay and frame-rate fix (held by the coordinator).
+    public var subtitleTiming: AppleSubtitleTiming { coordinator.subtitleTiming }
+
+    /// A subtitle-menu timing action: the cue on screen moves at once, paused or not.
+    public func changeSubtitleTiming(_ change: AppleSubtitleTiming.Change) {
+        bumpActivity()
+        coordinator.subtitleTiming.apply(change)
     }
 
     // MARK: - Route-derived secondary actions
@@ -320,8 +490,9 @@ public final class AppleTransportOverlayModel {
     public var showsAirPlay: Bool { route == .avPlayer }
 
     /// Picture-in-picture button is shown on `.avPlayer` routes on iOS
-    /// (toggles PiP through the AVKit controller). tvOS has no PiP;
-    /// `.surface` hides it. The T7e overlay no longer renders it.
+    /// (toggles PiP through the AVKit controller). tvOS offers PiP from the
+    /// stock player only (`AppleTVPictureInPicturePolicy`), never from this
+    /// overlay; `.surface` hides it. The T7e overlay no longer renders it.
     public var showsPictureInPicture: Bool {
         #if os(iOS)
         return route == .avPlayer
@@ -335,15 +506,16 @@ public final class AppleTransportOverlayModel {
 
     /// Starts the next episode once this one has run out, unless the viewer
     /// turned auto-play off or dismissed the card.
-    private func advanceToNextEpisodeIfDue() {
-        guard !hasAdvancedToNextEpisode, let nextEpisode else { return }
+    private func advanceToNextEpisodeIfDue(hasEnded: Bool = false) {
+        guard !hasAdvancedToNextEpisode, let nextEpisode, !coordinator.isPlaceholderPlayback else { return }
         guard AppleNextEpisodePolicy.shouldAutoAdvance(
             position: position,
-            duration: duration,
+            duration: duration ?? coordinator.engine.duration,
             nextTitle: nextEpisodeTitle,
             isLive: isLive,
             isDismissed: nextEpisodeDismissed,
-            isEnabled: autoPlayNextEpisode
+            isEnabled: autoPlayNextEpisode,
+            hasEnded: hasEnded
         ) else { return }
         hasAdvancedToNextEpisode = true
         appleTrace("next episode auto-advance → \(nextEpisodeTitle ?? "?")")
@@ -352,18 +524,25 @@ public final class AppleTransportOverlayModel {
 
     // MARK: - Skip
 
-    /// Skip by `seconds` (typically ±10). Clamped to `[0, duration]` for
-    /// VOD, to the DVR window for live-with-DVR; no-op for live without DVR.
+    /// Skip by `seconds` (typically ±10). Clamped to `[0, duration]` for VOD
+    /// and to the stream's real seekable range for live; a no-op for a live
+    /// source with no rewind, and for a move the range leaves nowhere to go.
     public func skip(by seconds: Double) async {
         bumpActivity()
         let target: Double
         if isLive {
-            guard let window = dvrWindowSeconds, window > 0 else { return }
-            target = min(window, max(0, position + seconds))
+            guard let live = AppleLiveSeekPolicy.skipTarget(
+                from: position, by: seconds, in: liveSeekableRange
+            ) else {
+                appleTrace("live skip \(Int(seconds))s ignored — seekable \(liveSeekableRange.map { "\(Int($0.start))–\(Int($0.end))s" } ?? "none") at \(Int(position))s")
+                return
+            }
+            target = live
         } else {
             guard let duration, duration > 0 else { return }
             target = min(duration, max(0, position + seconds))
         }
+        appleTrace("skip \(Int(seconds))s: \(Int(position))s → \(Int(target))s")
         await coordinator.userSeek(to: target)
     }
 
@@ -372,6 +551,47 @@ public final class AppleTransportOverlayModel {
     public func bumpActivity() {
         controlsVisible = true
         scheduleAutoHide()
+    }
+
+    public func hideControls() {
+        controlsVisible = false
+        hideTask?.cancel()
+    }
+
+    /// True while a menu from the transport (Audio & Subtitles, More) is open.
+    /// Removing the chrome closed the open menu after three seconds (full
+    /// test 2026-09-30), so the auto-hide stands down until it closes.
+    public var menuIsOpen: Bool { openMenuItems > 0 }
+
+    /// Menu rows on screen. A menu reports each of its rows appearing and
+    /// disappearing, so the count is balanced however many rows it has.
+    private var openMenuItems = 0
+
+    /// How long an open menu holds the chrome before the timer resumes, in
+    /// case the menu's close is never reported.
+    private let openMenuHideDelay: Duration = .seconds(60)
+
+    public func menuItemAppeared() {
+        openMenuItems += 1
+        guard openMenuItems == 1 else { return }
+        controlsVisible = true
+        scheduleAutoHide()
+    }
+
+    public func menuItemDisappeared() {
+        guard openMenuItems > 0 else { return }
+        openMenuItems -= 1
+        if openMenuItems == 0 { scheduleAutoHide() }
+    }
+
+    /// Apple TV: true while Skip Intro holds focus. The auto-hide stands down
+    /// until focus leaves it: hiding the chrome took the focus back to the
+    /// picture a moment after it landed (Apple TV verification 2026-10-01).
+    public var focusedPromptHoldsControls = false {
+        didSet {
+            guard focusedPromptHoldsControls != oldValue else { return }
+            scheduleAutoHide()
+        }
     }
 
     // MARK: - Formatting
@@ -404,16 +624,33 @@ public final class AppleTransportOverlayModel {
         }
     }
 
-    private func apply(_ event: ApplePlaybackEngineEvent) {
+    /// Internal so a model test can feed it events without an engine stream.
+    func apply(_ event: ApplePlaybackEngineEvent) {
         switch event {
-        case .phase:
-            // Phase is read directly from the coordinator; re-evaluate auto-hide.
+        case .phase(let phase):
+            // A new load runs through the engine's `stop()`, which reports
+            // `.idle`; from here that is the only load boundary in sight (the
+            // coordinator's attempt counter is private). The opening belongs to
+            // the item, so both the marker and the skip end with it.
+            if phase == .idle {
+                clearIntroForNewItem()
+                // A new item has its own tracks; an unconfirmed pick is moot.
+                pendingAudioID = nil
+            }
+            // A load boundary replaces the item and with it the window.
+            refreshSeekableRange()
+            if phase == .ended { advanceToNextEpisodeIfDue(hasEnded: true) }
+            // Phase is otherwise read directly from the coordinator;
+            // re-evaluate auto-hide.
             scheduleAutoHide()
         case .route(let route):
             self.route = route
         case .position(let seconds):
             let clamped = max(0, seconds)
             if position != clamped { position = clamped }
+            // The window slides with the stream: re-read it on every tick so
+            // the badge, the scrubber and the skip bounds all follow the edge.
+            refreshSeekableRange()
             advanceToNextEpisodeIfDue()
             // Cues carry source PTS and the active cue rolls with the position;
             // re-read on each tick so the overlay renders the current cue, but
@@ -422,22 +659,37 @@ public final class AppleTransportOverlayModel {
             // invalidated on every position tick.
             let cues = coordinator.engine.subtitleCues
             if subtitleCues != cues { subtitleCues = cues }
+            let presented = coordinator.engine.presentationTime
+            if cueTime != presented { cueTime = presented }
         case .duration(let seconds):
-            if duration != seconds { duration = seconds }
+            guard duration != seconds else { break }
+            duration = seconds
+            // The runtime and the chapter list come from independent engine
+            // publishers, so a runtime that lands *after* the chapters has to
+            // re-run the marker test: `AppleChapterMarkers.intro` can only skip
+            // a mislabelled single-chapter file once it knows the runtime to
+            // measure the chapter against.
+            refreshIntroChapter()
         case .tracks:
             // Chapters land in the same pass as the tracks, after `load`
             // returns, so this is where a stream's opening sequence becomes
             // known.
-            if let native = coordinator.engine as? NativePlaybackEngine {
-                let found = AppleChapterMarkers.intro(in: native.chapters, duration: duration)
-                if introChapter != found { introChapter = found }
-            }
+            refreshIntroChapter()
             let audio = coordinator.engine.audioTracks
             if audioTracks != audio { audioTracks = audio }
+            let active = coordinator.engine.activeAudioTrackID
+            if active != nil, active == pendingAudioID {
+                pendingAudioID = nil
+            }
+            let audioID = AppleTrackSelectionPolicy.audio(
+                engineActive: active, pending: pendingAudioID, current: selectedAudioID)
+            if audioID != selectedAudioID { selectedAudioID = audioID }
             let subtitles = coordinator.engine.subtitleTracks
             if subtitleTracks != subtitles { subtitleTracks = subtitles }
             let cues = coordinator.engine.subtitleCues
             if subtitleCues != cues { subtitleCues = cues }
+            // Nil is an authoritative Off too, including a native-menu action.
+            selectedSubtitleID = coordinator.engine.activeSubtitleTrackID
         case .failure:
             break
         }
@@ -449,12 +701,13 @@ public final class AppleTransportOverlayModel {
 
     private func scheduleAutoHide() {
         hideTask?.cancel()
-        guard case .playing = coordinator.phase else {
-            // Keep controls visible while paused / buffering / failed.
+        guard case .playing = coordinator.phase, !focusedPromptHoldsControls else {
+            // Keep controls visible while paused / buffering / failed, and
+            // while a focused prompt holds them.
             controlsVisible = true
             return
         }
-        let delay = hideDelay
+        let delay = menuIsOpen ? max(hideDelay, openMenuHideDelay) : hideDelay
         hideTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: delay)
             guard !Task.isCancelled, let self else { return }

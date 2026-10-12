@@ -215,11 +215,12 @@ struct AppleAddonManifestEdgeCaseTests {
         #expect(manifest.id == "tmdb-addon")
         #expect(manifest.version == "3.1.7")
         #expect(manifest.resources == ["catalog", "meta"])
-        #expect(manifest.catalogs.count == AppleStremioManifest.maximumCatalogs)
+        // All 32 are stored so Settings can offer each (add-on sweep 2026-09-30).
+        #expect(manifest.catalogs.count == 32)
         #expect(manifest.catalogs.first?.id == "tmdb.latest")
         #expect(manifest.catalogs.contains { $0.id == "tmdb.top" && $0.type == "movie" })
         // `extra: [{name: "genre", isRequired: false}, {name: "skip"}]`
-        #expect(manifest.catalogs.allSatisfy { !$0.requiresInput })
+        #expect(manifest.catalogs.prefix(12).allSatisfy { !$0.requiresInput })
         #expect(!manifest.requiresConfiguration)
         #expect(manifest.logoURL?.absoluteString == "https://tmdb.elfhosted.com/logo.png")
     }

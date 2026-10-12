@@ -8,7 +8,7 @@ public enum AppleProtectedHTTPPlaybackError: Error, LocalizedError, Sendable {
 
     public var errorDescription: String? {
         switch self {
-        case .listenerUnavailable: "OpenStream couldn’t start its private Live TV playback bridge."
+        case .listenerUnavailable: "oStream couldn’t start its private Live TV playback bridge."
         case .invalidUpstream: "The Live TV provider returned an invalid stream address."
         case .invalidRequest: "The private Live TV playback request was invalid."
         }
@@ -42,7 +42,15 @@ public actor AppleProtectedHTTPPlaybackServer {
         /// ID, for registered children that are themselves playlists (e.g. a
         /// media playlist referenced from a master playlist).
         var childResolvedURLs: [String: URL] = [:]
+        /// Serve `captionMasterPath` as a one-variant master declaring CC1 in
+        /// front of the proxied media playlist (`AppleLiveCaptionWrapPolicy`).
+        var declaresCaptions = false
     }
+
+    /// The synthesized master's path, and the variant it names. The variant is
+    /// the session root, proxied exactly as an unwrapped channel's playlist.
+    static let captionMasterPath = "captions.m3u8"
+    static let captionVariantPath = "stream.m3u8"
 
     private var sessions: [String: Session] = [:]
     private var listener: NWListener?
@@ -51,10 +59,14 @@ public actor AppleProtectedHTTPPlaybackServer {
 
     public init() {}
 
+    /// `declaringCaptions` returns the synthesized master's URL instead of the
+    /// proxied upstream's; the master names the proxied upstream, which carries
+    /// the same headers as ever. Only for a live HLS media playlist.
     public func playbackURL(
         upstreamURL: URL,
         requestHeaders: [String: String] = [:],
-        lifetime: TimeInterval = 4 * 60 * 60
+        lifetime: TimeInterval = 4 * 60 * 60,
+        declaringCaptions: Bool = false
     ) async throws -> URL {
         guard let scheme = upstreamURL.scheme?.lowercased(),
               scheme == "http" || scheme == "https",
@@ -69,8 +81,12 @@ public actor AppleProtectedHTTPPlaybackServer {
             upstreamURL: upstreamURL,
             requestHeaders: Self.safeHeaders(requestHeaders),
             expiresAt: .now.addingTimeInterval(min(max(lifetime, 60), 24 * 60 * 60)),
-            childURLs: [:]
+            childURLs: [:],
+            declaresCaptions: declaringCaptions
         )
+        if declaringCaptions {
+            return URL(string: "http://127.0.0.1:\(port)/live/\(token)/\(Self.captionMasterPath)")!
+        }
         let ext = Self.safeExtension(upstreamURL.pathExtension)
         return URL(string: "http://127.0.0.1:\(port)/live/\(token)/stream.\(ext)")!
     }
@@ -179,6 +195,16 @@ public actor AppleProtectedHTTPPlaybackServer {
             )
             return
         }
+        if session.declaresCaptions, pieces.count == 3, pieces[2] == Self.captionMasterPath {
+            let body = Data(AppleHLSCaptionDeclaration.master(wrapping: Self.captionVariantPath).utf8)
+            let headers = "HTTP/1.1 200 OK\r\n"
+                + "Content-Type: application/vnd.apple.mpegurl\r\n"
+                + "Content-Length: \(body.count)\r\n"
+                + "Cache-Control: no-store\r\nConnection: close\r\n\r\n"
+            try await send(Data(headers.utf8) + (method == "HEAD" ? Data() : body),
+                           connection: connection, final: true)
+            return
+        }
         let childID: String?
         let originURL: URL
         if pieces.count >= 4, pieces[2] == "resource" {
@@ -204,10 +230,14 @@ public actor AppleProtectedHTTPPlaybackServer {
         // request can't make the same media sequence resolve to a different
         // absolute segment URL between two live playlist refreshes.
         let stickyTarget = Self.stickyURL(childID: childID, in: session)
+        // A playlist may name a different host directly, with no redirect
+        // delegate hop. Credentials belong to the session's root origin.
+        let resourceHeaders = Self.isSameOrigin(originURL, session.upstreamURL) ? session.requestHeaders
+            : session.requestHeaders.filter { !["authorization", "cookie"].contains($0.key.lowercased()) }
         var attempt = await attemptFetch(
             method: method,
             lines: lines,
-            requestHeaders: session.requestHeaders,
+            requestHeaders: resourceHeaders,
             targetURL: stickyTarget ?? originURL,
             originURL: originURL,
             connection: connection
@@ -220,7 +250,7 @@ public actor AppleProtectedHTTPPlaybackServer {
             attempt = await attemptFetch(
                 method: method,
                 lines: lines,
-                requestHeaders: session.requestHeaders,
+                requestHeaders: resourceHeaders,
                 targetURL: originURL,
                 originURL: originURL,
                 connection: connection

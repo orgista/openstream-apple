@@ -1,8 +1,9 @@
 import Foundation
+import Synchronization
 import Testing
 @testable import OpenStreamApple
 
-private final class OfflineDownloadURLProtocol: URLProtocol, @unchecked Sendable {
+private final class OfflineDownloadURLProtocol: URLProtocol {
     private struct Fixture {
         var data = Data()
         var chunkSize = 16_384
@@ -12,10 +13,8 @@ private final class OfflineDownloadURLProtocol: URLProtocol, @unchecked Sendable
         var requests: [URLRequest] = []
     }
 
-    private static let lock = NSLock()
-    nonisolated(unsafe) private static var fixture = Fixture()
-    private let stateLock = NSLock()
-    private var stopped = false
+    private static let fixture = Mutex(Fixture())
+    private let stopped = Mutex(false)
 
     static func configure(
         data: Data,
@@ -24,29 +23,24 @@ private final class OfflineDownloadURLProtocol: URLProtocol, @unchecked Sendable
         ignoreRange: Bool = false,
         failOnce: URLError.Code? = nil
     ) {
-        lock.lock()
-        fixture = Fixture(
-            data: data,
-            chunkSize: chunkSize,
-            chunkDelay: chunkDelay,
-            ignoreRange: ignoreRange,
-            failOnce: failOnce,
-            requests: []
-        )
-        lock.unlock()
+        fixture.withLock {
+            $0 = Fixture(
+                data: data,
+                chunkSize: chunkSize,
+                chunkDelay: chunkDelay,
+                ignoreRange: ignoreRange,
+                failOnce: failOnce,
+                requests: []
+            )
+        }
     }
 
     static func setIgnoreRange(_ value: Bool) {
-        lock.lock()
-        fixture.ignoreRange = value
-        lock.unlock()
+        fixture.withLock { $0.ignoreRange = value }
     }
 
     static func recordedRequests() -> [URLRequest] {
-        lock.lock()
-        let value = fixture.requests
-        lock.unlock()
-        return value
+        fixture.withLock { $0.requests }
     }
 
     override class func canInit(with request: URLRequest) -> Bool {
@@ -56,15 +50,12 @@ private final class OfflineDownloadURLProtocol: URLProtocol, @unchecked Sendable
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
     override func startLoading() {
-        Self.lock.lock()
-        Self.fixture.requests.append(request)
-        let data = Self.fixture.data
-        let chunkSize = Self.fixture.chunkSize
-        let delay = Self.fixture.chunkDelay
-        let ignoreRange = Self.fixture.ignoreRange
-        let failure = Self.fixture.failOnce
-        Self.fixture.failOnce = nil
-        Self.lock.unlock()
+        let request = request
+        let (data, chunkSize, delay, ignoreRange, failure) = Self.fixture.withLock { fixture in
+            fixture.requests.append(request)
+            defer { fixture.failOnce = nil }
+            return (fixture.data, fixture.chunkSize, fixture.chunkDelay, fixture.ignoreRange, fixture.failOnce)
+        }
 
         if let failure {
             client?.urlProtocol(self, didFailWithError: URLError(failure))
@@ -103,31 +94,24 @@ private final class OfflineDownloadURLProtocol: URLProtocol, @unchecked Sendable
     }
 
     override func stopLoading() {
-        stateLock.lock()
-        stopped = true
-        stateLock.unlock()
+        stopped.withLock { $0 = true }
     }
 
     private var isStopped: Bool {
-        stateLock.lock()
-        let value = stopped
-        stateLock.unlock()
-        return value
+        stopped.withLock { $0 }
     }
 }
 
+/// Waits for the transfer to reach a state. No wall-clock deadline: the
+/// transfer's steps run on the main actor, which the parallel gate can keep
+/// busy for seconds; the suite's time limit fails a state that never comes.
 @MainActor
 private func waitForDownloadState(
-    timeout: Duration = .seconds(4),
     _ predicate: @escaping (AppleOfflineDownloadCoordinator.State) -> Bool
 ) async throws {
-    let clock = ContinuousClock()
-    let deadline = clock.now.advanced(by: timeout)
-    while clock.now < deadline {
-        if predicate(DownloadTestContext.coordinator.state) { return }
+    while !predicate(DownloadTestContext.coordinator.state) {
         try await Task.sleep(for: .milliseconds(10))
     }
-    Issue.record("Timed out waiting for download state: \(DownloadTestContext.coordinator.state)")
 }
 
 @MainActor
@@ -135,7 +119,7 @@ private enum DownloadTestContext {
     static var coordinator = AppleOfflineDownloadCoordinator()
 }
 
-@Suite(.serialized)
+@Suite(.serialized, .timeLimit(.minutes(1)))
 @MainActor
 struct AppleOfflineDownloadCoordinatorTests {
     private func makeContext(data: Data) throws -> (AppleOfflineDownloadCoordinator, AppleOfflineMediaStore, URL) {
@@ -307,6 +291,22 @@ struct AppleOfflineDownloadCoordinatorTests {
         coordinator.retry()
         try await waitForDownloadState { $0.isCompleted }
         #expect(await store.record(for: "movie:fixture") != nil)
+    }
+
+    @Test func noStreamsFromTheResolverSaysNoDownloadableSource() async throws {
+        let (coordinator, _, root) = try makeContext(data: Data())
+        defer { try? FileManager.default.removeItem(at: root) }
+        coordinator.start(request: request(), resolvePlans: { throw AppleStremioPlaybackResolutionError.noStreams })
+        try await waitForDownloadState { if case .failed = $0 { return true }; return false }
+        #expect(coordinator.state == .failed(item: "Sample Movie", message: AppleOfflineDownloadFailure.noDownloadSource.message))
+    }
+
+    @Test func otherResolverFailuresStillSayPreparationFailed() async throws {
+        let (coordinator, _, root) = try makeContext(data: Data())
+        defer { try? FileManager.default.removeItem(at: root) }
+        coordinator.start(request: request(), resolvePlans: { throw AppleStremioPlaybackResolutionError.gatewayUnavailable })
+        try await waitForDownloadState { if case .failed = $0 { return true }; return false }
+        #expect(coordinator.state == .failed(item: "Sample Movie", message: AppleOfflineDownloadFailure.preparationFailed.message))
     }
 
     @Test func localDownloadPlatformPolicyRejectsTVAndVision() {

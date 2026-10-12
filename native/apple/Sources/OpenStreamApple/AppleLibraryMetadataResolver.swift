@@ -4,7 +4,27 @@ import Foundation
 actor AppleLibraryMetadataResolver {
     static let shared = AppleLibraryMetadataResolver()
     typealias Lookup = @Sendable (AppleLibraryTitle, [AppleSource], String, String) async throws -> AppleCatalogItem?
-    private struct Entry: Codable { let value: AppleCatalogItem?; let checkedAt: Date; let addedAt: Date }
+    private struct Entry: Codable {
+        let value: AppleCatalogItem?
+        let checkedAt: Date
+        let addedAt: Date
+        /// Which shape of `AppleCatalogItem` this entry was written with.
+        /// Absent in everything written before `schema` existed, which reads
+        /// back as `0` — see `currentSchema`.
+        var schema: Int?
+    }
+
+    /// Bumped when a new field means a cached entry is *missing* something
+    /// rather than merely being old.
+    ///
+    /// 1 → `AppleCatalogItem.logoURL`. Without this, a viewer who already had
+    /// a Library keeps a hero with no wordmark for up to the seven-day
+    /// lifetime below, because the cached JSON simply has no logo in it — the
+    /// fix would look like it had not shipped. Re-resolving is the same work
+    /// the title did on its first ever appearance, four at a time, and
+    /// `addedAt` is carried across so "Recently Added" does not reshuffle.
+    private static let currentSchema = 1
+
     private let directory: URL
     private let lookup: Lookup
     private var active = 0
@@ -37,8 +57,12 @@ actor AppleLibraryMetadataResolver {
         for group in groups {
             guard let item = group.items.first else { continue }
             let file = directory.appendingPathComponent(item.sourceID.uuidString).appendingPathComponent(Self.cacheKey(item) + ".json")
+            // Same schema gate as `resolve`. Without it a stale entry
+            // published here would stick: the store only resolves a group
+            // whose metadata is still nil, so the old shape would never be
+            // asked to refresh.
             if let data = try? Data(contentsOf: file), let entry = try? JSONDecoder().decode(Entry.self, from: data),
-               let value = entry.value { result[group.id] = value }
+               (entry.schema ?? 0) == Self.currentSchema, let value = entry.value { result[group.id] = value }
         }
         return result
     }
@@ -52,7 +76,8 @@ actor AppleLibraryMetadataResolver {
         let file = directory.appendingPathComponent(item.sourceID.uuidString)
             .appendingPathComponent(Self.cacheKey(item) + ".json")
         let cached = (try? Data(contentsOf: file)).flatMap { try? JSONDecoder().decode(Entry.self, from: $0) }
-        if let cached, Date().timeIntervalSince(cached.checkedAt) < (cached.value == nil ? 3600 : 604800) { return cached.value }
+        if let cached, (cached.schema ?? 0) == Self.currentSchema,
+           Date().timeIntervalSince(cached.checkedAt) < (cached.value == nil ? 3600 : 604800) { return cached.value }
         // Waiting belongs to the card's task: disappearing cards cancel immediately.
         while active >= 4 { try await Task.sleep(for: .milliseconds(30)) }
         try Task.checkCancellation()
@@ -62,7 +87,8 @@ actor AppleLibraryMetadataResolver {
         guard parsed.kind != .other else { return nil }
         let value = try await lookup(parsed, sources, tmdbKey, omdbKey)
         try Task.checkCancellation()
-        let entry = Entry(value: value, checkedAt: Date(), addedAt: cached?.addedAt ?? Date())
+        let entry = Entry(value: value, checkedAt: Date(), addedAt: cached?.addedAt ?? Date(),
+                          schema: Self.currentSchema)
         try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
         try JSONEncoder().encode(entry).write(to: file, options: .atomic)
         return value
@@ -116,10 +142,11 @@ actor AppleLibraryMetadataResolver {
 
     static func liveLookup(_ parsed: AppleLibraryTitle, _ sources: [AppleSource], _ tmdbKey: String, _ omdbKey: String) async throws -> AppleCatalogItem? {
         let type = parsed.kind == .show ? "series" : "movie"
+#if OPENSTREAM_ADDONS
         var cinemeta = AppleStremioMetadataClient.defaultMetadataSource
         cinemeta.resources = ["catalog", "meta"]
         cinemeta.catalogs = [.init(type: type, id: "top", supportsSearch: true)]
-        let candidates = [cinemeta] + sources.filter { $0.isEnabled && $0.kind == .stremio && $0.manifestID != cinemeta.manifestID }
+        let candidates = [cinemeta] + sources.filter { $0.isEnabled && $0.isAddon && $0.manifestID != cinemeta.manifestID }
         let client = AppleStremioCatalogClient()
         for source in candidates {
             for catalog in source.catalogs.filter({ $0.type == type && $0.supportsSearch }).prefix(1) {
@@ -129,13 +156,18 @@ actor AppleLibraryMetadataResolver {
                     if let match = bestMatch(results, parsed: parsed) {
                         let detail = try? await AppleStremioMetadataClient().details(source: source, type: type, mediaID: match.mediaID)
                         try Task.checkCancellation()
+                        // `detail.logoURL` is the title's wordmark and it came
+                        // back in this very response. Dropping it is why the
+                        // Library hero could only ever draw a text title.
                         return AppleCatalogItem(mediaID: match.mediaID, type: type, name: detail?.title ?? match.name,
                             posterURL: detail?.posterURL ?? match.posterURL, backgroundURL: detail?.backdropURL ?? match.backgroundURL,
-                            summary: detail?.overview ?? match.summary, releaseInfo: detail?.releaseInfo ?? match.releaseInfo)
+                            summary: detail?.overview ?? match.summary, releaseInfo: detail?.releaseInfo ?? match.releaseInfo,
+                            logoURL: detail?.logoURL ?? match.logoURL)
                     }
                 } catch { try Task.checkCancellation() }
             }
         }
+#endif
         if !tmdbKey.isEmpty, let result = try? await credentialLookup(parsed, key: tmdbKey, tmdb: true) { return result }
         try Task.checkCancellation()
         if !omdbKey.isEmpty { return try await credentialLookup(parsed, key: omdbKey, tmdb: false) }
@@ -171,16 +203,49 @@ actor AppleLibraryMetadataResolver {
                 releaseInfo: (value[tmdb ? (show ? "first_air_date" : "release_date") : "Year"] as? String).map { String($0.prefix(4)) })
         }
         guard let match = bestMatch(items, parsed: parsed) else { return nil }
-        if tmdb {
-            var ids = URLComponents(string: "https://api.themoviedb.org/3/\(show ? "tv" : "movie")/\(match.mediaID.dropFirst(5))/external_ids")!
-            if !bearer { ids.queryItems = [.init(name: "api_key", value: key)] }
-            request.url = ids.url
-            if let (data, _) = try? await AppleTMDBClient.liveLoader(request), data.count < 2_000_000,
-               let value = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let imdb = value["imdb_id"] as? String, AppleStremioMetadataClient.isIMDBIdentifier(imdb) {
-                return match.withMediaID(imdb)
-            }
+        guard tmdb else { return match }
+        // Still one follow-up request, not two: the external ids this match
+        // needs and the textless backdrop the hero wants both hang off the
+        // record, so they are appended to the same call that used to fetch
+        // `/external_ids` on its own.
+        var record = URLComponents(string: "https://api.themoviedb.org/3/\(show ? "tv" : "movie")/\(match.mediaID.dropFirst(5))")!
+        record.queryItems = [
+            .init(name: "append_to_response", value: "external_ids,images"),
+            .init(name: "include_image_language", value: "null"),
+        ]
+        if !bearer { record.queryItems?.append(.init(name: "api_key", value: key)) }
+        request.url = record.url
+        guard let (data, _) = try? await AppleTMDBClient.liveLoader(request), data.count < 2_000_000,
+              let value = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return match }
+        var result = match
+        if let path = textlessBackdropPath(in: value) {
+            result = result.withHeroArtwork(
+                backgroundURL: URL(string: "https://image.tmdb.org/t/p/w1280\(path)"), logoURL: nil
+            )
         }
-        return match
+        if let imdb = (value["external_ids"] as? [String: Any])?["imdb_id"] as? String,
+           AppleStremioMetadataClient.isIMDBIdentifier(imdb) {
+            result = result.withMediaID(imdb)
+        }
+        return result
+    }
+
+    /// The best textless backdrop in an appended `images` block, or nothing —
+    /// in which case the search result's own `backdrop_path` stands.
+    private static func textlessBackdropPath(in value: [String: Any]) -> String? {
+        let backdrops = ((value["images"] as? [String: Any])?["backdrops"] as? [[String: Any]] ?? [])
+            .map {
+                AppleArtworkImage(
+                    filePath: $0["file_path"] as? String,
+                    // A JSON null arrives as NSNull and casts to nil, which is
+                    // precisely what "textless" means here.
+                    languageCode: $0["iso_639_1"] as? String,
+                    voteAverage: $0["vote_average"] as? Double
+                )
+            }
+        guard case .textlessBackdrop(let path)? = AppleTextlessBackdropPolicy.choose(
+            backdrops: backdrops, backdropPath: nil, posterPath: nil
+        ) else { return nil }
+        return path
     }
 }

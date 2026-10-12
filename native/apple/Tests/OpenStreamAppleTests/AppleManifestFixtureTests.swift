@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 import Testing
 @testable import OpenStreamApple
 
@@ -140,8 +141,8 @@ struct AppleManifestFixtureTests {
     }
 }
 
-private final class ManifestFixtureURLProtocol: URLProtocol, @unchecked Sendable {
-    struct Fixture: @unchecked Sendable {
+private final class ManifestFixtureURLProtocol: URLProtocol {
+    struct Fixture: Sendable {
         let statusCode: Int
         let body: Data
         let contentLength: Int64?
@@ -169,19 +170,20 @@ private final class ManifestFixtureURLProtocol: URLProtocol, @unchecked Sendable
         let hasURLCredentials: Bool
     }
 
-    private static let lock = NSLock()
-    nonisolated(unsafe) private static var fixtures: [String: Fixture] = [:]
-    nonisolated(unsafe) private static var requestCounts: [String: Int] = [:]
-    nonisolated(unsafe) private static var requestAudits: [RequestAudit] = []
-    private let stateLock = NSLock()
-    private var stopped = false
+    private struct SharedState {
+        var fixtures: [String: Fixture] = [:]
+        var requestCounts: [String: Int] = [:]
+        var requestAudits: [RequestAudit] = []
+    }
+
+    private static let shared = Mutex(SharedState())
+    private let stopped = Mutex(false)
+    // Touched only on the URL loading thread (startLoading, stopLoading and the timer all run there).
+    private var delayTimer: Timer?
+    private var delayedDelivery: (fixture: Fixture, requestURL: URL)?
 
     static func configure(_ fixtures: [String: Fixture]) {
-        Self.lock.lock()
-        self.fixtures = fixtures
-        requestCounts = [:]
-        requestAudits = []
-        Self.lock.unlock()
+        shared.withLock { $0 = SharedState(fixtures: fixtures) }
     }
 
     static func reset() {
@@ -189,15 +191,11 @@ private final class ManifestFixtureURLProtocol: URLProtocol, @unchecked Sendable
     }
 
     static func requestCount(path: String) -> Int {
-        lock.lock()
-        defer { lock.unlock() }
-        return requestCounts[path, default: 0]
+        shared.withLock { $0.requestCounts[path, default: 0] }
     }
 
     static func audit() -> [RequestAudit] {
-        lock.lock()
-        defer { lock.unlock() }
-        return requestAudits
+        shared.withLock { $0.requestAudits }
     }
 
     override class func canInit(with request: URLRequest) -> Bool {
@@ -208,42 +206,56 @@ private final class ManifestFixtureURLProtocol: URLProtocol, @unchecked Sendable
 
     override func startLoading() {
         guard let url = request.url else { return }
-        let fixture: Fixture?
-        Self.lock.lock()
-        fixture = Self.fixtures[url.path]
-        Self.requestCounts[url.path, default: 0] += 1
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-        Self.requestAudits.append(RequestAudit(
+        let audit = RequestAudit(
             hasAuthorizationHeader: request.value(forHTTPHeaderField: "Authorization") != nil,
             hasBody: request.httpBody != nil,
             hasURLCredentials: components?.user != nil || components?.password != nil
-        ))
-        Self.lock.unlock()
+        )
+        let fixture = Self.shared.withLock { state -> Fixture? in
+            state.requestCounts[url.path, default: 0] += 1
+            state.requestAudits.append(audit)
+            return state.fixtures[url.path]
+        }
 
         guard let fixture else {
             finish(statusCode: 404, body: Data(), responseURL: url, contentLength: 0)
             return
         }
         if fixture.delay > 0 {
-            DispatchQueue.global().asyncAfter(deadline: .now() + fixture.delay) { [weak self] in
-                self?.send(fixture: fixture, requestURL: url)
-            }
+            // A timer on the loading thread's run loop keeps every client callback on the thread
+            // URLProtocol requires, without handing `self` to another queue.
+            delayedDelivery = (fixture, url)
+            let timer = Timer(
+                timeInterval: fixture.delay,
+                target: self,
+                selector: #selector(deliverDelayedFixture),
+                userInfo: nil,
+                repeats: false
+            )
+            delayTimer = timer
+            RunLoop.current.add(timer, forMode: RunLoop.current.currentMode ?? .default)
         } else {
             send(fixture: fixture, requestURL: url)
         }
     }
 
     override func stopLoading() {
-        stateLock.lock()
-        stopped = true
-        stateLock.unlock()
+        stopped.withLock { $0 = true }
+        delayTimer?.invalidate()
+        delayTimer = nil
+        delayedDelivery = nil
+    }
+
+    @objc private func deliverDelayedFixture() {
+        delayTimer = nil
+        guard let delivery = delayedDelivery else { return }
+        delayedDelivery = nil
+        send(fixture: delivery.fixture, requestURL: delivery.requestURL)
     }
 
     private func send(fixture: Fixture, requestURL: URL) {
-        stateLock.lock()
-        let isStopped = stopped
-        stateLock.unlock()
-        guard !isStopped else { return }
+        guard !stopped.withLock({ $0 }) else { return }
         finish(
             statusCode: fixture.statusCode,
             body: fixture.body,
@@ -253,10 +265,7 @@ private final class ManifestFixtureURLProtocol: URLProtocol, @unchecked Sendable
     }
 
     private func finish(statusCode: Int, body: Data, responseURL: URL, contentLength: Int64) {
-        stateLock.lock()
-        let isStopped = stopped
-        stateLock.unlock()
-        guard !isStopped,
+        guard !stopped.withLock({ $0 }),
               let response = HTTPURLResponse(
                   url: responseURL,
                   statusCode: statusCode,

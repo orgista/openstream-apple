@@ -5,6 +5,15 @@ import Foundation
 final class AppleLivePlaybackLifetime {
     var isFullScreen = false
     private var loadIdentity: String?
+    private(set) var isInBackground = false
+
+    func enteredBackground(host: ApplePlayerHost, coordinator: ApplePlaybackCoordinator) {
+        isInBackground = true
+        guard !host.keepsPlaybackForPictureInPicture else { return }
+        stop(host: host, coordinator: coordinator)
+    }
+
+    func enteredForeground() { isInBackground = false }
 
     func beginLoad(identity: String) -> Bool {
         guard loadIdentity != identity else { return false }
@@ -13,7 +22,7 @@ final class AppleLivePlaybackLifetime {
     }
 
     func inlineDisappeared(host: ApplePlayerHost, coordinator: ApplePlaybackCoordinator) {
-        guard !isFullScreen else { return }
+        guard !isFullScreen, !host.keepsPlaybackForPictureInPicture else { return }
         stop(host: host, coordinator: coordinator)
     }
 

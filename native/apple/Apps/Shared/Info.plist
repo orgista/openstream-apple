@@ -18,7 +18,7 @@
 	</array>
 #endif
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>OpenStream connects to media servers and add-ons on your local network.</string>
+	<string>oStream finds media servers and network shares on your local network.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_openstream._tcp</string>
@@ -44,8 +44,6 @@
 	</dict>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<key>UIDesignRequiresCompatibility</key>
-	<true/>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>

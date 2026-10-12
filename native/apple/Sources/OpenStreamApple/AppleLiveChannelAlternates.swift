@@ -18,6 +18,16 @@ public enum AppleLiveChannelAlternates: Sendable {
     /// may allow very few.
     public static let limit = 2
 
+    /// Shared by inline and full-window live starts. Archive requests have
+    /// no equivalent programme on a different feed.
+    public static func playbackCandidates(
+        for channel: AppleIPTVChannel?, request: ApplePlaybackRequest,
+        in lineup: [AppleIPTVChannel], hasRecentlyFailed: (URL) -> Bool
+    ) -> [ApplePlaybackRequest] {
+        guard request.isLive, let channel else { return [] }
+        return alternates(for: channel, in: lineup, hasRecentlyFailed: hasRecentlyFailed).map { $0.playbackRequest() }
+    }
+
     /// Other channels carrying the same network as `channel`, best first.
     ///
     /// Matching is `AppleChannelLineupPresets.normalize(name:)`, the same

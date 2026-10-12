@@ -77,3 +77,23 @@ private let scanCredentials = AppleSMBCredentials(username: "fixture", password:
     await #expect(throws: CancellationError.self) { try await task.value }
     #expect(await client.requestedPaths.isEmpty)
 }
+
+@Test func smbLibrarySkipsDownloadStagingAndHiddenFolders() async throws {
+    let client = LibraryScanClient([
+        "": [scanEntry("movies", directory: true), scanEntry("downloads", directory: true),
+             scanEntry("Incomplete", directory: true), scanEntry(".recycle", directory: true),
+             scanEntry("@eaDir", directory: true)],
+        "movies": [scanEntry("movies/film.mkv")],
+        "downloads": [scanEntry("downloads/film.mkv")],
+    ])
+    let result = try await AppleSMBLibraryScanner(client: client).scan(source: scanSource, credentials: scanCredentials)
+    #expect(result.items.map(\.relativePath) == ["movies/film.mkv"])
+    #expect(await client.requestedPaths == ["", "movies"])
+}
+
+@Test func smbLibraryStillScansAStagingFolderChosenAsTheSource() async throws {
+    let source = AppleSource(kind: .nas, name: "Downloads", url: URL(string: "smb://nas.example/Media/downloads")!)
+    let client = LibraryScanClient(["downloads": [scanEntry("downloads/film.mkv")]])
+    let result = try await AppleSMBLibraryScanner(client: client).scan(source: source, credentials: scanCredentials)
+    #expect(result.items.map(\.relativePath) == ["downloads/film.mkv"])
+}

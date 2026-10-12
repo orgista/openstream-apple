@@ -3,6 +3,115 @@ import Testing
 import Darwin
 @testable import OpenStreamApple
 
+@Test func webManagementQRIncludesOnlyTheCurrentPairingCode() throws {
+    let root = try #require(URL(string: "http://192.168.1.20:8090/"))
+    let session = AppleWebManagementSession(
+        url: root, friendlyURL: root, expiresAt: .now.addingTimeInterval(600),
+        token: "private-token", pairingCode: "ABCD2345"
+    )
+    #expect(session.pairingURL.absoluteString == "http://192.168.1.20:8090/?pair=ABCD2345")
+    #expect(session.friendlyURL == root)
+    #expect(!session.pairingURL.absoluteString.contains(session.token))
+}
+
+@Test(arguments: ["a b", " ab ", "a\tb", "a\nb", "a\u{00a0}b"])
+func xtreamCredentialSanitizerRemovesWhitespace(_ input: String) {
+    #expect(AppleIPTVEndpointPolicy.sanitizeCredential(input) == "ab")
+    #expect(throws: AppleIPTVError.credentialsContainWhitespace) {
+        try AppleIPTVEndpointPolicy.validateCredentials(username: input, password: "valid")
+    }
+    #expect(throws: AppleIPTVError.credentialsContainWhitespace) {
+        try AppleIPTVEndpointPolicy.validateCredentials(username: "valid", password: input)
+    }
+}
+
+@MainActor
+@Test func webManagementQueryPairingSurvivesRotationAndExpiresAfterInactivity() async throws {
+    let suite = "openstream-web-sliding-\(UUID())"
+    let defaults = try #require(UserDefaults(suiteName: suite))
+    defer { defaults.removePersistentDomain(forName: suite) }
+    let store = AppleSourceStore(defaults: defaults)
+    var now = Date()
+    let manifest = Data(#"{"id":"org.example.session","name":"Session Catalog","resources":["catalog"],"catalogs":[{"type":"movie","id":"top"}]}"#.utf8)
+    let server = AppleWebManagementServer(
+        configuration: .init(preferredPort: 0, sessionDuration: 60, advertisesBonjour: false, advertisedHost: "127.0.0.1"),
+        manifestClient: AppleManifestClient { url in
+            (manifest, HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+        },
+        now: { now }
+    )
+    let active = try await server.start(sourceStore: store)
+    defer { server.stop() }
+    let configuration = URLSessionConfiguration.ephemeral
+    configuration.httpShouldSetCookies = false
+    let browser = URLSession(configuration: configuration)
+    defer { browser.invalidateAndCancel() }
+    let (data, paired) = try await dataResponse(for: request(url: active.pairingURL), using: browser)
+    #expect(paired.statusCode == 200)
+    #expect(String(decoding: data, as: UTF8.self).contains("data-paired=\"true\""))
+    let cookie = try pairingCookie(from: paired)
+    #expect(paired.value(forHTTPHeaderField: "Set-Cookie")?.contains("HttpOnly") == true)
+    #expect(server.connectedBrowsers.count == 1)
+    #expect(server.session?.pairingCode != active.pairingCode)
+    #expect(try await response(for: request(url: active.pairingURL), using: browser).statusCode == 403)
+
+    var codeOnly = request(url: active.friendlyURL)
+    codeOnly.httpMethod = "POST"
+    codeOnly.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+    codeOnly.httpBody = encodedForm([
+        "pairingCode": try #require(server.session).pairingCode,
+        "manifest": "https://fixture.example/manifest.json"
+    ])
+    #expect(try await response(for: codeOnly, using: browser).statusCode == 401)
+    #expect(store.sources.isEmpty)
+
+    now = now.addingTimeInterval(61)
+    var add = request(url: active.friendlyURL)
+    add.httpMethod = "POST"
+    add.setValue(cookie, forHTTPHeaderField: "Cookie")
+    add.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+    add.httpBody = encodedForm(["manifest": "https://fixture.example/manifest.json"])
+    #expect(try await response(for: add, using: browser).statusCode == 200)
+    #expect(store.sources.count == 1)
+    var page = request(url: active.friendlyURL)
+    page.setValue(cookie, forHTTPHeaderField: "Cookie")
+    for _ in 0 ..< 2 {
+        now = now.addingTimeInterval(29 * 60)
+        let (content, response) = try await dataResponse(for: page, using: browser)
+        #expect(response.statusCode == 200)
+        #expect(String(decoding: content, as: UTF8.self).contains("data-paired=\"true\""))
+        #expect(server.connectedBrowsers.count == 1)
+    }
+    now = now.addingTimeInterval(30 * 60)
+    let (ended, expired) = try await dataResponse(for: add, using: browser)
+    #expect(expired.statusCode == 401)
+    #expect(String(decoding: ended, as: UTF8.self).contains("Session ended — scan the code again"))
+    #expect(server.connectedBrowsers.isEmpty)
+    #expect(store.sources.count == 1)
+
+    // Query and form pairing share the same single-use check. Two browsers
+    // get distinct sessions; ending one cannot revoke the other.
+    let next = try #require(server.session)
+    var queryPair = request(url: next.pairingURL)
+    queryPair.httpMethod = "POST"
+    queryPair.httpBody = encodedForm(["action": "pair"])
+    queryPair.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+    let firstCookie = try pairingCookie(from: await response(for: queryPair, using: browser))
+    let firstID = try #require(server.connectedBrowsers.first).id
+    let secondCookie = try await pairBrowser(try #require(server.session), using: browser)
+    #expect(firstCookie != secondCookie)
+    #expect(server.connectedBrowsers.count == 2)
+    server.endBrowser(id: firstID)
+    add.setValue(firstCookie, forHTTPHeaderField: "Cookie")
+    #expect(try await response(for: add, using: browser).statusCode == 401)
+    page.setValue(secondCookie, forHTTPHeaderField: "Cookie")
+    let (stillPaired, _) = try await dataResponse(for: page, using: browser)
+    #expect(String(decoding: stillPaired, as: UTF8.self).contains("data-paired=\"true\""))
+    server.endAllBrowsers()
+    add.setValue(secondCookie, forHTTPHeaderField: "Cookie")
+    #expect(try await response(for: add, using: browser).statusCode == 401)
+}
+
 @Test func webManagementTokenAndTrustRulesMatchTheLANContract() throws {
     let tokens = Set((0 ..< 32).map { _ in AppleWebManagementProtocol.makeToken() })
     #expect(tokens.count == 32)
@@ -86,14 +195,14 @@ import Darwin
         address: "192.168.1.95:8090"
     )
 
-    #expect(page.contains("OpenStream"))
+    #expect(page.contains("oStream"))
     #expect(page.contains("Add-on"))
-    #expect(page.contains("IPTV playlist"))
-    #expect(page.contains("Xtream"))
+    #expect(page.contains("M3U Playlist"))
+    #expect(page.contains("Xtream Account"))
     #expect(page.contains("192.168.1.95:8090"))
     #expect(page.contains("&lt;script&gt;"))
     #expect(page.contains("No &lt;unsafe&gt; source"))
-    #expect(!page.contains("<script>"))
+    #expect(!page.contains("<script>alert(1)</script>"))
     #expect(!page.contains("abc123"))
     #expect(!page.contains("name=\"token\""))
     #expect(!page.contains("Example:"))
@@ -120,7 +229,7 @@ import Darwin
 
     #expect(unpaired.contains("Pairing code"))
     #expect(!unpaired.contains("id=\"manifest\""))
-    #expect(!paired.contains("Pairing code"))
+    #expect(paired.contains("data-paired=\"true\""))
     #expect(paired.contains("id=\"manifest\""))
     #expect(paired.contains("Cinemeta"))
     #expect(paired.contains("value=\"remove\""))
@@ -206,12 +315,12 @@ import Darwin
     defer { bootstrap.invalidateAndCancel() }
     let (_, rawBootstrapResponse) = try await bootstrap.data(for: request(url: activeSession.privateURL))
     let bootstrapResponse = try #require(rawBootstrapResponse as? HTTPURLResponse)
-    #expect(bootstrapResponse.statusCode == 303)
-    #expect(bootstrapResponse.value(forHTTPHeaderField: "Location") == activeSession.friendlyURL.absoluteString)
-    #expect(bootstrapResponse.value(forHTTPHeaderField: "Set-Cookie")?.contains("openstream_token=") == true)
+    #expect(bootstrapResponse.statusCode == 200)
+    #expect(bootstrapResponse.value(forHTTPHeaderField: "Set-Cookie") == nil)
+    let cookie = try await pairBrowser(activeSession, using: requestSession)
 
     var pageRequest = request(url: activeSession.friendlyURL)
-    pageRequest.setValue("openstream_token=\(activeSession.token)", forHTTPHeaderField: "Cookie")
+    pageRequest.setValue(cookie, forHTTPHeaderField: "Cookie")
     let (pageData, pageResponse) = try await dataResponse(for: pageRequest, using: requestSession)
     #expect(pageResponse.statusCode == 200)
     #expect(pageResponse.url?.query == nil)
@@ -224,13 +333,13 @@ import Darwin
     invalidPost.httpMethod = "POST"
     invalidPost.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
     invalidPost.httpBody = formBody(manifest: manifest, token: "wrong")
-    #expect(try await response(for: invalidPost, using: requestSession).statusCode == 403)
+    #expect(try await response(for: invalidPost, using: requestSession).statusCode == 401)
 
     var validPost = request(url: activeSession.friendlyURL)
     validPost.httpMethod = "POST"
     validPost.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
     validPost.setValue(activeSession.friendlyURL.absoluteString, forHTTPHeaderField: "Origin")
-    validPost.setValue("openstream_token=\(activeSession.token)", forHTTPHeaderField: "Cookie")
+    validPost.setValue(cookie, forHTTPHeaderField: "Cookie")
     validPost.httpBody = formBody(manifest: manifest)
     let (successData, successResponse) = try await dataResponse(for: validPost, using: requestSession)
     #expect(successResponse.statusCode == 200)
@@ -263,12 +372,13 @@ import Darwin
     let session = URLSession(configuration: .ephemeral)
     defer { session.invalidateAndCancel() }
 
+    let cookie = try await pairBrowser(active, using: session)
     var m3u = request(url: active.friendlyURL)
+    m3u.setValue(cookie, forHTTPHeaderField: "Cookie")
     m3u.httpMethod = "POST"
     m3u.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
     m3u.setValue(active.friendlyURL.absoluteString, forHTTPHeaderField: "Origin")
     m3u.httpBody = encodedForm([
-        "pairingCode": active.pairingCode,
         "sourceType": "m3u",
         "m3uName": "Fixture TV",
         "playlistURL": "http://127.0.0.1:8765/media/stress-5000.m3u"
@@ -283,7 +393,7 @@ import Darwin
     xtream.httpMethod = "POST"
     xtream.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
     xtream.setValue(active.friendlyURL.absoluteString, forHTTPHeaderField: "Origin")
-    xtream.setValue("openstream_token=\(active.token)", forHTTPHeaderField: "Cookie")
+    xtream.setValue(cookie, forHTTPHeaderField: "Cookie")
     xtream.httpBody = encodedForm([
         "sourceType": "xtream",
         "xtreamName": "Wrong Account",
@@ -293,7 +403,7 @@ import Darwin
     ])
     let (xtreamData, xtreamResponse) = try await dataResponse(for: xtream, using: session)
     #expect(xtreamResponse.statusCode == 400)
-    #expect(String(decoding: xtreamData, as: UTF8.self).contains("auth=0"))
+    #expect(String(decoding: xtreamData, as: UTF8.self).contains("account is disabled"))
     #expect(store.sources.count == 1)
 }
 
@@ -338,25 +448,59 @@ import Darwin
 }
 
 @MainActor
-@Test func webManagementExpiresAndReleasesItsListener() async throws {
+@Test func webManagementRotatesCodeWithoutReleasingItsListener() async throws {
     let suiteName = "openstream-web-expiry-tests-\(UUID().uuidString)"
     let defaults = try #require(UserDefaults(suiteName: suiteName))
     defer { defaults.removePersistentDomain(forName: suiteName) }
     let sourceStore = AppleSourceStore(defaults: defaults)
-    let configuration = AppleWebManagementServer.Configuration(
-        preferredPort: 0,
-        sessionDuration: 0.05,
-        advertisesBonjour: false,
-        advertisedHost: "127.0.0.1"
-    )
-    let server = AppleWebManagementServer(configuration: configuration)
+    var now = Date()
+    let server = AppleWebManagementServer(configuration: .init(
+        preferredPort: 0, sessionDuration: 60, advertisesBonjour: false, advertisedHost: "127.0.0.1"
+    ), now: { now })
+    let first = try await server.start(sourceStore: sourceStore)
+    defer { server.stop() }
+    now = now.addingTimeInterval(61)
+    server.refreshLifetimes()
+    #expect(server.session?.pairingURL != first.pairingURL)
+    #expect(server.session?.friendlyURL == first.friendlyURL)
+    let configuration = URLSessionConfiguration.ephemeral
+    configuration.httpShouldSetCookies = false
+    let browser = URLSession(configuration: configuration)
+    defer { browser.invalidateAndCancel() }
+    #expect(try await response(for: request(url: first.pairingURL), using: browser).statusCode == 403)
+    let current = try #require(server.session)
+    let cookie = try await pairBrowser(current, using: browser)
+    let connected = try #require(server.connectedBrowsers.first)
+    server.endBrowser(id: connected.id)
+    var add = request(url: first.friendlyURL)
+    add.httpMethod = "POST"
+    add.setValue(cookie, forHTTPHeaderField: "Cookie")
+    add.httpBody = encodedForm(["manifest": "https://fixture.example/manifest.json"])
+    #expect(try await response(for: add, using: browser).statusCode == 401)
+    #expect(server.connectedBrowsers.isEmpty)
+}
 
-    _ = try await server.start(sourceStore: sourceStore)
-    let deadline = ContinuousClock.now.advanced(by: .seconds(2))
-    while server.session != nil, ContinuousClock.now < deadline {
-        try await Task.sleep(for: .milliseconds(20))
-    }
-    #expect(server.session == nil)
+@MainActor
+@Test func webManagementBoundsFailedPairingAttemptsAndAllowsRetryAfterTheWindow() async throws {
+    let name = "openstream-web-pair-limit-\(UUID())"
+    let defaults = try #require(UserDefaults(suiteName: name))
+    defer { defaults.removePersistentDomain(forName: name) }
+    var now = Date()
+    let server = AppleWebManagementServer(configuration: .init(preferredPort: 0, sessionDuration: 600,
+        advertisesBonjour: false, advertisedHost: "127.0.0.1"), now: { now })
+    let active = try await server.start(sourceStore: AppleSourceStore(defaults: defaults))
+    defer { server.stop() }
+    let configuration = URLSessionConfiguration.ephemeral
+    configuration.httpShouldSetCookies = false
+    let browser = URLSession(configuration: configuration)
+    defer { browser.invalidateAndCancel() }
+    let wrong = active.friendlyURL.appending(queryItems: [.init(name: "pair", value: "INVALID")])
+    for _ in 0..<10 { #expect(try await response(for: request(url: wrong), using: browser).statusCode == 403) }
+    #expect(try await response(for: request(url: active.pairingURL), using: browser).statusCode == 403)
+    #expect(server.connectedBrowsers.isEmpty)
+    now = now.addingTimeInterval(61)
+    #expect(try await response(for: request(url: active.pairingURL), using: browser).statusCode == 200)
+    #expect(server.connectedBrowsers.count == 1)
 }
 
 @MainActor
@@ -438,37 +582,40 @@ private final class AppleNoRedirectSessionDelegate: NSObject, URLSessionTaskDele
     }
 }
 
+/// Holds a loopback port BELOW the ephemeral range (49152…65535 on macOS).
+/// An OS-assigned port sits inside that range, where the kernel hands the
+/// next ports out to every other test's sockets while this one runs — so the
+/// server's P+1…P+63 fallback could find all of them taken ("Address already
+/// in use"). Nothing allocates below the range implicitly, so the ports after
+/// this one stay free unless a named listener already owns them.
 private func occupiedLoopbackPort() throws -> (Int32, UInt16) {
-    let descriptor = Darwin.socket(AF_INET, SOCK_STREAM, 0)
-    guard descriptor >= 0 else { throw POSIXError(.ENFILE) }
+    let firstCandidate = UInt16.random(in: 20_000 ..< 40_000)
+    for offset in 0 ..< 256 {
+        let port = firstCandidate + UInt16(offset)
+        let descriptor = Darwin.socket(AF_INET, SOCK_STREAM, 0)
+        guard descriptor >= 0 else { throw POSIXError(.ENFILE) }
 
-    var address = sockaddr_in()
-    address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
-    address.sin_family = sa_family_t(AF_INET)
-    address.sin_port = 0
-    address.sin_addr = in_addr(s_addr: inet_addr("127.0.0.1"))
+        var address = sockaddr_in()
+        address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        address.sin_family = sa_family_t(AF_INET)
+        address.sin_port = port.bigEndian
+        address.sin_addr = in_addr(s_addr: inet_addr("127.0.0.1"))
 
-    let bindResult = withUnsafePointer(to: &address) { pointer in
-        pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) {
-            Darwin.bind(descriptor, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+        let bindResult = withUnsafePointer(to: &address) { pointer in
+            pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                Darwin.bind(descriptor, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+            }
+        }
+        if bindResult == 0, Darwin.listen(descriptor, 1) == 0 {
+            return (descriptor, port)
+        }
+        let failure = errno
+        Darwin.close(descriptor)
+        guard failure == EADDRINUSE else {
+            throw POSIXError(POSIXErrorCode(rawValue: failure) ?? .EIO)
         }
     }
-    guard bindResult == 0, Darwin.listen(descriptor, 1) == 0 else {
-        Darwin.close(descriptor)
-        throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
-    }
-
-    var length = socklen_t(MemoryLayout<sockaddr_in>.size)
-    let nameResult = withUnsafeMutablePointer(to: &address) { pointer in
-        pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) {
-            Darwin.getsockname(descriptor, $0, &length)
-        }
-    }
-    guard nameResult == 0 else {
-        Darwin.close(descriptor)
-        throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
-    }
-    return (descriptor, UInt16(bigEndian: address.sin_port))
+    throw POSIXError(.EADDRINUSE)
 }
 
 @MainActor
@@ -533,24 +680,23 @@ private func occupiedLoopbackPort() throws -> (Int32, UInt16) {
         return post
     }
 
-    // A failed add must name the reason, keep the page paired, and hand the
-    // browser a pairing cookie instead of spending the code.
+    let initialCookie = try await pairBrowser(active, using: session)
+    // A failed add keeps the browser session and refreshes its cookie.
     let (failureData, failureResponse) = try await dataResponse(
         for: browserPost([
-            "pairingCode": active.pairingCode,
-            "sourceType": "addon",
+                "sourceType": "addon",
             "manifest": "https://broken.example/manifest.json"
-        ]),
+        ], cookie: initialCookie),
         using: session
     )
     #expect(failureResponse.statusCode == 400)
     let failureBody = String(decoding: failureData, as: UTF8.self)
     #expect(failureBody.contains("HTTP 404"))
-    #expect(!failureBody.contains("Pairing code"))
+    #expect(failureBody.contains("data-paired=\"true\""))
     #expect(failureBody.contains("id=\"manifest\""))
     #expect(failureBody.contains("value=\"https://broken.example/manifest.json\""))
     let cookie = try pairingCookie(from: failureResponse)
-    #expect(cookie == "openstream_token=\(active.token)")
+    #expect(cookie == initialCookie)
     #expect(store.sources.isEmpty)
 
     // The cookie from the failed answer is enough for the retry; no code.
@@ -565,22 +711,20 @@ private func occupiedLoopbackPort() throws -> (Int32, UInt16) {
     let successBody = String(decoding: successData, as: UTF8.self)
     #expect(successBody.contains("Added Browser Catalog"))
     #expect(successBody.contains("Browser Catalog"))
-    #expect(!successBody.contains("Pairing code"))
+    #expect(successBody.contains("data-paired=\"true\""))
     #expect(store.sources.count == 1)
     #expect(store.sources.first?.manifestID == "org.example.browser")
 
     // The page is still reachable without the cookie after the code was used.
     #expect(try await response(for: request(url: active.friendlyURL), using: session).statusCode == 200)
 
-    // Safari omits Referer under a no-referrer policy and can omit Origin on a
-    // same-origin form post; the request must still work, and the pairing
-    // code is still accepted after the earlier failure and success.
+    // A headerless same-origin post is still authorized by its session cookie.
     var headerless = request(url: active.friendlyURL)
     headerless.httpMethod = "POST"
+    headerless.setValue(cookie, forHTTPHeaderField: "Cookie")
     headerless.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
     headerless.httpBody = encodedForm([
         "action": "remove",
-        "pairingCode": active.pairingCode,
         "sourceID": try #require(store.sources.first).id.uuidString
     ])
     let (removedData, removedResponse) = try await dataResponse(for: headerless, using: session)
@@ -637,14 +781,15 @@ private func occupiedLoopbackPort() throws -> (Int32, UInt16) {
     let session = URLSession(configuration: configuration)
     defer { session.invalidateAndCancel() }
 
+    let cookie = try await pairBrowser(active, using: session)
     let boundary = "----WebKitFormBoundary\(UUID().uuidString.prefix(16))"
     var post = request(url: active.friendlyURL)
     post.httpMethod = "POST"
+    post.setValue(cookie, forHTTPHeaderField: "Cookie")
     post.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
     post.setValue(active.friendlyURL.absoluteString, forHTTPHeaderField: "Origin")
     post.setValue(active.friendlyURL.absoluteString, forHTTPHeaderField: "Referer")
     post.httpBody = multipartForm([
-        "pairingCode": active.pairingCode,
         "sourceType": "addon",
         "manifest": "https://addon.example/manifest.json"
     ], boundary: boundary)
@@ -653,7 +798,7 @@ private func occupiedLoopbackPort() throws -> (Int32, UInt16) {
     #expect(response.statusCode == 200)
     let body = String(decoding: data, as: UTF8.self)
     #expect(body.contains("Added Multipart Catalog"))
-    #expect(try pairingCookie(from: response) == "openstream_token=\(active.token)")
+    #expect(try pairingCookie(from: response) == cookie)
     #expect(store.sources.count == 1)
     #expect(store.sources.first?.manifestID == "org.example.multipart")
 }
@@ -680,12 +825,13 @@ private func occupiedLoopbackPort() throws -> (Int32, UInt16) {
     defer { session.invalidateAndCancel() }
     let port = try #require(active.friendlyURL.port)
 
+    let initialCookie = try await pairBrowser(active, using: session)
     var post = request(url: active.friendlyURL)
     post.httpMethod = "POST"
+    post.setValue(initialCookie, forHTTPHeaderField: "Cookie")
     post.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
     post.setValue(active.friendlyURL.absoluteString, forHTTPHeaderField: "Origin")
     post.httpBody = encodedForm([
-        "pairingCode": active.pairingCode,
         "sourceType": "addon",
         "manifest": "https://unreachable.example/manifest.json"
     ])
@@ -694,7 +840,7 @@ private func occupiedLoopbackPort() throws -> (Int32, UInt16) {
     let failureBody = String(decoding: failureData, as: UTF8.self)
     #expect(failureBody.contains("class=\"feedback error\" role=\"alert\">"))
     #expect(!failureBody.contains("role=\"alert\"></p>"))
-    #expect(!failureBody.contains("Pairing code"))
+    #expect(failureBody.contains("data-paired=\"true\""))
     #expect(store.sources.isEmpty)
     let cookie = try pairingCookie(from: failureResponse)
 
@@ -706,7 +852,7 @@ private func occupiedLoopbackPort() throws -> (Int32, UInt16) {
     #expect(pageResponse.statusCode == 200)
     let pageBody = String(decoding: pageData, as: UTF8.self)
     #expect(pageBody.contains("id=\"manifest\""))
-    #expect(!pageBody.contains("Pairing code"))
+    #expect(pageBody.contains("data-paired=\"true\""))
     #expect(pageBody.contains("<p class=\"address\">127.0.0.1:\(port)</p>"))
     #expect(!pageBody.contains("http://127.0.0.1"))
     #expect(pageBody.contains("<svg class=\"mark\""))
@@ -731,6 +877,37 @@ private func occupiedLoopbackPort() throws -> (Int32, UInt16) {
     #expect(store.sources.isEmpty)
 }
 
+@MainActor
+@Test func workingPlaylistRequiresAnExplicitCredentialExportChoice() async throws {
+    let suite = "openstream-export-choice-\(UUID())"
+    let defaults = try #require(UserDefaults(suiteName: suite))
+    defer { defaults.removePersistentDomain(forName: suite) }
+    let store = AppleSourceStore(defaults: defaults)
+    let server = AppleWebManagementServer(configuration: .init(preferredPort: 0,
+        sessionDuration: 30, advertisesBonjour: false, advertisedHost: "127.0.0.1"))
+    let active = try await server.start(sourceStore: store)
+    defer { server.stop() }
+    let browser = URLSession(configuration: .ephemeral)
+    defer { browser.invalidateAndCancel() }
+    let export = active.friendlyURL.appendingPathComponent("working.m3u")
+    #expect(try await response(for: request(url: export), using: browser).statusCode == 401)
+    let cookie = try await pairBrowser(active, using: browser)
+    var unconfirmed = request(url: export)
+    unconfirmed.setValue(cookie, forHTTPHeaderField: "Cookie")
+    let (page, reply) = try await dataResponse(for: unconfirmed, using: browser)
+    #expect(reply.value(forHTTPHeaderField: "Content-Disposition") == nil)
+    #expect(String(decoding: page, as: UTF8.self).contains("Download Playlist With Provider Credentials"))
+    for choice in ["omit", "include"] {
+        var components = try #require(URLComponents(url: export, resolvingAgainstBaseURL: false))
+        components.queryItems = [URLQueryItem(name: "credentials", value: choice)]
+        var download = request(url: try #require(components.url))
+        download.setValue(cookie, forHTTPHeaderField: "Cookie")
+        let (_, response) = try await dataResponse(for: download, using: browser)
+        #expect(response.statusCode == 200)
+        #expect(response.value(forHTTPHeaderField: "Content-Disposition")?.hasPrefix("attachment;") == true)
+    }
+}
+
 private func multipartForm(_ values: [String: String], boundary: String) -> Data {
     var body = ""
     for (name, value) in values {
@@ -746,4 +923,14 @@ private func pairingCookie(from response: HTTPURLResponse) throws -> String {
     let pair = try #require(header.split(separator: ";").first).trimmingCharacters(in: .whitespaces)
     #expect(pair.hasPrefix("openstream_token="))
     return pair
+}
+
+private func pairBrowser(_ active: AppleWebManagementSession, using browser: URLSession) async throws -> String {
+    var post = request(url: active.friendlyURL)
+    post.httpMethod = "POST"
+    post.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+    post.httpBody = encodedForm(["action": "pair", "pairingCode": active.pairingCode])
+    let response = try await response(for: post, using: browser)
+    #expect(response.statusCode == 200)
+    return try pairingCookie(from: response)
 }

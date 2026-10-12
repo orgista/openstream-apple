@@ -3,16 +3,21 @@ import SwiftUI
 enum AppleSettingsRoute: Hashable {
     case sources
     case channels
+    case restrictions
     case metadata
     case serverDownloads
     case trakt
     case watchProviders
+    case discoverRows
     case playback
     case playbackInfo
     case subtitleLanguages
     case privacy
     case storage
     case about
+    #if !os(tvOS)
+    case backup
+    #endif
 }
 
 extension View {
@@ -36,6 +41,7 @@ extension View {
                     .frame(maxWidth: AppleTVSettingsMetrics.standard.formColumnWidth, alignment: .leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .tint(.white)
+                    .toggleStyle(.tvReadable)
             }
         } else {
             appleSettingsPage(title)
@@ -51,20 +57,72 @@ struct AppleSettingsView: View {
     let settings: AppleSettingsStore
     let sourceStore: AppleSourceStore
     let webManagement: any AppleWebManagementServing
+    var backupController: AppleConfigurationController? = nil
+    var catalogStore: AppleCatalogStore? = nil
+    /// Set on a regular-width iPad in landscape: Settings draws its own split
+    /// view, sections on the left and the chosen page on the right, with this
+    /// as the right column's stack. Nil pushes everything on one stack.
+    var splitPath: Binding<NavigationPath>? = nil
+    @State private var splitSelection: AppleSettingsRoute = .sources
+    #if os(iOS)
+    @State private var showsSendSetup = false
+    #endif
 
     var body: some View {
+        settingsContent.modifier(AppleSettingsPINLock())
+    }
+
+    @ViewBuilder private var settingsContent: some View {
         #if os(tvOS)
         AppleTVSettingsSplitView(settings: settings, sourceStore: sourceStore, webManagement: webManagement)
             .navigationDestination(for: AppleSettingsRoute.self) { route in
                 destination(for: route)
             }
         #else
-        rootForm
-            .navigationDestination(for: AppleSettingsRoute.self) { route in
-                destination(for: route)
+        if let splitPath {
+            NavigationSplitView {
+                rootForm
+            } detail: {
+                NavigationStack(path: splitPath) {
+                    destination(for: splitSelection)
+                        .navigationDestination(for: AppleSettingsRoute.self) { route in
+                            destination(for: route)
+                        }
+                }
             }
+            .navigationSplitViewStyle(.balanced)
+        } else {
+            rootForm
+                .navigationDestination(for: AppleSettingsRoute.self) { route in
+                    destination(for: route)
+                }
+        }
         #endif
     }
+
+    #if !os(tvOS)
+    /// A row that opens a settings page: pushed on the stack, or shown in the
+    /// split view's right column with the row marked as the one showing.
+    @ViewBuilder
+    private func settingsLink<Label: View>(_ route: AppleSettingsRoute, @ViewBuilder label: () -> Label) -> some View {
+        if let splitPath {
+            let isSelected = splitSelection == route
+            Button {
+                splitSelection = route
+                splitPath.wrappedValue = NavigationPath()
+            } label: {
+                label()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(.rect)
+            }
+            .foregroundStyle(.primary)
+            .listRowBackground(isSelected ? Color.secondary.opacity(0.3) : nil)
+            .accessibilityAddTraits(isSelected ? .isSelected : [])
+        } else {
+            NavigationLink(value: route, label: label)
+        }
+    }
+    #endif
 
     @ViewBuilder
     private func destination(for route: AppleSettingsRoute) -> some View {
@@ -77,6 +135,8 @@ struct AppleSettingsView: View {
             )
         case .channels:
             AppleChannelManagerView(settings: settings, sourceStore: sourceStore)
+        case .restrictions:
+            AppleRestrictionsView(sourceStore: sourceStore)
         case .metadata:
             AppleMetadataSettingsView(settings: settings)
         case .serverDownloads:
@@ -85,6 +145,8 @@ struct AppleSettingsView: View {
             AppleTraktSettingsView(settings: settings)
         case .watchProviders:
             AppleWatchProviderSettingsView(settings: settings)
+        case .discoverRows:
+            AppleDiscoverRowsSettingsView(settings: settings, sourceStore: sourceStore, catalogStore: catalogStore)
         case .playback:
             ApplePlaybackSettingsView(settings: settings)
         case .playbackInfo:
@@ -97,6 +159,10 @@ struct AppleSettingsView: View {
             AppleStorageSettingsView()
         case .about:
             AppleAboutView()
+        #if !os(tvOS)
+        case .backup:
+            if let backupController { AppleBackupSettingsView(controller: backupController) }
+        #endif
         }
     }
 
@@ -105,15 +171,18 @@ struct AppleSettingsView: View {
         @Bindable var settings = settings
 
         return Form {
-            Section {
-                NavigationLink(value: AppleSettingsRoute.sources) {
-                    AppleTVNavigationLabel("Sources", systemImage: "rectangle.stack.badge.plus")
+            ForEach(AppleSettingsRootEntry.leadingSections, id: \.self) { entries in
+                Section {
+                    ForEach(entries, id: \.self) { entry in
+                        settingsLink(entry.route) {
+                            AppleTVNavigationLabel(entry.title, systemImage: entry.systemImage)
+                        }
+                        .appleTVReadableFocus()
+                    }
+                    if entries.contains(.backup) {
+                        setupTransferRows
+                    }
                 }
-                .appleTVReadableFocus()
-                NavigationLink(value: AppleSettingsRoute.channels) {
-                    AppleTVNavigationLabel("Channel Manager", systemImage: "list.star")
-                }
-                .appleTVReadableFocus()
             }
 
             Section("Discover") {
@@ -121,6 +190,11 @@ struct AppleSettingsView: View {
                     .disabled(!appleCanToggleTab(.home, settings: settings))
                     .accessibilityIdentifier("settings.discover.enabled")
                 Toggle("Top 10 lists", isOn: $settings.top10ListsEnabled)
+                settingsLink(AppleSettingsRoute.discoverRows) {
+                    AppleTVNavigationLabel("Discover Rows")
+                }
+                .appleTVReadableFocus()
+                .accessibilityIdentifier("settings.discover.rows")
             }
 
             Section("Library") {
@@ -130,55 +204,104 @@ struct AppleSettingsView: View {
             }
 
             Section("Live TV") {
+                AppleLiveResumeSetting()
                 Toggle("Show Live tab", isOn: $settings.liveTVEnabled)
                     .disabled(!appleCanToggleTab(.live, settings: settings))
                     .accessibilityIdentifier("settings.live.enabled")
+                AppleChannelHealthSettingsRows(store: .shared, settings: settings, sourceStore: sourceStore)
             }
 
             Section("Services") {
-                NavigationLink(value: AppleSettingsRoute.metadata) {
+                settingsLink(AppleSettingsRoute.metadata) {
                     AppleTVNavigationLabel("Metadata", systemImage: "photo.on.rectangle.angled")
                 }
                 .appleTVReadableFocus()
-                NavigationLink(value: AppleSettingsRoute.serverDownloads) {
+                settingsLink(AppleSettingsRoute.watchProviders) {
+                    AppleTVNavigationLabel("Streaming Services", systemImage: "rectangle.stack.badge.play")
+                }
+                .appleTVReadableFocus()
+                settingsLink(AppleSettingsRoute.serverDownloads) {
                     AppleTVNavigationLabel("Radarr & Sonarr", systemImage: "arrow.down.circle")
                 }
                 .appleTVReadableFocus()
-                NavigationLink(value: AppleSettingsRoute.trakt) {
+                settingsLink(AppleSettingsRoute.trakt) {
                     AppleTVNavigationLabel("Trakt", systemImage: "arrow.triangle.2.circlepath")
                 }
                 .appleTVReadableFocus()
             }
 
             Section("Playback") {
-                NavigationLink(value: AppleSettingsRoute.playback) {
+                settingsLink(AppleSettingsRoute.playback) {
                     AppleTVNavigationLabel("Playback", systemImage: "play.circle")
                 }
                 .appleTVReadableFocus()
             }
 
             Section("Privacy") {
-                NavigationLink(value: AppleSettingsRoute.privacy) {
+                settingsLink(AppleSettingsRoute.privacy) {
                     AppleTVNavigationLabel("Privacy", systemImage: "hand.raised")
                 }
                 .appleTVReadableFocus()
             }
 
             Section {
-                NavigationLink(value: AppleSettingsRoute.storage) {
+                settingsLink(AppleSettingsRoute.storage) {
                     AppleTVNavigationLabel("Storage", systemImage: "internaldrive")
                 }
                 .appleTVReadableFocus()
-                NavigationLink(value: AppleSettingsRoute.about) {
+                settingsLink(AppleSettingsRoute.about) {
                     AppleTVNavigationLabel("About", systemImage: "info.circle")
                 }
                 .appleTVReadableFocus()
             }
         }
         .appleSettingsContent()
+        #if os(iOS)
+        .alert("Open the Camera", isPresented: $showsSendSetup) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Point it at the code on the other device.")
+        }
+        #endif
+    }
+
+    /// Set Up from iPhone, both ends, beside Backup & Sync (owner 2026-10-09:
+    /// "can't find where to scan a QR code"); before this they were only
+    /// under Sources and at the bottom of Backup & Sync.
+    @ViewBuilder
+    private var setupTransferRows: some View {
+        Button {
+            AppleSetupTransferCenter.shared.presentReceiver()
+        } label: {
+            AppleTVNavigationLabel(AppleSetupTransferDevice.receiveTitle, systemImage: "qrcode")
+        }
+        .foregroundStyle(.primary)
+        .accessibilityIdentifier("settings.setupFromPhone")
+        #if os(iOS)
+        Button {
+            showsSendSetup = true
+        } label: {
+            AppleTVNavigationLabel("Send Setup to Another Device", systemImage: "iphone.and.arrow.forward")
+        }
+        .foregroundStyle(.primary)
+        .accessibilityIdentifier("settings.sendSetup")
+        #endif
     }
     #endif
 }
+
+#if !os(tvOS)
+private extension AppleSettingsRootEntry {
+    var route: AppleSettingsRoute {
+        switch self {
+        case .sources: .sources
+        case .channels: .channels
+        case .restrictions: .restrictions
+        case .backup: .backup
+        }
+    }
+}
+#endif
 
 /// The last content tab still on cannot be switched off, so its toggle goes
 /// inert rather than leaving the bar with Settings alone. Every other toggle
@@ -225,6 +348,7 @@ private struct AppleTVSettingsSplitView: View {
         HStack(alignment: .top, spacing: metrics.columnSpacing) {
             sidebar
                 .frame(width: metrics.sidebarWidth)
+                .frame(maxHeight: .infinity, alignment: .top)
                 .focusSection()
             detail
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -256,6 +380,7 @@ private struct AppleTVSettingsSplitView: View {
                         Image(systemName: section.systemImage)
                             .font(.body)
                             .frame(width: metrics.iconColumnWidth)
+                            .accessibilityHidden(true)
                         Text(section.title)
                             .font(.body)
                             .lineLimit(1)
@@ -286,8 +411,10 @@ private struct AppleTVSettingsSplitView: View {
             )
         case .channels:
             AppleChannelManagerView(settings: settings, sourceStore: sourceStore, embeddedInSplit: true)
+        case .restrictions:
+            AppleRestrictionsView(sourceStore: sourceStore, embeddedInSplit: true)
         case .liveTV:
-            AppleTVLiveTabPane(settings: settings)
+            AppleTVLiveTabPane(settings: settings, sourceStore: sourceStore, webManagement: webManagement)
         case .discover:
             AppleTVDiscoverPane(settings: settings)
         case .services:
@@ -343,14 +470,21 @@ struct AppleTVSettingsRowStyle: ButtonStyle {
 @MainActor
 private struct AppleTVLiveTabPane: View {
     let settings: AppleSettingsStore
+    let sourceStore: AppleSourceStore
+    let webManagement: any AppleWebManagementServing
 
     var body: some View {
         @Bindable var settings = settings
 
         return Form {
+            AppleLiveResumeSetting()
             Toggle("Show Live tab", isOn: $settings.liveTVEnabled)
                 .disabled(!appleCanToggleTab(.live, settings: settings))
                 .accessibilityIdentifier("settings.live.enabled")
+            Section {
+                AppleChannelHealthSettingsRows(store: .shared, settings: settings, sourceStore: sourceStore,
+                    webManagement: webManagement)
+            }
         }
         .appleSettingsPane("Live TV", embedded: true)
     }
@@ -369,6 +503,11 @@ private struct AppleTVDiscoverPane: View {
                     .disabled(!appleCanToggleTab(.home, settings: settings))
                     .accessibilityIdentifier("settings.discover.enabled")
                 Toggle("Top 10 lists", isOn: $settings.top10ListsEnabled)
+                NavigationLink(value: AppleSettingsRoute.discoverRows) {
+                    AppleTVNavigationLabel("Discover Rows")
+                }
+                .appleTVReadableFocus()
+                .accessibilityIdentifier("settings.discover.rows")
             }
 
             Section("Library") {
@@ -417,7 +556,7 @@ private struct AppleChannelManagerView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var query = ""
-    @State private var premierGuide: [AppleChannelLineupEntry] = []
+    @State private var completeGuide: [AppleChannelLineupEntry] = []
     @State private var lineupIndex = AppleChannelLineupIndex([])
     private let client = AppleIPTVClient()
 
@@ -426,44 +565,31 @@ private struct AppleChannelManagerView: View {
 
         Form {
             Section("Channel Preferences") {
+                #if os(tvOS)
+                // The stock Picker pushed an empty page here (AppleTVChoicePicker).
+                AppleTVChoicePicker("Package", selection: $settings.liveChannelPackage,
+                                    options: AppleLiveChannelPackage.available.map { .init(value: $0, title: $0.title) })
+                AppleTVChoicePicker("Live view", selection: $settings.liveChannelScope,
+                                    options: AppleLiveChannelScope.allCases.map { .init(value: $0, title: $0.title) })
+                #else
                 Picker("Package", selection: $settings.liveChannelPackage) {
-                    ForEach(AppleLiveChannelPackage.allCases) { package in
+                    ForEach(AppleLiveChannelPackage.available) { package in
                         Text(package.title).tag(package)
                     }
                 }
 
                 Picker("Live view", selection: $settings.liveChannelScope) {
                     ForEach(AppleLiveChannelScope.allCases) { scope in
-                        Text(scope == .regional && AppleZIPCodePolicy.isValid(settings.regionalZIPCode)
-                            ? "Local Channels · \(settings.regionalZIPCode)" : scope.title).tag(scope)
+                        Text(scope.title).tag(scope)
                     }
                 }
-
-                // The ZIP only means anything for the regional lineup. It used
-                // to sit here permanently, empty and disabled, which on a
-                // television reads as a broken field rather than an
-                // inapplicable one. Disclose it the way the Custom Package
-                // section below already does.
-                if settings.liveChannelScope == .regional {
-                    TextField("ZIP code", text: $settings.regionalZIPCode)
-                        #if os(iOS)
-                        .keyboardType(.numberPad)
-                        #endif
-                        .onChange(of: settings.regionalZIPCode) { _, value in
-                            let digits = String(value.filter(\.isNumber).prefix(5))
-                            if digits != value { settings.regionalZIPCode = digits }
-                        }
-                    if !settings.regionalZIPCode.isEmpty,
-                       !AppleZIPCodePolicy.isValid(settings.regionalZIPCode) {
-                        Text("Enter a valid 5-digit US ZIP code.")
-                            .font(.caption)
-                            .foregroundStyle(.red)
-                    }
-                }
+                #endif
 
                 Toggle("Show Pay-Per-View", isOn: $settings.showPayPerViewChannels)
                 Toggle("Show 24/7 channels", isOn: $settings.show24x7Channels)
             }
+
+            AppleLiveChannelPreferencesSection(channels: channels, settings: settings)
 
             if settings.liveChannelPackage == .custom {
                 Section("Custom Package") {
@@ -483,11 +609,6 @@ private struct AppleChannelManagerView: View {
             // list moved focus to the tab bar and left the Settings pill drawn
             // without its icon and overflowing the bar (measured 2026-09-16).
             Section {
-                NavigationLink {
-                    AppleTVChannelSearchEditor(query: $query)
-                } label: {
-                    AppleTVNavigationLabel("Search Channels", systemImage: "magnifyingglass")
-                }
                 Button {
                     Task { await reload() }
                 } label: {
@@ -496,41 +617,77 @@ private struct AppleChannelManagerView: View {
                 .disabled(isLoading)
             }
             #endif
+            // Owner, 2026-09-17: a 3,000-row wall of toggles is not a way to
+            // pick channels. The list holds only what is selected; adding goes
+            // through a searchable picker.
             Section(settings.liveChannelPackage == .custom ? "Custom Channels" : "My Channels") {
                 if isLoading, channels.isEmpty {
                     ProgressView()
                 } else if channels.isEmpty {
-                    Text(errorMessage ?? "Add a Live TV source first.")
-                        .foregroundStyle(errorMessage == nil ? Color.secondary : Color.red)
+                    Text(errorMessage ?? emptyLineupMessage)
+                        #if os(tvOS)
+                        // A fixed grey, not the hierarchical `.secondary`: in
+                        // this tvOS form the message row drew as an empty
+                        // capsule (Apple TV verification 2026-10-01).
+                        .foregroundStyle(Color.white.opacity(0.7))
+                        .fixedSize(horizontal: false, vertical: true)
+                        #else
+                        .foregroundStyle(.secondary)
+                        #endif
+                        .accessibilityIdentifier("channels.empty")
+                    if errorMessage != nil {
+                        Button {
+                            Task { await reload() }
+                        } label: {
+                            #if os(tvOS)
+                            AppleTVFocusReadableText("Retry")
+                            #else
+                            Text("Retry")
+                            #endif
+                        }
+                        .accessibilityIdentifier("channels.retry")
+                    }
                 } else {
-                    ForEach(numberedChannels) { channel in
-                        Toggle(isOn: Binding(
-                            get: { isSelected(channel.id) },
-                            set: { _ in toggle(channel.id) }
-                        )) {
-                            HStack(spacing: 12) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(displayName(for: channel))
-                                        .foregroundStyle(.primary)
-                                    if !channel.group.isEmpty {
-                                        Text(channel.group)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
+                    NavigationLink {
+                        channelPicker
+                    } label: {
+                        Label("Add Channels…", systemImage: "plus.circle")
+                    }
+                    .accessibilityIdentifier("channels.add")
+                    if let errorMessage {
+                        Text(errorMessage).font(.caption).foregroundStyle(.red)
+                    }
+                    ForEach(selectedChannels) { channel in
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(displayName(for: channel)).foregroundStyle(.primary)
+                                if !channel.group.isEmpty {
+                                    Text(channel.group).font(.caption).foregroundStyle(.secondary)
                                 }
                             }
+                            Spacer(minLength: 8)
+                            #if os(tvOS)
+                            Button { toggle(channel.id) } label: { AppleTVFocusReadableText("Remove") }
+                            #else
+                            Button { toggle(channel.id) } label: {
+                                Image(systemName: "minus.circle").foregroundStyle(.secondary)
+                                    .frame(minWidth: 44, minHeight: 44)
+                                    .contentShape(.rect)
+                            }
+                            .buttonStyle(.borderless)
+                            .accessibilityLabel("Remove \(channel.name)")
+                            #endif
                         }
-                        .accessibilityLabel(channel.name)
-                        .accessibilityValue(isSelected(channel.id)
-                            ? "Included" : "Not included")
                     }
+                    #if !os(tvOS)
+                    .onDelete { offsets in
+                        for channel in offsets.map({ selectedChannels[$0] }) { toggle(channel.id) }
+                    }
+                    #endif
                 }
             }
         }
         .appleSettingsPane("Channel Manager", embedded: embeddedInSplit)
-        #if !os(tvOS)
-        .searchable(text: $query, prompt: "Channels")
-        #endif
         // tvOS toolbar items always draw a box around the glyph, which is the
         // same defect the owner called on Discover (T4) and Search (R1).
         // On a television these two actions are rows in the form instead.
@@ -538,13 +695,22 @@ private struct AppleChannelManagerView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button { Task { await reload() } } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise")
+                    // The glyph gives way to the spinner while the lineup is
+                    // being fetched. Dimming alone was the only answer this
+                    // button gave, and against a playlist held on disk the
+                    // fetch is over before the dimming is drawn, so the press
+                    // read as dead (button crawl, 2026-09-19).
+                    if isLoading {
+                        ProgressView()
+                    } else {
+                        Label("Refresh", systemImage: "arrow.clockwise")
+                    }
                 }
                 .disabled(isLoading)
             }
         }
         #endif
-        .task(id: sourceIdentity) { await reload(); premierGuide = (try? AppleChannelLineupPresets.premierUS()) ?? []; lineupIndex = AppleChannelLineupIndex(premierGuide) }
+        .task(id: sourceIdentity) { await reload(); completeGuide = (try? AppleChannelLineupPresets.completeUS()) ?? []; lineupIndex = AppleChannelLineupIndex(completeGuide) }
         .task(id: projectionIdentity) { await rebuildFilteredChannels() }
     }
 
@@ -571,7 +737,6 @@ private struct AppleChannelManagerView: View {
                 scope: settings.liveChannelScope,
                 showPayPerView: settings.showPayPerViewChannels,
                 favoriteIDs: settings.favoriteChannelIDs,
-                regionalZIPCode: settings.regionalZIPCode,
                 show24x7: settings.show24x7Channels
             ),
             query: clean
@@ -612,8 +777,72 @@ private struct AppleChannelManagerView: View {
         settings.favoriteChannelIDs = values
     }
 
+    /// "Add a source" is wrong when one exists but is switched off.
+    private var emptyLineupMessage: String {
+        let live = sourceStore.sources.filter { $0.kind == .liveTV }
+        if live.isEmpty { return "Add a Live TV source first." }
+        return live.contains(where: \.isEnabled) ? "No channels yet." : "Your Live TV source is turned off."
+    }
+
+    private var selectedChannels: [AppleIPTVChannel] {
+        numberedChannels.filter { isSelected($0.id) }
+    }
+
+    /// The whole (filtered) lineup, grouped by the provider's groups, or a
+    /// flat result list while searching. Rows add with ⊕ and show ✓ once in.
+    private var channelPicker: some View {
+        Form {
+            #if os(tvOS)
+            Section {
+                NavigationLink {
+                    AppleTVChannelSearchEditor(query: $query)
+                } label: {
+                    AppleTVNavigationLabel(query.isEmpty ? "Search Channels" : "Search · \(query)", systemImage: "magnifyingglass")
+                }
+            }
+            #endif
+            if let errorMessage {
+                Section { Text(errorMessage).font(.caption).foregroundStyle(.red) }
+            }
+            ForEach(AppleChannelPickerSections.build(channels: numberedChannels, query: query)) { section in
+                Section(section.name) {
+                    ForEach(section.channels) { channel in
+                        Button {
+                            toggle(channel.id)
+                        } label: {
+                            HStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(displayName(for: channel)).foregroundStyle(.primary)
+                                    if !query.isEmpty, !channel.group.isEmpty {
+                                        Text(channel.group).font(.caption).foregroundStyle(.secondary)
+                                    }
+                                }
+                                Spacer(minLength: 8)
+                                Image(systemName: isSelected(channel.id) ? "checkmark.circle.fill" : "plus.circle")
+                                    .foregroundStyle(isSelected(channel.id) ? Color.primary : Color.secondary)
+                            }
+                        }
+                        .accessibilityLabel(channel.name)
+                        .accessibilityValue(isSelected(channel.id) ? "Included" : "Not included")
+                    }
+                }
+            }
+        }
+        .appleSettingsPage("Add Channels")
+        // The manager's own `task(id:)` sleeps while it is covered by this
+        // page, so the query has to drive the projection from here too.
+        .task(id: projectionIdentity) { await rebuildFilteredChannels() }
+        // Always-visible field: an inline-title page otherwise hides the
+        // search bar until the list is pulled down, which nobody discovers.
+        #if os(iOS)
+        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Channels")
+        #elseif !os(tvOS)
+        .searchable(text: $query, prompt: "Channels")
+        #endif
+    }
+
     private var numberedChannels: [AppleIPTVChannel] {
-        AppleGuideChannelProjection.rows(channels: filteredChannels, entries: premierGuide,
+        AppleGuideChannelProjection.rows(channels: filteredChannels, entries: completeGuide,
             favoriteIDs: [], favoritesOnly: false, sortByNumber: true).map(\.channel)
     }
 
@@ -627,31 +856,56 @@ private struct AppleChannelManagerView: View {
     private func reload() async {
         let sources = sourceStore.sources.filter { $0.kind == .liveTV && $0.isEnabled }
         guard !sources.isEmpty else {
+            settings.updateAutomaticLiveChannelPackage(channels: [])
             channels = []
             filteredChannels = []
             channelsRevision &+= 1
             errorMessage = nil
             return
         }
+        // The saved lineup goes up at once, as on the Live tab: with the
+        // panel down, My Channels spun until the deadline (Apple TV
+        // regression 2026-10-01). A dead Xtream panel now fails its login
+        // probe in `AppleIPTVClient.accountProbeTimeout` and says so.
+        if channels.isEmpty {
+            var cached: [AppleIPTVChannel] = []
+            for source in sources {
+                cached += await AppleIPTVChannelCache.shared.snapshot(for: source.id)?.channels ?? []
+            }
+            if !cached.isEmpty {
+                settings.updateAutomaticLiveChannelPackage(channels: cached)
+                channels = cached
+                channelsRevision &+= 1
+            }
+        }
         isLoading = true
+        let started = ContinuousClock.now
         defer { isLoading = false }
         var loaded: [AppleIPTVChannel] = []
         var errors: [String] = []
         for source in sources {
             do {
-                loaded += try await client.channels(
-                    source: source,
-                    credentials: try sourceStore.iptvCredentials(for: source)
-                )
+                let credentials = try sourceStore.iptvCredentials(for: source)
+                let client = client
+                // A panel that is down can hold the request open well past
+                // its idle timeout; My Channels then spun for good (full test
+                // 2026-10-01). Each source gets a deadline, then says so.
+                loaded += try await AppleChannelManagerLoad.withDeadline(AppleChannelManagerLoad.deadline) {
+                    try await client.channels(source: source, credentials: credentials)
+                }
             } catch is CancellationError {
                 return
             } catch {
-                errors.append("\(source.name): \(error.localizedDescription)")
+                errors.append(AppleChannelManagerLoad.message(sourceName: source.name, error: error))
+                // Its saved copy stays, with the error under it.
+                loaded += await AppleIPTVChannelCache.shared.snapshot(for: source.id)?.channels ?? []
             }
         }
+        settings.updateAutomaticLiveChannelPackage(channels: loaded)
         channels = loaded
         channelsRevision &+= 1
         errorMessage = errors.first
+        try? await Task.sleep(for: AppleProgressVisibility.remaining(since: started))
     }
 }
 
@@ -671,10 +925,13 @@ private struct AppleMetadataSettingsView: View {
                 Toggle("Use Metadata APIs", isOn: $settings.metadataEnabled)
             }
 
-            Section("TMDB") {
+            Section {
                 SecureField("API key or read token", text: $settings.tmdbAPIKey)
                     .disabled(!settings.metadataEnabled)
                     .appleFormSubmit(.tmdb, chain: Self.chain, focus: $focusedField)
+            } header: {
+                // TMDB's credit lives once, in About (owner 2026-10-08: no notices around the app).
+                Text("TMDB")
             }
 
             Section("OMDb") {
@@ -753,43 +1010,79 @@ private struct AppleArrConnectionSection: View {
     }
 
     var body: some View {
-        Section(kind.displayName) {
-            TextField("Server URL", text: $baseURL)
-                .autocorrectionDisabled()
-                .tint(.primary)
-                .appleFormSubmit(.baseURL, chain: Self.chain, focus: $focusedField)
-            SecureField("API key", text: $apiKey)
-                .appleFormSubmit(.apiKey, chain: Self.chain, focus: $focusedField)
-            TextField("Root folder path", text: $rootFolderPath)
-                .autocorrectionDisabled()
-                .appleFormSubmit(.rootFolder, chain: Self.chain, focus: $focusedField)
-            TextField("Quality profile ID", text: $qualityProfileID)
-                #if os(iOS)
-                .keyboardType(.numberPad)
-                #endif
-                .appleFormSubmit(.qualityProfile, chain: Self.chain, focus: $focusedField)
-
-            AppleConnectionStatusView(state: state)
-
-            Button {
-                Task { await testConnection() }
-            } label: {
-                AppleConnectionTestLabel(isTesting: state.isTesting)
+        Group {
+            #if os(macOS)
+            Section {
+                fields
+            } header: {
+                Text(kind.displayName)
+            } footer: {
+                AppleFormActionBar { testButton }
             }
-            .buttonStyle(.brandSecondary)
-            .disabled(!canTest || state.isTesting)
-            // The list row draws its own capsule and `.brandSecondary` draws a
-            // pill inside it — a box in a box, which is the "no boxes and
-            // weirdness" the owner called out for the settings panes
-            // (2026-09-16). One piece of chrome, not two. Confirmed on the
-            // phone as well as the television (2026-09-17), so it is not
-            // platform-gated.
-            .listRowBackground(Color.clear)
+            #else
+            Section(kind.displayName) {
+                fields
+                testButton
+                    // The list row draws its own capsule and `.brandSecondary` draws a
+                    // pill inside it — a box in a box, which is the "no boxes and
+                    // weirdness" the owner called out for the settings panes
+                    // (2026-09-16). One piece of chrome, not two. Confirmed on the
+                    // phone as well as the television (2026-09-17), so it is not
+                    // platform-gated.
+                    .listRowBackground(Color.clear)
+            }
+            #endif
         }
         .onChange(of: baseURL) { _, _ in state = .idle }
         .onChange(of: apiKey) { _, _ in state = .idle }
         .onChange(of: rootFolderPath) { _, _ in state = .idle }
         .onChange(of: qualityProfileID) { _, _ in state = .idle }
+    }
+
+    /// The prompt colour the other add-source forms use: the default
+    /// placeholder was fainter here, and the empty API key row read as blank
+    /// (UX tour 2026-10-08).
+    private static func prompt(_ title: String) -> Text {
+        #if os(iOS)
+        Text(title).foregroundStyle(Color(uiColor: .secondaryLabel))
+        #else
+        Text(title).foregroundStyle(.secondary)
+        #endif
+    }
+
+    @ViewBuilder
+    private var fields: some View {
+        TextField("Server URL", text: $baseURL, prompt: Self.prompt("Server URL"))
+            .autocorrectionDisabled()
+            #if os(iOS) || os(visionOS)
+            .keyboardType(.URL)
+            .textContentType(.URL)
+            #endif
+            .tint(.primary)
+            .appleFormSubmit(.baseURL, chain: Self.chain, focus: $focusedField)
+        SecureField("API key", text: $apiKey, prompt: Self.prompt("API key"))
+            .textContentType(.password)
+            .appleFormSubmit(.apiKey, chain: Self.chain, focus: $focusedField)
+        TextField("Root folder path", text: $rootFolderPath, prompt: Self.prompt("Root folder path"))
+            .autocorrectionDisabled()
+            .appleFormSubmit(.rootFolder, chain: Self.chain, focus: $focusedField)
+        TextField("Quality profile ID", text: $qualityProfileID, prompt: Self.prompt("Quality profile ID"))
+            #if os(iOS)
+            .keyboardType(.numberPad)
+            #endif
+            .appleFormSubmit(.qualityProfile, chain: Self.chain, focus: $focusedField)
+
+        AppleConnectionStatusView(state: state)
+    }
+
+    private var testButton: some View {
+        Button {
+            Task { await testConnection() }
+        } label: {
+            AppleConnectionTestLabel(isTesting: state.isTesting)
+        }
+        .buttonStyle(.brandSecondary)
+        .disabled(!canTest || state.isTesting)
     }
 
     private var canTest: Bool {
@@ -856,25 +1149,27 @@ private struct ApplePlaybackSettingsView: View {
         @Bindable var settings = settings
 
         Form {
-            Section("Engine") {
-                Picker("Player", selection: $settings.playbackEngine) {
-                    Text("OpenStream").tag(ApplePlaybackEngineKind.openStream)
-                    Text("Native").tag(ApplePlaybackEngineKind.native)
-                }
-            }
-
+            // No Player choice: every play uses the OpenStream engine inside
+            // Apple's own player (owner decision 2026-10-01).
             Section("Captions") {
                 // Not "Language": every option here is a *mode* — Off, English,
                 // Device Language, Always — so the row read "Language: Always",
                 // and the actual language list is the row underneath it. That
                 // pair is what left the owner thinking subtitles were chosen
                 // when captions were still off (review 2026-09-14).
-                Picker("Show Captions", selection: $settings.captionsPreference) {
+                #if os(tvOS)
+                AppleTVChoicePicker("Show Captions", selection: $settings.storedCaptionsPreference, options: [
+                    .init(value: .off, title: "Off"), .init(value: .english, title: "English"),
+                    .init(value: .deviceLanguage, title: "Device Language"), .init(value: .always, title: "Always"),
+                ])
+                #else
+                Picker("Show Captions", selection: $settings.storedCaptionsPreference) {
                     Text("Off").tag(AppleCaptionsPreference.off)
                     Text("English").tag(AppleCaptionsPreference.english)
                     Text("Device Language").tag(AppleCaptionsPreference.deviceLanguage)
                     Text("Always").tag(AppleCaptionsPreference.always)
                 }
+                #endif
                 NavigationLink(value: AppleSettingsRoute.subtitleLanguages) {
                     AppleTVNavigationLabel("Subtitle Languages")
                 }
@@ -882,11 +1177,41 @@ private struct ApplePlaybackSettingsView: View {
             }
 
             Section("Playback") {
+                #if os(tvOS)
+                AppleTVChoicePicker("Live buffer", selection: $settings.liveBuffer,
+                    options: AppleLiveBufferPreference.allCases.map { .init(value: $0, title: $0.title) })
+                #else
+                Picker("Live buffer", selection: $settings.liveBuffer) {
+                    ForEach(AppleLiveBufferPreference.allCases, id: \.self) { preference in
+                        Text(preference.title).tag(preference)
+                    }
+                }
+                .accessibilityIdentifier("settings.liveBuffer")
+                #endif
+                #if os(tvOS)
+                AppleTVChoicePicker("Audio Language", selection: $settings.audioLanguage,
+                                    options: Self.audioLanguageOptions)
+                #else
+                Picker("Audio Language", selection: $settings.audioLanguage) {
+                    Text(AppleAudioLanguagePreference.automaticTitle).tag("")
+                    ForEach(AppleSubtitleLanguages.all) { language in
+                        Text(language.name).tag(language.code)
+                    }
+                }
+                .accessibilityIdentifier("settings.audioLanguage")
+                #endif
                 Toggle("Auto Play Next Episode", isOn: $settings.autoPlayNextEpisode)
+                #if os(tvOS)
+                // Apple TV has no trailers (47aebf1); the same stored switch now
+                // only starts the Live guide's channel previews, which are always
+                // silent, so there is nothing for Auto-Mute to do here.
+                Toggle("Auto Play Live Previews", isOn: $settings.autoPlayTrailer)
+                #else
                 Toggle("Auto Play Trailer", isOn: $settings.autoPlayTrailer)
                 if settings.autoPlayTrailer {
                     Toggle("Auto-Mute", isOn: $settings.autoMuteTrailer)
                 }
+                #endif
                 Toggle("Delete After Watching", isOn: $settings.deleteAfterWatching)
                 NavigationLink(value: AppleSettingsRoute.playbackInfo) {
                     AppleTVNavigationLabel("Playback Info")
@@ -896,6 +1221,13 @@ private struct ApplePlaybackSettingsView: View {
         }
         .appleSettingsPane("Playback", embedded: embeddedInSplit)
     }
+
+    #if os(tvOS)
+    private static var audioLanguageOptions: [AppleTVChoicePicker<String>.Option] {
+        [AppleTVChoicePicker<String>.Option(value: "", title: AppleAudioLanguagePreference.automaticTitle)]
+            + AppleSubtitleLanguages.all.map { AppleTVChoicePicker<String>.Option(value: $0.code, title: $0.name) }
+    }
+    #endif
 }
 
 /// Picks up to three languages the captions menu lists add-on subtitles for.
@@ -913,9 +1245,9 @@ struct AppleSubtitleLanguagesView: View {
         // 2026-09-14, U5).
         ScrollViewReader { proxy in
             list.onAppear {
-                guard let first = AppleSubtitleLanguages.all
-                    .first(where: { settings.subtitleLanguages.contains($0.code) }) else { return }
-                proxy.scrollTo(first.code, anchor: .center)
+                guard let target = AppleSubtitleLanguages.initialScrollTarget(
+                    selected: settings.subtitleLanguages) else { return }
+                proxy.scrollTo(target, anchor: .center)
             }
         }
     }
@@ -934,13 +1266,17 @@ struct AppleSubtitleLanguagesView: View {
                         Text(language.name)
                         Spacer()
                         if isSelected {
+                            // The row's Selected trait says it.
                             Image(systemName: "checkmark")
+                                .accessibilityHidden(true)
                         }
                     }
                 }
                 .disabled(!isSelected && settings.subtitleLanguages.count >= AppleSubtitleLanguages.maximumSelection)
                 .appleTVReadableFocus()
                 .accessibilityIdentifier("settings.subtitleLanguages.\(language.code)")
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
+                .accessibilityRemoveTraits(isSelected ? [] : .isSelected)
                 .id(language.code)
             }
 
@@ -1012,6 +1348,7 @@ private struct AppleConnectionTestLabel: View {
             HStack {
                 ProgressView()
                     .controlSize(.small)
+                    .accessibilityLabel("Testing connection")
                 Text("Testing")
             }
         } else {
@@ -1048,31 +1385,139 @@ private struct AppleAboutView: View {
     var body: some View {
         Form {
             Section {
-                LabeledContent("App", value: "OpenStream")
+                LabeledContent("App", value: "oStream")
                 LabeledContent("Version", value: version)
                 LabeledContent("Build", value: build)
             }
 
+            // TMDB's logo and notice and the JustWatch credit sit behind one
+            // (i) row (owner: "just make them (i)"). The app is open source:
+            // the repository link may 404 until the owner flips it public
+            // after a secret scan, which is expected.
             Section {
-                if let url = URL(string: "https://github.com/orgista/openstream") {
-                    Link(destination: url) {
-                        HStack {
-                            Text("GitHub")
-                            Spacer()
-                            Text("github.com/orgista/openstream")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                AppleAttributionInfoRow()
+                #if os(tvOS)
+                LabeledContent("Source Code", value: AppleAttribution.sourceCodeDisplay)
+                    .accessibilityIdentifier("settings.about.sourceCode")
+                #else
+                Link(destination: AppleAttribution.sourceCodeURL) {
+                    HStack {
+                        Text("Source Code")
+                        Spacer()
+                        Text(AppleAttribution.sourceCodeDisplay)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
-                    .foregroundStyle(.primary)
                 }
+                .foregroundStyle(.primary)
+                .accessibilityIdentifier("settings.about.sourceCode")
+                #endif
+            }
+
+            Section {
                 NavigationLink {
                     AppleThirdPartyNoticesView()
                 } label: {
                     AppleTVNavigationLabel("Third-Party Notices", systemImage: "doc.text")
                 }
             }
+
+            #if !os(tvOS)
+            Section {
+                ShareLink(item: AppleDiagnosticsFile(), preview: SharePreview("oStream Diagnostics")) {
+                    Text("Share Diagnostics")
+                }
+                .accessibilityIdentifier("settings.about.shareDiagnostics")
+            }
+            #endif
         }
-        .appleSettingsPane("About", embedded: embeddedInSplit)
+        .appleSettingsPane("oStream", embedded: embeddedInSplit)
+    }
+}
+
+struct AppleWorkingButtonLabel: View {
+    let title: LocalizedStringKey
+    let workingTitle: LocalizedStringKey
+    let isWorking: Bool
+    /// `.leading` for a Form row. Centred in the width of "◌ Syncing…", a
+    /// row's "Sync Now" sat ~8 pt right of the rows above it (UX tour
+    /// 2026-10-08); pill buttons keep the centre.
+    var alignment: Alignment = .center
+
+    var body: some View {
+        ZStack(alignment: alignment) {
+            HStack(spacing: 8) {
+                ProgressView().controlSize(.mini).accessibilityHidden(true)
+                Text(workingTitle)
+            }
+            .hidden()
+            .accessibilityHidden(true)
+            
+            HStack(spacing: 8) {
+                Text(title)
+            }
+            .hidden()
+            .accessibilityHidden(true)
+            
+            HStack(spacing: 8) {
+                if isWorking {
+                    ProgressView().controlSize(.mini).accessibilityHidden(true)
+                }
+                Text(isWorking ? workingTitle : title)
+                    .contentTransition(.identity)
+            }
+            .animation(nil, value: isWorking)
+        }
+        #if os(tvOS)
+        // A focused Settings row turns white and the form's white tint drew
+        // "Clear Cache" white on it (Apple TV regression 2026-10-01).
+        .modifier(AppleTVFocusedLabelInk())
+        #endif
+    }
+}
+
+#if os(tvOS)
+/// Black ink on the white focus fill; untouched otherwise, so a destructive
+/// role keeps its own colour.
+struct AppleTVFocusedLabelInk: ViewModifier {
+    @Environment(\.isFocused) private var isFocused
+
+    func body(content: Content) -> some View {
+        if isFocused {
+            content.foregroundStyle(Color.black)
+        } else {
+            content
+        }
+    }
+}
+#endif
+
+/// Loading the lineup for the Channel Manager.
+enum AppleChannelManagerLoad {
+    /// Longer than one request's idle timeout (20 s), shorter than patience.
+    static let deadline: Duration = .seconds(30)
+
+    static func message(sourceName: String, error: Error) -> String {
+        if (error as? URLError)?.code == .timedOut {
+            return "\(sourceName) is not responding."
+        }
+        return "\(sourceName): \(error.localizedDescription)"
+    }
+
+    static func withDeadline<Value: Sendable>(
+        _ duration: Duration,
+        operation: @escaping @Sendable () async throws -> Value
+    ) async throws -> Value {
+        try Task.checkCancellation()
+        return try await withThrowingTaskGroup(of: Value.self) { group in
+            defer { group.cancelAll() }
+            group.addTask { try await operation() }
+            group.addTask {
+                try await Task.sleep(for: duration)
+                throw URLError(.timedOut)
+            }
+            guard let value = try await group.next() else { throw CancellationError() }
+            return value
+        }
     }
 }

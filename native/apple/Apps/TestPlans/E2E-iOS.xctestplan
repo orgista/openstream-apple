@@ -1,0 +1,43 @@
+{
+  "configurations": [
+    {
+      "id": "320B4B7E-E707-464A-A76D-3DE0F39C96D2",
+      "name": "Stubbed",
+      "options": {}
+    }
+  ],
+  "defaultOptions": {
+    "commandLineArgumentEntries": [
+      {
+        "argument": "-OpenStreamMuteAudio YES"
+      },
+      {
+        "argument": "-OpenStreamTrace YES"
+      }
+    ],
+    "environmentVariableEntries": [
+      {
+        "key": "OPENSTREAM_STUB_DIR",
+        "value": "$(SRCROOT)/TestPlans/Stubs"
+      }
+    ],
+    "language": "en",
+    "region": "US",
+    "targetForVariableExpansion": {
+      "containerPath": "container:OpenStreamApps.xcodeproj",
+      "identifier": "AB1000000000000000000008",
+      "name": "OpenStreamiOSUITests"
+    },
+    "testTimeoutsEnabled": true
+  },
+  "testTargets": [
+    {
+      "target": {
+        "containerPath": "container:OpenStreamApps.xcodeproj",
+        "identifier": "AB1000000000000000000008",
+        "name": "OpenStreamiOSUITests"
+      }
+    }
+  ],
+  "version": 1
+}

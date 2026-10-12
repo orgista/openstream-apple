@@ -32,6 +32,8 @@ public enum AppleInteractionTrace {
         case network
         /// Something failed in a way the viewer can see.
         case failure
+        /// A line from the playback engine's own log (`AppleEngineLogBridge`).
+        case engine
     }
 
     /// Enough to cover a reproduction without holding a session's worth.
@@ -39,7 +41,7 @@ public enum AppleInteractionTrace {
 
     nonisolated(unsafe) private static var entries: [String] = []
     nonisolated(unsafe) private static var origin = Date()
-    nonisolated(unsafe) private static let lock = NSLock()
+    private static let lock = NSLock()
 
     /// The key a viewer's own choice is stored under. An explicitly stored
     /// value always wins, on either side of the default.
@@ -70,14 +72,15 @@ public enum AppleInteractionTrace {
         #else
         return defaultEnabled(
             infoPlistFlag: Bundle.main.object(forInfoDictionaryKey: infoPlistKey) as? Bool,
-            isTestFlight: AppleBuildChannel.isTestFlight)
+            isTestFlight: AppleBuildChannel.hasSandboxReceipt)
         #endif
     }
 
     /// `OpenStreamTraceDefault` in the app's Info.plist. A build stamped
     /// `true` ships with tracing on (owner, 2026-09-17: Internal and
-    /// TraceEnabled), `false` with it off (the Reddit group). Absent, TestFlight
-    /// installs trace by default and App Store installs do not. The Settings
+    /// TraceEnabled), `false` with it off (the Reddit group). Absent, sandbox-receipt
+    /// installs (TestFlight, and App Review's build) trace by default and App
+    /// Store installs do not. The Settings
     /// toggle overrides either way.
     public static let infoPlistKey = "OpenStreamTraceDefault"
 
@@ -101,6 +104,16 @@ public enum AppleInteractionTrace {
         record(.screen, "trace started")
     }
 
+    /// Debug builds always echo the trace to stdout. A release build does so only when a cabled Mac launches it with
+    /// `-OpenStreamTraceConsole YES` (`devicectl device process launch --console`), so device runs can be read live.
+    static let printsToConsole: Bool = {
+        #if DEBUG
+        return true
+        #else
+        return UserDefaults.standard.bool(forKey: "OpenStreamTraceConsole")
+        #endif
+    }()
+
     public static func record(_ kind: Kind, _ detail: @autoclosure () -> String) {
         guard isEnabled else { return }
         let text = detail()
@@ -110,9 +123,10 @@ public enum AppleInteractionTrace {
         entries.append(line)
         if entries.count > limit { entries.removeFirst(entries.count - limit) }
         lock.unlock()
-        #if DEBUG
-        print("[OpenStream] trace \(line)")
-        #endif
+        if printsToConsole {
+            print("[OpenStream] trace \(line)")
+            fflush(stdout)
+        }
         append(line)
     }
 

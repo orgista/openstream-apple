@@ -49,12 +49,12 @@ struct AppleSystemArtworkPolicyTests {
     /// an internal hostname onto a system surface.
     @Test func privateAndLocalHostsAreRefused() {
         for value in [
-            "https://192.168.1.87/poster.jpg",
+            "https://192.168.1.20/poster.jpg",
             "https://10.0.0.4/poster.jpg",
-            "https://serverplus.local/poster.jpg",
+            "https://home-server.local/poster.jpg",
             "https://nas.internal/poster.jpg",
             "https://localhost/poster.jpg",
-            "https://serverplus/poster.jpg",
+            "https://home-server/poster.jpg",
         ] {
             #expect(AppleSystemArtworkPolicy.publicURL(url(value)) == nil,
                     "\(value) should not reach a system surface")

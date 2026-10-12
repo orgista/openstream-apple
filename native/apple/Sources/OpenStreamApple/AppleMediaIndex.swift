@@ -21,7 +21,7 @@ public enum AppleMediaIndexError: Error, Equatable, LocalizedError, Sendable {
     public var errorDescription: String? {
         switch self {
         case let .unsupportedVersion(version):
-            "This media index was created by a newer OpenStream version (\(version))."
+            "This media index was created by a newer oStream version (\(version))."
         }
     }
 }
@@ -55,6 +55,11 @@ public struct AppleMediaRecord: Identifiable, Codable, Equatable, Sendable {
     public var year: Int?
     public var summary: String?
     public var artworkURL: URL?
+    /// The title's 16:9 backdrop, saved with the record so a landscape card —
+    /// Continue Watching, the Top Shelf — still has a still to draw once no
+    /// loaded shelf lists the title (N52). Records written before this field
+    /// decode it as nil.
+    public var backdropURL: URL?
     public var availability: [AppleMediaAvailability]
     public var isFavorite: Bool
     public var progress: Double?
@@ -69,6 +74,7 @@ public struct AppleMediaRecord: Identifiable, Codable, Equatable, Sendable {
         year: Int? = nil,
         summary: String? = nil,
         artworkURL: URL? = nil,
+        backdropURL: URL? = nil,
         availability: [AppleMediaAvailability],
         isFavorite: Bool = false,
         progress: Double? = nil,
@@ -86,6 +92,7 @@ public struct AppleMediaRecord: Identifiable, Codable, Equatable, Sendable {
         self.year = year.flatMap { (1_880 ... 2_200).contains($0) ? $0 : nil }
         self.summary = summary.map { Self.clean($0, limit: 4_000) }.flatMap { $0.isEmpty ? nil : $0 }
         self.artworkURL = Self.safeArtworkURL(artworkURL)
+        self.backdropURL = Self.safeArtworkURL(backdropURL)
         self.availability = Self.deduplicate(availability)
         self.isFavorite = isFavorite
         self.progress = progress.flatMap { $0.isFinite && (0 ... 1).contains($0) ? $0 : nil }
@@ -95,6 +102,7 @@ public struct AppleMediaRecord: Identifiable, Codable, Equatable, Sendable {
 
     fileprivate static func merged(_ lhs: AppleMediaRecord, _ rhs: AppleMediaRecord) -> AppleMediaRecord {
         var result = rhs
+        result.backdropURL = rhs.backdropURL ?? lhs.backdropURL
         result.availability = deduplicate(lhs.availability + rhs.availability)
         result.aliases = Array(Set(lhs.aliases + rhs.aliases)).sorted()
         result.isFavorite = lhs.isFavorite || rhs.isFavorite
@@ -142,7 +150,7 @@ public actor AppleMediaIndexRepository {
     private let blockedVersion: Int?
 
     public init(fileURL: URL? = nil) {
-        self.fileURL = fileURL ?? Self.defaultURL()
+        self.fileURL = fileURL ?? Self.defaultFileURL
         guard FileManager.default.fileExists(atPath: self.fileURL.path) else {
             recordsByID = [:]
             searchTextByID = [:]
@@ -153,13 +161,21 @@ public actor AppleMediaIndexRepository {
 
         do {
             let data = try Data(contentsOf: self.fileURL)
-            let envelope = try JSONDecoder().decode(Envelope.self, from: data)
+            let clean = try AppleCachedCredentialPolicy.metadata(data)
+            let envelope = try JSONDecoder().decode(Envelope.self, from: clean)
             guard envelope.version == 1 else {
                 recordsByID = [:]
                 searchTextByID = [:]
                 orderedRecordIDs = []
                 blockedVersion = envelope.version
                 return
+            }
+            if clean != data {
+                #if os(iOS) || os(tvOS) || os(visionOS)
+                try clean.write(to: self.fileURL, options: [.atomic, .completeFileProtectionUnlessOpen])
+                #else
+                try clean.write(to: self.fileURL, options: .atomic)
+                #endif
             }
             let records = Dictionary(uniqueKeysWithValues: envelope.records.map { ($0.id, $0) })
             recordsByID = records
@@ -226,6 +242,7 @@ public actor AppleMediaIndexRepository {
                 refreshed.isFavorite = old.isFavorite || refreshed.isFavorite
                 refreshed.progress = old.progress ?? refreshed.progress
                 refreshed.isPrivate = old.isPrivate || refreshed.isPrivate
+                refreshed.backdropURL = refreshed.backdropURL ?? old.backdropURL
             }
             if let existing = next[record.id] {
                 next[record.id] = AppleMediaRecord.merged(existing, refreshed)
@@ -270,6 +287,20 @@ public actor AppleMediaIndexRepository {
         guard next != recordsByID else { return }
         try persist(next)
         recordsByID = next
+    }
+
+    func restoreConfigurationWatchlist(_ watchlist: [AppleMediaRecord]) throws {
+        var next = recordsByID
+        for id in next.keys { next[id]?.isFavorite = false }
+        for record in watchlist {
+            var restored = next[record.id] ?? record
+            restored.isFavorite = true
+            next[record.id] = restored
+        }
+        try persist(next)
+        recordsByID = next
+        searchTextByID = Self.makeSearchTextByID(next)
+        orderedRecordIDs = Self.makeOrderedRecordIDs(next)
     }
 
     public func setFavorite(_ isFavorite: Bool, recordID: String) throws {
@@ -345,7 +376,7 @@ public actor AppleMediaIndexRepository {
         }
         let directory = fileURL.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let data = try JSONEncoder().encode(Envelope(version: 1, records: Array(values.values)))
+        let data = try AppleCachedCredentialPolicy.metadata(JSONEncoder().encode(Envelope(version: 1, records: Array(values.values))))
         #if os(iOS) || os(tvOS) || os(visionOS)
         try data.write(to: fileURL, options: [.atomic, .completeFileProtectionUnlessOpen])
         #else
@@ -353,10 +384,8 @@ public actor AppleMediaIndexRepository {
         #endif
     }
 
-    private static func defaultURL() -> URL {
-        let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-            ?? FileManager.default.temporaryDirectory
-        return root.appending(path: "OpenStream", directoryHint: .isDirectory)
+    static var defaultFileURL: URL {
+        AppleStorageLocation.applicationSupport.appending(path: "OpenStream", directoryHint: .isDirectory)
             .appending(path: "media-index-v1.json")
     }
 }
@@ -448,18 +477,21 @@ public enum AppleMediaIngestion {
         verifiedAt: Date = .now
     ) -> AppleMediaRecord {
         AppleMediaRecord(
-            canonicalID: AppleStremioMetadataClient.isIMDBIdentifier(item.mediaID) ? item.mediaID : nil,
+            canonicalID: AppleXtreamReference.parse(item.mediaID) != nil ? item.mediaID
+                : AppleStremioMetadataClient.isIMDBIdentifier(item.mediaID) ? item.mediaID : item.imdbID,
             kind: item.type == "series" ? .series : .movie,
             title: item.name,
             year: item.releaseInfo.flatMap { Int($0.prefix(4)) },
             summary: item.summary,
             artworkURL: item.posterURL,
+            backdropURL: item.backgroundURL,
             availability: [.init(
                 instanceID: instanceID,
                 capability: .resolvable,
                 itemReference: "\(item.type)|\(item.mediaID)",
                 lastVerified: verifiedAt
             )],
+            isPrivate: AppleXtreamReference.parse(item.mediaID) != nil,
             lastVerified: verifiedAt
         )
     }
@@ -562,6 +594,9 @@ public final class AppleMediaIndexStore {
     /// page's critical path. Not observed: it is a lookup table, and the
     /// array beside it is what views watch.
     @ObservationIgnored private var recordsByID: [String: AppleMediaRecord] = [:]
+    /// Where each id first occurs in `records`, so a prefix lookup can still
+    /// answer with the earliest match the way `records.first` did.
+    @ObservationIgnored private var recordOffsetByID: [String: Int] = [:]
     private let repository: AppleMediaIndexRepository
 
     public init(repository: AppleMediaIndexRepository = AppleMediaIndexRepository()) {
@@ -570,12 +605,32 @@ public final class AppleMediaIndexStore {
 
     public func load() async { setRecords(await repository.records()) }
 
-    /// One record by id, without touching the array.
-    public func record(id: String) -> AppleMediaRecord? { recordsByID[id] }
+    /// One record by id, without scanning the array. Reads `records` so a
+    /// view that looks a record up still redraws when the index changes.
+    public func record(id: String) -> AppleMediaRecord? {
+        _ = records
+        return recordsByID[id]
+    }
+
+    /// The record a download belongs to: the one whose id is the download's
+    /// media id, or a leading `id:` part of it (an episode download is
+    /// `<record id>:<episode id>`). Looks up each such prefix instead of
+    /// scanning the index once per download; with several matches, the one
+    /// earliest in `records` wins, as the scan it replaces did.
+    public func record(matchingMediaID mediaID: String) -> AppleMediaRecord? {
+        _ = records
+        var best = recordOffsetByID[mediaID]
+        for index in mediaID.indices where mediaID[index] == ":" {
+            guard let offset = recordOffsetByID[String(mediaID[..<index])] else { continue }
+            best = min(best ?? offset, offset)
+        }
+        return best.map { records[$0] }
+    }
 
     private func setRecords(_ values: [AppleMediaRecord]) {
         records = values
         recordsByID = Dictionary(values.map { ($0.id, $0) }, uniquingKeysWith: { _, latest in latest })
+        recordOffsetByID = Dictionary(values.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { first, _ in first })
     }
 
     public func upsert(_ record: AppleMediaRecord) async throws {
@@ -605,6 +660,11 @@ public final class AppleMediaIndexStore {
             progressByID[record.id] = min(max(progress.position / progress.duration, 0), 1)
         }
         try await repository.updateProgress(progressByID)
+        setRecords(await repository.records())
+    }
+
+    func restoreConfigurationWatchlist(_ watchlist: [AppleMediaRecord]) async throws {
+        try await repository.restoreConfigurationWatchlist(watchlist)
         setRecords(await repository.records())
     }
 

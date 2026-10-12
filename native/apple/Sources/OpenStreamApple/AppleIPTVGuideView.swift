@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 public struct AppleIPTVGuideView: View {
     let guide: AppleIPTVGuide
@@ -21,7 +22,7 @@ public struct AppleIPTVGuideView: View {
                     Text("NOW PLAYING")
                         .font(.caption)
                         .fontWeight(.bold)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(Color.secondary)
                     
                     Text(now.title)
                         .font(.headline)
@@ -30,19 +31,19 @@ public struct AppleIPTVGuideView: View {
                     if let desc = now.description {
                         Text(desc)
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(Color.secondary)
                             .lineLimit(2)
                     }
                     
                     Text("\(format(now.start)) - \(format(now.end))")
                         .font(.caption2)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(.gray)
                 }
                 .padding(.bottom, 8)
             } else {
                 Text("No guide data available")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(Color.secondary)
             }
             
             if let next = next {
@@ -50,7 +51,7 @@ public struct AppleIPTVGuideView: View {
                     Text("UP NEXT")
                         .font(.caption)
                         .fontWeight(.bold)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(Color.secondary)
                     
                     Text(next.title)
                         .font(.subheadline)
@@ -58,7 +59,7 @@ public struct AppleIPTVGuideView: View {
                     
                     Text("\(format(next.start)) - \(format(next.end))")
                         .font(.caption2)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(.gray)
                 }
             }
         }

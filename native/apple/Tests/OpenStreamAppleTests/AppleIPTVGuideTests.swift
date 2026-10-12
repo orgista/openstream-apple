@@ -5,6 +5,21 @@ import Foundation
 @Suite("AppleIPTVGuide Tests")
 struct AppleIPTVGuideTests {
 
+    @Test func xmltvTwoHundredThousandProgrammeBenchmark() throws {
+        var xml = "<tv>"
+        xml.reserveCapacity(32_000_000)
+        for index in 0..<200_000 {
+            xml += "<programme channel=\"c\(index % 1000)\" start=\"20301005090000 +0000\" stop=\"20301005100000 +0000\"><title>Programme \(index)</title></programme>"
+        }
+        xml += "</tv>"
+        let data = Data(xml.utf8)
+        let start = ContinuousClock.now
+        let guide = try AppleIPTVGuideXMLTVParser().validatedGuide(data: data)
+        let elapsed = ContinuousClock.now - start
+        print("XMLTV benchmark: 200000 programmes, \(data.count) bytes, \(elapsed)")
+        #expect(guide.allProgrammes.count == 200_000)
+    }
+
     @Test("XMLTV parsing and nowAndNext")
     func testXMLTVParsingAndNowAndNext() async throws {
         let xmlString = """

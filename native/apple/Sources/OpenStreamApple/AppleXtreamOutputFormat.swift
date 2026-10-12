@@ -31,13 +31,20 @@ public enum AppleXtreamOutputFormat: String {
 /// directly to the request.
 extension AppleIPTVChannel {
     public func playbackRequest() -> ApplePlaybackRequest {
-        ApplePlaybackRequest(
+        let nativeRemoteHLS = AppleLiveStreamRoutePolicy.nativeRemoteHLS(url: streamURL, probedKind: probedMediaKind)
+        var request = ApplePlaybackRequest(
             url: streamURL,
             headers: playbackHeaders,
             isLive: true,
             mediaID: id,
             title: name,
-            sourceKind: .liveTV
+            sourceKind: .liveTV,
+            hints: .init(nativeRemoteHLS: nativeRemoteHLS,
+                         declaresEmbeddedCaptions: nativeRemoteHLS && wrapsInCaptionMaster != false)
         )
+        request.artworkURL = logoURL
+        request.restrictionChannelID = id
+        request.restrictionGroup = group
+        return request
     }
 }

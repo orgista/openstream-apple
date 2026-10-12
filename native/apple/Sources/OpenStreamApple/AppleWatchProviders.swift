@@ -71,6 +71,14 @@ public struct AppleWatchProvider: Equatable, Sendable, Identifiable {
         guard let label = offer.label else { return name }
         return "\(name) · \(label)"
     }
+
+    /// TMDB's small logo for this provider, at `w92` — one of the thumbnail
+    /// sizes the app already validates and caches (`AppleTitlePagePolicy`),
+    /// plenty for an 18–28 pt row icon.
+    public var logoURL: URL? {
+        guard let logoPath, logoPath.hasPrefix("/") else { return nil }
+        return URL(string: "https://image.tmdb.org/t/p/w92\(logoPath)")
+    }
 }
 
 /// What the title page is allowed to show, from everything TMDB returned.
@@ -101,6 +109,13 @@ public enum AppleWatchProviderPolicy: Sendable {
             .filter { seen.insert($0.id).inserted }
     }
 
+    /// The logos shown before the sentence — capped the same way the
+    /// sentence itself is, so the row never grows past a quiet line of icons
+    /// plus text.
+    public static func logos(_ providers: [AppleWatchProvider], limit: Int = 3) -> [AppleWatchProvider] {
+        Array(providers.prefix(limit))
+    }
+
     private static func rank(_ offer: AppleWatchProviderOffer) -> Int {
         switch offer {
         case .subscription: 0
@@ -117,6 +132,77 @@ public enum AppleWatchProviderPolicy: Sendable {
     /// "also available on" (owner: "in general prefer to stay in the app").
     public static func replacesPlay(hasLocalOrAddonSource: Bool, visibleProviders: [AppleWatchProvider]) -> Bool {
         !hasLocalOrAddonSource && !visibleProviders.isEmpty
+    }
+
+    /// How many services the Add Service menu offers (owner 2026-09-28:
+    /// "only include the top 10 by popularity").
+    public static let addableLimit = 10
+
+    /// The services the viewer has added, in `directory` order. An id the
+    /// region's directory does not list stays stored but has no row.
+    public static func added(_ directory: [AppleWatchProvider], enabledProviderIDs: Set<Int>) -> [AppleWatchProvider] {
+        var seen = Set<Int>()
+        return directory.filter { enabledProviderIDs.contains($0.id) && seen.insert($0.id).inserted }
+    }
+
+    /// The Add Service menu: the most popular services not yet added, at most
+    /// `limit`. `directory` is already in popularity order.
+    ///
+    /// Stores, add-on channels and aggregators are left out, and the big
+    /// subscription services come first: TMDB's US top ten was JustWatch TV,
+    /// Amazon Video, Apple TV Store and "HBO Max Amazon Channel", with HBO
+    /// Max, Paramount+ and Peacock nowhere (iPhone 27 v2 re-run).
+    public static func addable(
+        _ directory: [AppleWatchProvider],
+        enabledProviderIDs: Set<Int>,
+        limit: Int = addableLimit
+    ) -> [AppleWatchProvider] {
+        var seen = Set<Int>()
+        // One row per service: Paramount+ Essential and Premium, Peacock
+        // Premium and Premium Plus were each listed (iPad v2 re-run). The
+        // first, most popular tier stands for the service, and a service
+        // already added in any tier is not offered again.
+        var families = Set(directory.filter { enabledProviderIDs.contains($0.id) }.map { serviceFamily($0.name) })
+        let services = directory.filter {
+            !enabledProviderIDs.contains($0.id) && isStreamingService($0.name) && seen.insert($0.id).inserted
+                && families.insert(serviceFamily($0.name)).inserted
+        }
+        let major = services.filter { isMajorSubscription($0.name) }
+        let rest = services.filter { !isMajorSubscription($0.name) }
+        return Array((major + rest).prefix(limit))
+    }
+
+    /// False for a store (rent or buy), a channel sold inside another
+    /// service, or an aggregator: none of them is a service to subscribe to.
+    static func isStreamingService(_ name: String) -> Bool {
+        let lowered = name.lowercased()
+        let excluded = ["channel", "store", "amazon video", "justwatch", "google play", "fandango", "vudu",
+                        "microsoft", "rakuten", "itunes"]
+        if excluded.contains(where: lowered.contains) { return false }
+        return lowered != "youtube"
+    }
+
+    /// A service's name without its tier: "Paramount+ Premium" and
+    /// "Paramount Plus Essential" are both "paramount", "Peacock Premium Plus"
+    /// is "peacock", "Netflix Standard with Ads" is "netflix".
+    static func serviceFamily(_ name: String) -> String {
+        let tiers: Set<String> = ["plus", "premium", "essential", "standard", "basic", "with", "ads"]
+        var words = name.lowercased()
+            .replacingOccurrences(of: "+", with: " plus")
+            .split(whereSeparator: { !$0.isLetter && !$0.isNumber }).map(String.init)
+        while words.count > 1, let last = words.last, tiers.contains(last) { words.removeLast() }
+        return words.joined(separator: " ")
+    }
+
+    /// The subscription services most viewers have, by TMDB's names.
+    static func isMajorSubscription(_ name: String) -> Bool {
+        let key = name.lowercased()
+            .replacingOccurrences(of: "+", with: " plus")
+            .split(whereSeparator: { !$0.isLetter && !$0.isNumber }).joined(separator: " ")
+        let major = ["netflix", "hulu", "amazon prime video", "disney plus", "max", "hbo max", "apple tv",
+                     "apple tv plus", "paramount plus", "paramount plus premium", "paramount plus essential",
+                     "peacock", "peacock premium", "peacock premium plus"]
+        return major.contains(key)
     }
 }
 
@@ -196,13 +282,25 @@ public extension AppleWatchProviderResponse {
         public let provider_name: String
         public let logo_path: String?
         public let display_priority: Int?
+        /// Per-region rank, keyed by ISO 3166-1 alpha-2. Lower is more popular.
+        public let display_priorities: [String: Int]?
     }
 
-    /// Ordered as TMDB ranks them for the region, so the services a viewer is
-    /// most likely to have appear first rather than alphabetically.
-    static func directory(in envelope: DirectoryEnvelope) -> [AppleWatchProvider] {
-        (envelope.results ?? [])
-            .sorted { ($0.display_priority ?? .max) < ($1.display_priority ?? .max) }
+    /// Ordered as TMDB ranks them for the region (`display_priorities`, then
+    /// `display_priority`), so the most popular services come first. Entries
+    /// with no rank keep TMDB's order, after the ranked ones.
+    static func directory(in envelope: DirectoryEnvelope, region: String? = nil) -> [AppleWatchProvider] {
+        let key = region?.uppercased()
+        func rank(_ entry: DirectoryEntry) -> Int {
+            key.flatMap { entry.display_priorities?[$0] } ?? entry.display_priority ?? .max
+        }
+        return (envelope.results ?? [])
+            .enumerated()
+            .sorted { lhs, rhs in
+                let a = rank(lhs.element), b = rank(rhs.element)
+                return a == b ? lhs.offset < rhs.offset : a < b
+            }
+            .map(\.element)
             .map {
                 AppleWatchProvider(
                     id: $0.provider_id,

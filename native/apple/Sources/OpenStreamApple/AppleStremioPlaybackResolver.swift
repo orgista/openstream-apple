@@ -1,6 +1,6 @@
 import Foundation
 
-public struct AppleResolvedStremioPlayback: Equatable, Sendable {
+public struct AppleResolvedMediaPlayback: Equatable, Sendable {
     public let sourceName: String
     public let stream: AppleStremioHTTPPlaybackCandidate
     public let preparedPlayback: ApplePreparedPlayback
@@ -16,7 +16,7 @@ public struct AppleResolvedStremioPlayback: Equatable, Sendable {
     }
 }
 
-public enum AppleStremioPlaybackResolutionError: Swift.Error, Equatable, LocalizedError, Sendable {
+public enum AppleMediaPlaybackResolutionError: Swift.Error, Equatable, LocalizedError, Sendable {
     case noStreams
     case unsupportedOnly(AppleStremioUnsupportedReason)
     case externalDemuxRequired
@@ -30,8 +30,6 @@ public enum AppleStremioPlaybackResolutionError: Swift.Error, Equatable, Localiz
             "No streams available."
         case .unsupportedOnly(let reason):
             switch reason {
-            case .torrent:
-                "Torrent resolver required."
             case .externalLink:
                 "External link only."
             case .youtube:
@@ -54,7 +52,8 @@ public enum AppleStremioPlaybackResolutionError: Swift.Error, Equatable, Localiz
 /// Coordinates the protocol client with AVAsset runtime inspection and the
 /// existing playback route executor. Provider ordering is preserved: each
 /// HTTP candidate is tried until one produces a real prepared playback URL.
-public struct AppleStremioPlaybackResolver: Sendable {
+#if OPENSTREAM_ADDONS
+public struct AppleMediaPlaybackResolver: Sendable {
     public typealias Inspector = @Sendable (URL) async throws -> AppleAssetInspection
     public typealias Preparer = @Sendable (
         URL,
@@ -65,7 +64,6 @@ public struct AppleStremioPlaybackResolver: Sendable {
     public typealias ProtectedPlaybackRevoker = @Sendable (URL) async -> Void
 
     private let client: AppleStremioPlaybackClient
-    private let streamingServerClient: AppleStremioStreamingServerClient
     private let inspector: Inspector
     private let preparer: Preparer
     private let protectedPlaybackURL: AppleIPTVClient.ProtectedPlaybackURL
@@ -81,12 +79,10 @@ public struct AppleStremioPlaybackResolver: Sendable {
         revokeProtectedPlaybackURL: @escaping ProtectedPlaybackRevoker = {
             AppleProtectedHTTPPlaybackServer.shared.revoke(playbackURL: $0)
         },
-        streamingServerClient: AppleStremioStreamingServerClient = AppleStremioStreamingServerClient(),
         resolutionTimeout: Duration = .seconds(45),
         sourceTimeout: Duration = .seconds(15)
     ) {
         self.client = client
-        self.streamingServerClient = streamingServerClient
         self.inspector = inspector
         preparer = { sourceURL, decision, inspection, gatewayRequest in
             try await playbackPreparer.prepare(
@@ -110,12 +106,10 @@ public struct AppleStremioPlaybackResolver: Sendable {
         revokeProtectedPlaybackURL: @escaping ProtectedPlaybackRevoker = {
             AppleProtectedHTTPPlaybackServer.shared.revoke(playbackURL: $0)
         },
-        streamingServerClient: AppleStremioStreamingServerClient = AppleStremioStreamingServerClient(),
         resolutionTimeout: Duration = .seconds(45),
         sourceTimeout: Duration = .seconds(15)
     ) {
         self.client = client
-        self.streamingServerClient = streamingServerClient
         self.inspector = inspector
         self.preparer = preparer
         self.protectedPlaybackURL = protectedPlaybackURL
@@ -128,7 +122,6 @@ public struct AppleStremioPlaybackResolver: Sendable {
         source: AppleSource,
         item: AppleCatalogItem,
         gatewayConfig: AppleTranscodeGatewayConfig? = nil,
-        streamingServerConfiguration: AppleStremioStreamingServerConfiguration? = nil,
         progress: (@Sendable (ApplePlaybackPhase) async -> Void)? = nil
     ) async throws -> AppleResolvedStremioPlayback {
         await progress?(.resolving)
@@ -160,52 +153,6 @@ public struct AppleStremioPlaybackResolver: Sendable {
             }
         }
 
-        if let streamingServerConfiguration {
-            for unsupported in selection.unsupported.prefix(6) {
-                guard case .torrent(let infoHash, let fileIndex, let sources) = unsupported.reason else {
-                    continue
-                }
-                let generated: [AppleStremioHTTPPlaybackCandidate]
-                do {
-                    generated = try await streamingServerClient.playbackCandidates(
-                        title: unsupported.title,
-                        filename: unsupported.filename,
-                        infoHash: infoHash,
-                        fileIndex: fileIndex,
-                        sources: sources,
-                        seriesInfo: AppleStremioSeriesInfo(mediaID: item.mediaID),
-                        configuration: streamingServerConfiguration
-                    )
-                } catch is CancellationError {
-                    throw CancellationError()
-                } catch {
-                    state.record(.provider(Self.streamingServerFailure(error)))
-                    break
-                }
-
-                for stream in generated {
-                    try Task.checkCancellation()
-                    do {
-                        let resolved = try await prepare(
-                            stream: stream,
-                            // The configured Stremio Service is already the
-                            // torrent/HLS boundary. Never forward its local or
-                            // private media URL to a separate remote gateway.
-                            gatewayConfig: nil,
-                            progress: progress
-                        )
-                        return AppleResolvedStremioPlayback(stream: resolved.stream, preparedPlayback: resolved.preparedPlayback, sourceName: source.name)
-                    } catch is CancellationError {
-                        throw CancellationError()
-                    } catch let error as CandidateAttemptError {
-                        state.record(error)
-                    } catch {
-                        state.record(.provider(ApplePlaybackFailure.classify(error)))
-                    }
-                }
-            }
-        }
-
         if let lastProviderFailure = state.lastProviderFailure {
             throw AppleStremioPlaybackResolutionError.providerFailure(lastProviderFailure)
         }
@@ -230,7 +177,6 @@ public struct AppleStremioPlaybackResolver: Sendable {
         preferredSourceID: AppleSource.ID? = nil,
         item: AppleCatalogItem,
         gatewayConfig: AppleTranscodeGatewayConfig? = nil,
-        streamingServerConfiguration: AppleStremioStreamingServerConfiguration? = nil,
         progress: (@Sendable (ApplePlaybackPhase) async -> Void)? = nil
     ) async throws -> AppleResolvedStremioPlayback {
         let candidates = Self.streamSources(from: sources, preferredSourceID: preferredSourceID)
@@ -245,7 +191,6 @@ public struct AppleStremioPlaybackResolver: Sendable {
                     source: source,
                     item: item,
                     gatewayConfig: gatewayConfig,
-                    streamingServerConfiguration: streamingServerConfiguration,
                     progress: progress
                 )
             } catch is CancellationError {
@@ -264,25 +209,21 @@ public struct AppleStremioPlaybackResolver: Sendable {
     /// route preparation. The caller builds an `ApplePlaybackRequest` from the
     /// first candidate and passes the rest as fallback candidates so the
     /// playback coordinator tries the next on `.unsupportedMedia`/HTTP failure.
-    /// Torrent-only selections are expanded through the configured Stremio
-    /// streaming server before ranking.
     public func rankedCandidates(
         sources: [AppleSource],
         preferredSourceID: AppleSource.ID? = nil,
-        item: AppleCatalogItem,
-        streamingServerConfiguration: AppleStremioStreamingServerConfiguration? = nil
+        item: AppleCatalogItem
     ) async throws -> [AppleStremioHTTPPlaybackCandidate] {
         try await Self.withTimeout(resolutionTimeout) {
             try await rankedCandidatesWithinBudget(sources: sources, preferredSourceID: preferredSourceID,
-                item: item, streamingServerConfiguration: streamingServerConfiguration)
+                item: item)
         }
     }
 
     private func rankedCandidatesWithinBudget(
         sources: [AppleSource],
         preferredSourceID: AppleSource.ID?,
-        item: AppleCatalogItem,
-        streamingServerConfiguration: AppleStremioStreamingServerConfiguration?
+        item: AppleCatalogItem
     ) async throws -> [AppleStremioHTTPPlaybackCandidate] {
         let candidates = Self.streamSources(from: sources, preferredSourceID: preferredSourceID)
         guard !candidates.isEmpty else { throw AppleStremioPlaybackResolutionError.noStreams }
@@ -291,6 +232,7 @@ public struct AppleStremioPlaybackResolver: Sendable {
         let started = ContinuousClock.now
         var bestError: AppleStremioPlaybackResolutionError = .noStreams
         var providerFailure: ApplePlaybackFailure?
+        var someSourceAnswered = false
         for source in candidates {
             try Task.checkCancellation()
             if !collected.isEmpty, started.duration(to: .now) + sourceTimeout >= resolutionTimeout { break }
@@ -298,32 +240,15 @@ public struct AppleStremioPlaybackResolver: Sendable {
                 let selection = try await Self.withTimeout(sourceTimeout) {
                     try await client.streams(source: source, type: item.type, mediaID: item.mediaID)
                 }
-                var http = selection.httpCandidates.filter { !$0.isPendingPreparation }
+                let http = selection.httpCandidates.filter { !$0.isPendingPreparation }
+                someSourceAnswered = true
+                // Per add-on, so "did not return an Apple-compatible stream"
+                // can be read off the trace: which add-on answered with what.
+                appleTrace("streams from \(source.name) for \(item.name): ready=\(http.count) "
+                    + "pending=\(selection.httpCandidates.count - http.count) unsupported=\(selection.unsupported.count)"
+                    + (selection.unsupported.isEmpty ? "" : " (\(Set(selection.unsupported.map { Self.traceLabel($0.reason) }).sorted().joined(separator: ",")))"))
                 if http.isEmpty, selection.httpCandidates.contains(where: \.isPendingPreparation) {
                     providerFailure = .init(kind: .unavailable, message: "The provider is still preparing this title. No ready stream was returned.")
-                }
-                if let streamingServerConfiguration {
-                    for unsupported in selection.unsupported.prefix(6) {
-                        guard case .torrent(let infoHash, let fileIndex, let sources) = unsupported.reason else {
-                            continue
-                        }
-                        do {
-                            let generated = try await streamingServerClient.playbackCandidates(
-                                title: unsupported.title,
-                                filename: unsupported.filename,
-                                infoHash: infoHash,
-                                fileIndex: fileIndex,
-                                sources: sources,
-                                seriesInfo: AppleStremioSeriesInfo(mediaID: item.mediaID),
-                                configuration: streamingServerConfiguration
-                            )
-                            http.append(contentsOf: generated)
-                        } catch is CancellationError {
-                            throw CancellationError()
-                        } catch {
-                            continue
-                        }
-                    }
                 }
                 if !http.isEmpty {
                     collected += http.map { $0.withSourceName(source.name) }
@@ -348,10 +273,37 @@ public struct AppleStremioPlaybackResolver: Sendable {
             // cannot win on resolution alone.
             let wanted = AppleStremioSeriesInfo(mediaID: item.mediaID)
                 .map { (season: $0.season, episode: $0.episode) }
-            return AppleStremioCandidateRanking.rankForAutomaticPlayback(collected, episode: wanted)
+            let ranked = AppleStremioCandidateRanking.rankForAutomaticPlayback(collected, episode: wanted, title: item.name, year: item.year)
+            // The trace names the top picks so a "wrong show" report can be
+            // read off the file instead of reproduced.
+            appleTrace("candidates for \(item.name): " + ranked.prefix(4).map {
+                String(($0.filename ?? $0.title).prefix(60)) }.joined(separator: " | "))
+            return ranked
         }
         if let providerFailure { throw AppleStremioPlaybackResolutionError.providerFailure(providerFailure) }
+        if bestError == .noStreams, someSourceAnswered {
+            // The stream add-ons answered with nothing for this title. Not
+            // "this catalog provides details only, add a stream source": the
+            // viewer has one, and it was asked (playback sweep 2026-10-08).
+            throw AppleStremioPlaybackResolutionError.providerFailure(Self.nothingFound)
+        }
         throw bestError
+    }
+
+    static let nothingFound = ApplePlaybackFailure(
+        kind: .unavailable, message: "No stream was found for this title. Your stream sources returned nothing for it."
+    )
+
+    /// The kind of stream that could not play, without its locator (an
+    /// external link can carry a token).
+    static func traceLabel(_ reason: AppleStremioUnsupportedReason) -> String {
+        switch reason {
+        case .youtube: "youtube"
+        case .externalLink: "external-link"
+        case .invalidHTTPURL: "bad-url"
+        case .invalidLocator: "bad-locator"
+        case .missingLocator: "no-url (torrent only)"
+        }
     }
 
     private static func withTimeout<Value: Sendable>(
@@ -378,14 +330,12 @@ public struct AppleStremioPlaybackResolver: Sendable {
     func resolveDownloadPlan(
         sources: [AppleSource],
         preferredSourceID: AppleSource.ID? = nil,
-        item: AppleCatalogItem,
-        streamingServerConfiguration: AppleStremioStreamingServerConfiguration? = nil
+        item: AppleCatalogItem
     ) async throws -> AppleOfflineDownloadPlan {
         let plans = try await resolveDownloadPlans(
             sources: sources,
             preferredSourceID: preferredSourceID,
-            item: item,
-            streamingServerConfiguration: streamingServerConfiguration
+            item: item
         )
         guard let selected = plans.first else {
             throw AppleStremioPlaybackResolutionError.noStreams
@@ -405,8 +355,7 @@ public struct AppleStremioPlaybackResolver: Sendable {
     func resolveDownloadPlans(
         sources: [AppleSource],
         preferredSourceID: AppleSource.ID? = nil,
-        item: AppleCatalogItem,
-        streamingServerConfiguration: AppleStremioStreamingServerConfiguration? = nil
+        item: AppleCatalogItem
     ) async throws -> [AppleOfflineDownloadPlan] {
         let candidates = Self.streamSources(from: sources, preferredSourceID: preferredSourceID)
         guard !candidates.isEmpty else { throw AppleStremioPlaybackResolutionError.noStreams }
@@ -438,33 +387,6 @@ public struct AppleStremioPlaybackResolver: Sendable {
                 }
 
                 if !plans.isEmpty { return plans }
-
-                if let streamingServerConfiguration {
-                    for unsupported in selection.unsupported.prefix(6) {
-                        guard case .torrent(let infoHash, let fileIndex, let sources) = unsupported.reason else {
-                            continue
-                        }
-                        do {
-                            let generated = try await streamingServerClient.playbackCandidates(
-                                title: unsupported.title,
-                                filename: unsupported.filename,
-                                infoHash: infoHash,
-                                fileIndex: fileIndex,
-                                sources: sources,
-                                seriesInfo: AppleStremioSeriesInfo(mediaID: item.mediaID),
-                                configuration: streamingServerConfiguration
-                            )
-                            for stream in generated.prefix(12) {
-                                plans.append(try await downloadPlan(for: stream))
-                            }
-                            if !plans.isEmpty { return plans }
-                        } catch is CancellationError {
-                            throw CancellationError()
-                        } catch {
-                            lastProviderFailure = Self.streamingServerFailure(error)
-                        }
-                    }
-                }
 
                 if selection.httpCandidates.isEmpty, let unsupported = selection.unsupported.first {
                     let error = AppleStremioPlaybackResolutionError.unsupportedOnly(unsupported.reason)
@@ -512,7 +434,7 @@ public struct AppleStremioPlaybackResolver: Sendable {
     ) -> [AppleSource] {
         sources
             .filter { source in
-                source.kind == .stremio
+                source.isAddon
                     && source.isEnabled
                     && source.resources.contains { $0.caseInsensitiveCompare("stream") == .orderedSame }
             }
@@ -672,17 +594,6 @@ public struct AppleStremioPlaybackResolver: Sendable {
         }
     }
 
-    private static func streamingServerFailure(_ error: any Swift.Error) -> ApplePlaybackFailure {
-        if let serviceError = error as? AppleStremioStreamingServerError {
-            let kind: ApplePlaybackFailure.Kind = switch serviceError {
-            case .invalidTorrent, .invalidResponse: .unavailable
-            case .responseTooLarge, .requestFailed, .redirectRejected, .unreachable: .network
-            }
-            return ApplePlaybackFailure(kind: kind, message: serviceError.localizedDescription)
-        }
-        return ApplePlaybackFailure.classify(error)
-    }
-
     private func inspectWithTimeout(_ url: URL) async throws -> AppleAssetInspection {
         try await withThrowingTaskGroup(of: AppleAssetInspection.self) { group in
             group.addTask { try await inspector(url) }
@@ -738,3 +649,31 @@ public struct AppleStremioPlaybackResolver: Sendable {
         }
     }
 }
+#else
+public struct AppleMediaPlaybackResolver: Sendable {
+    public init() {}
+    public func rankedCandidates(sources: [AppleSource], preferredSourceID: AppleSource.ID? = nil, item: AppleCatalogItem) async throws -> [AppleStremioHTTPPlaybackCandidate] { [] }
+    func resolveDownloadPlans(sources: [AppleSource], preferredSourceID: AppleSource.ID? = nil, item: AppleCatalogItem) async throws -> [AppleOfflineDownloadPlan] { [] }
+    public static func decision(for inspection: AppleAssetInspection) -> OpenStreamPlaybackDecision {
+        let evidence = inspection.runtimeEvidence
+        guard evidence.supportsDirectPlayback else {
+            let reason: String
+            if evidence.hasProtectedContent && !evidence.assetIsPlayable {
+                reason = "Protected media failed the system playback check."
+            } else if !evidence.assetIsPlayable {
+                reason = "The asset failed the system playback check."
+            } else {
+                reason = "An enabled track failed the system playback check."
+            }
+            return OpenStreamPlaybackDecision(support: .unsupported, reasons: [reason])
+        }
+        return OpenStreamPlaybackDecision(support: .supported, reasons: [])
+    }
+}
+#endif
+
+public typealias AppleResolvedStremioPlayback = AppleResolvedMediaPlayback
+
+public typealias AppleStremioPlaybackResolutionError = AppleMediaPlaybackResolutionError
+
+public typealias AppleStremioPlaybackResolver = AppleMediaPlaybackResolver

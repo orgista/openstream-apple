@@ -19,6 +19,18 @@ struct AppleLiveChannelAlternatesTests {
 
     private func never(_ url: URL) -> Bool { false }
 
+    @Test func sharedPlaybackCandidatesExcludeCatchUpAndStartOver() {
+        let selected = channel("live", "CBS", url: "https://fixture.example/live.m3u8")
+        let alternate = channel("backup", "CBS HD", url: "https://fixture.example/backup.m3u8")
+        let lineup = [selected, alternate]
+        #expect(A.playbackCandidates(for: selected, request: selected.playbackRequest(), in: lineup,
+            hasRecentlyFailed: never).map(\.url) == [alternate.streamURL])
+        var archive = selected.playbackRequest()
+        archive.isLive = false
+        #expect(A.playbackCandidates(for: selected, request: archive, in: lineup, hasRecentlyFailed: never).isEmpty)
+        #expect(A.playbackCandidates(for: nil, request: selected.playbackRequest(), in: lineup, hasRecentlyFailed: never).isEmpty)
+    }
+
     @Test func anotherFeedOfTheSameNetworkReplacesADeadOne() {
         let dead = channel("1", "CBS (EAST)", url: "http://p/1")
         let lineup = [

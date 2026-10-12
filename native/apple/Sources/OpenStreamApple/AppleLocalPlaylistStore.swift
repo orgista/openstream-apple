@@ -11,17 +11,44 @@ public struct AppleLocalPlaylistStore: Sendable {
     public static let pastedURL = URL(string: "\(scheme)://local/pasted.m3u")!
 
     public let directory: URL
+    /// Where a compressed copy of each playlist is kept when the file may be
+    /// purged. Apple TV guarantees no local file storage: the system may
+    /// reclaim anything outside user defaults and iCloud when space runs low
+    /// ("tvOS apps have limited persistent local storage"), and a pasted
+    /// playlist cannot be fetched again, unlike the channel cache or channel
+    /// health history, which rebuild themselves. Nil elsewhere: Application
+    /// Support is kept on iPhone, iPad, Mac and Vision Pro. Held as a
+    /// defaults suite name (`standardMirror` for the app's own defaults) so
+    /// the store stays `Sendable`.
+    public let mirrorSuite: String?
+    public static let standardMirror = "standard"
 
-    public init(directory: URL) {
+    public init(directory: URL, mirrorSuite: String? = nil) {
         self.directory = directory
+        self.mirrorSuite = mirrorSuite
+    }
+
+    private var mirror: UserDefaults? {
+        guard let mirrorSuite else { return nil }
+        return mirrorSuite == Self.standardMirror ? .standard : UserDefaults(suiteName: mirrorSuite)
     }
 
     public static let shared: AppleLocalPlaylistStore = {
-        let base = (try? FileManager.default.url(
-            for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
-            ?? FileManager.default.temporaryDirectory
-        return AppleLocalPlaylistStore(directory: base.appending(path: "OpenStream/Playlists"))
+        let base = AppleStorageLocation.applicationSupport
+        #if os(tvOS)
+        let mirror: String? = standardMirror
+        #else
+        let mirror: String? = nil
+        #endif
+        return AppleLocalPlaylistStore(directory: base.appending(path: "OpenStream/Playlists"), mirrorSuite: mirror)
     }()
+
+    /// The largest compressed playlist kept in user defaults. tvOS ends an
+    /// app whose defaults pass 1 MB, and the settings live there too; a
+    /// playlist over this stays file-only and has to be pasted again if the
+    /// system purges it.
+    public static let mirrorLimit = 256 * 1024
+    static let mirrorKeyPrefix = "openstream.localPlaylist.v1."
 
     public static func isLocal(_ url: URL) -> Bool {
         url.scheme?.lowercased() == scheme
@@ -36,11 +63,43 @@ public struct AppleLocalPlaylistStore: Sendable {
     }
 
     public func fileURL(for url: URL) -> URL {
-        directory.appending(path: url.lastPathComponent)
+        let name = url.lastPathComponent
+        let allowed = !name.isEmpty && name != "." && name != ".." && name.utf8.allSatisfy {
+            (48...57).contains($0) || (65...90).contains($0) || (97...122).contains($0) || [45, 46, 95].contains($0)
+        }
+        return directory.appending(path: allowed ? name : ApplePlaybackIdentity.digest(for: url.absoluteString) + ".m3u")
     }
 
     public func read(_ url: URL) throws -> Data {
-        try Data(contentsOf: fileURL(for: url))
+        let file = fileURL(for: url)
+        do {
+            return try Data(contentsOf: file)
+        } catch {
+            // Purged: put the file back from the mirror and carry on.
+            guard let restored = mirrored(url) else { throw error }
+            try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            try? restored.write(to: file, options: .atomic)
+            return restored
+        }
+    }
+
+    /// The mirror's copy of `url`, decompressed; nil without one.
+    func mirrored(_ url: URL) -> Data? {
+        guard let stored = mirror?.data(forKey: Self.mirrorKeyPrefix + url.lastPathComponent) else { return nil }
+        return try? (stored as NSData).decompressed(using: .zlib) as Data
+    }
+
+    /// Keeps a compressed copy in the mirror when it fits; drops a stale one
+    /// that no longer does, so a purge never brings back an older playlist.
+    private func updateMirror(_ data: Data, for url: URL) {
+        guard let mirror else { return }
+        let key = Self.mirrorKeyPrefix + url.lastPathComponent
+        if let compressed = try? (data as NSData).compressed(using: .zlib) as Data,
+           compressed.count <= Self.mirrorLimit {
+            mirror.set(compressed, forKey: key)
+        } else {
+            mirror.removeObject(forKey: key)
+        }
     }
 
     public func text(_ url: URL) -> String? {
@@ -52,7 +111,9 @@ public struct AppleLocalPlaylistStore: Sendable {
     public func merge(text: String, into url: URL = pastedURL) throws -> AppleM3UTextMerger.Result {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let result = AppleM3UTextMerger.merge(existing: self.text(url), incoming: text)
-        try Data(result.text.utf8).write(to: fileURL(for: url), options: .atomic)
+        let data = Data(result.text.utf8)
+        try data.write(to: fileURL(for: url), options: .atomic)
+        updateMirror(data, for: url)
         return result
     }
 }

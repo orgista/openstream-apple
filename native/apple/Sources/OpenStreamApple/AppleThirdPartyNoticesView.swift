@@ -4,7 +4,7 @@ import SwiftUI
 @MainActor
 struct AppleThirdPartyNoticesView: View {
     var body: some View {
-        List {
+        AppleSettingsCollection {
             Section {
                 ForEach(AppleThirdPartyNotices.all()) { notice in
                     NavigationLink {
@@ -47,6 +47,12 @@ private struct AppleThirdPartyNoticeDetailView: View {
                     Link(notice.url, destination: url)
                         .font(.caption)
                         .foregroundStyle(.primary)
+                }
+                if !notice.note.isEmpty {
+                    Text(notice.note)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 Text(notice.text)
                     .font(.body.monospaced())

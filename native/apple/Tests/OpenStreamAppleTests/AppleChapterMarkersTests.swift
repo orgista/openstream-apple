@@ -67,6 +67,19 @@ struct AppleChapterMarkersTests {
         #expect(!AppleChapterMarkers.shouldOfferSkip(position: 45, intro: intro, hasSkipped: true))
     }
 
+    /// Full test 2026-09-30: 16 chapters reported, no marks on the scrubber.
+    @Test func chapterStartsBecomeScrubberMarks() {
+        let movie = [chapter("Chapter 01", 0, 600), chapter("Chapter 02", 600, 1800),
+                     chapter("Chapter 03", 1800, 3600), chapter("Duplicate", 1800, 3600),
+                     chapter("Past the end", 4000, 4100)]
+        #expect(AppleChapterMarkers.scrubberFractions(chapters: movie, duration: 3600) == [600.0 / 3600, 0.5])
+    }
+
+    @Test func noRuntimeMeansNoMarks() {
+        #expect(AppleChapterMarkers.scrubberFractions(chapters: episode, duration: nil).isEmpty)
+        #expect(AppleChapterMarkers.scrubberFractions(chapters: episode, duration: 0).isEmpty)
+    }
+
     @Test func noIntroMeansNoButton() {
         #expect(!AppleChapterMarkers.shouldOfferSkip(position: 45, intro: nil))
     }

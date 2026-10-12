@@ -24,6 +24,7 @@ import json
 import os
 import re
 import time
+from urllib.parse import urlsplit, parse_qs
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
@@ -98,6 +99,87 @@ class FixtureHandler(BaseHTTPRequestHandler):
 
         path = self.path
         root = self.server.root
+
+        parsed = urlsplit(path)
+        query = parse_qs(parsed.query)
+        if parsed.path == "/iptv/stream.m3u8":
+            base = f"http://127.0.0.1:{self.server.server_address[1]}"
+            return self._send_simple(200, f"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1500000\n{base}/hls/index.m3u8\n".encode(), "application/vnd.apple.mpegurl")
+        if parsed.path == "/iptv/control":
+            self.server.iptv_count = min(max(int(query.get("count", ["12"])[0]), 1), 25000)
+            self.server.iptv_delay_ms = min(max(int(query.get("delay_ms", ["0"])[0]), 0), 1000)
+            return self._send_simple(200, b"synthetic lineup updated")
+        if parsed.path in ("/iptv/playlist.m3u", "/iptv/guide.xml", "/iptv/broken.xml"):
+            count = min(max(int(query.get("count", [str(getattr(self.server, "iptv_count", 12))])[0]), 1), 25000)
+            base = f"http://127.0.0.1:{self.server.server_address[1]}"
+            if parsed.path.endswith("playlist.m3u"):
+                guide = f"{base}/iptv/guide.xml?count={count}"
+                body = f'#EXTM3U x-tvg-url="{guide}"\n' + "".join(
+                    f'#EXTINF:-1 tvg-id="fixture-{i}" group-title="{("Family" if i % 2 == 0 else "Restricted")}" tvg-logo="{base}/fixture-poster.svg" catchup="default" catchup-days="2" catchup-source="{base}/iptv/stream.m3u8?start={{utc}}",Fixture Channel {i + 1}\n{base}/iptv/stream.m3u8?channel={i}\n'
+                    for i in range(count))
+                data = body.encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/vnd.apple.mpegurl")
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                try:
+                    for offset in range(0, len(data), 65536):
+                        self.wfile.write(data[offset:offset + 65536])
+                        self.wfile.flush()
+                        time.sleep(getattr(self.server, "iptv_delay_ms", 0) / 1000)
+                except (BrokenPipeError, ConnectionResetError):
+                    pass
+                return
+            if parsed.path.endswith("broken.xml"):
+                return self._send_simple(200, b"<tv><programme", "application/xml")
+            now = int(time.time())
+            def stamp(value):
+                return time.strftime("%Y%m%d%H%M%S +0000", time.gmtime(value))
+            body = '<tv>' + ''.join(f'<channel id="fixture-{i}"><display-name>Fixture Channel {i + 1}</display-name></channel>' for i in range(count))
+            body += ''.join(f'<programme channel="fixture-{i}" start="{stamp(now + j * 1800)}" stop="{stamp(now + (j + 1) * 1800)}"><title>Synthetic Programme {i + 1} / {j + 3}</title></programme>' for i in range(count) for j in range(-2, 6)) + '</tv>'
+            return self._send_simple(200, body.encode(), "application/xml")
+        if parsed.path == "/player_api.php":
+            action = query.get("action", [""])[0]
+            if query.get("username", [""])[0] == "fixture-failure" and action.startswith(("get_vod", "get_series")):
+                return self._send_simple(503, b"fixture unavailable")
+            base = f"http://127.0.0.1:{self.server.server_address[1]}"
+            movie = {"stream_id": 101, "name": "Fixture Movie", "category_id": "1",
+                     "stream_icon": f"{base}/fixture-poster.svg", "plot": "A synthetic provider movie.",
+                     "year": "2024", "rating": "8.1", "container_extension": "mp4"}
+            series = {"series_id": 201, "name": "Fixture Series", "category_id": "2",
+                      "cover": f"{base}/fixture-poster.svg", "plot": "A synthetic provider series.",
+                      "releaseDate": "2025-01-01", "rating": "7.5"}
+            if action in ("get_vod_categories", "get_series_categories", "get_live_categories"):
+                return self._send_json([{"category_id": "2" if action == "get_series_categories" else "1",
+                                         "category_name": "Fixture Category"}])
+            if action == "get_vod_streams":
+                # Optional stress catalogue: /player_api.php?...&fixture_count=25000
+                count = min(max(int(query.get("fixture_count", ["2"])[0]), 1), 50000)
+                return self._send_json([dict(movie, stream_id=101+i,
+                    name="Fixture Movie" if i == 0 else f"Fixture Movie {i+1}") for i in range(count)])
+            if action == "get_series":
+                return self._send_json([series])
+            if action == "get_vod_info":
+                return self._send_json({"info": movie, "movie_data": movie})
+            if action == "get_series_info":
+                episodes = {str(season): [{"id": str(300+season*10+number), "title": f"Episode {number}",
+                    "season": season, "episode_num": number, "container_extension": "mp4"}
+                    for number in (1, 2)] for season in (1, 2)}
+                return self._send_json({"info": series, "seasons": [{"season_number": 1}, {"season_number": 2}],
+                                        "episodes": episodes})
+            if action == "get_live_streams":
+                return self._send_json([{"stream_id": 1, "name": "Fixture Live", "category_id": "1",
+                                         "container_extension": "m3u8", "stream_icon": ""}])
+            if action == "get_short_epg":
+                return self._send_json({"epg_listings": []})
+            return self._send_json({"user_info": {"auth": 1, "status": "Active",
+                "allowed_output_formats": ["m3u8"], "max_connections": "4"}, "server_info": {"timezone": "UTC"}})
+        if re.match(r"^/(movie|series)/[^/]+/[^/]+/\d+\.mp4$", parsed.path):
+            return self._serve_file(os.path.join(root, "mp4-h264-aac.mp4"), allow_range=True)
+        if re.match(r"^/live/[^/]+/[^/]+/1\.m3u8$", parsed.path):
+            return self._send_simple(200, f"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1500000\nhttp://127.0.0.1:{self.server.server_address[1]}/hls/index.m3u8\n".encode(), "application/vnd.apple.mpegurl")
+        if parsed.path == "/fixture-poster.svg":
+            return self._send_simple(200, b'<svg xmlns="http://www.w3.org/2000/svg" width="300" height="450"><rect width="300" height="450" fill="gray"/><text x="30" y="200" fill="white" font-size="32">Fixture</text></svg>', "image/svg+xml")
 
         if path == "/addon/manifest.json":
             return self._send_json({

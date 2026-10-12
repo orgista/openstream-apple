@@ -14,6 +14,44 @@ public enum AppleWatchCommand: String, Sendable {
     case skipBackward
 }
 
+/// What another device on the same iCloud account says it is playing.
+///
+/// The watch target does not link `OpenStreamApple`, so the shape and the key
+/// are restated here rather than imported. They are pinned against the
+/// package's own `AppleDevicePlaybackPolicy` by
+/// `AppleDevicePlaybackBeaconTests`, the same way `AppleWatchPayload.commandKey`
+/// is pinned above.
+///
+/// Read-only. The watch has no path to command an Apple TV, so nothing here
+/// offers transport for one.
+struct AppleRemotePlayback: Decodable, Equatable {
+    let deviceName: String
+    let title: String
+    let isPlaying: Bool
+    /// Seconds since 1970.
+    let updatedAt: Double
+
+    /// Mirrors `AppleDevicePlaybackPolicy.cloudKey`.
+    static let cloudKey = "openstream.nowplaying.device.v1"
+    /// Mirrors `AppleDevicePlaybackPolicy.staleAfter`. A television that loses
+    /// power never writes its stop, so this clock is what retires its entry.
+    static let staleAfter: TimeInterval = 90
+
+    func isShowable(now: Date) -> Bool {
+        guard isPlaying, !title.isEmpty else { return false }
+        let age = now.timeIntervalSince1970 - updatedAt
+        return age >= -Self.staleAfter && age <= Self.staleAfter
+    }
+}
+
+/// What the watch puts on screen. Mirrors
+/// `AppleDevicePlaybackPolicy.Resolution`.
+enum AppleWatchNowPlaying: Equatable {
+    case nothing
+    case local(title: String, isPlaying: Bool)
+    case remote(deviceName: String, title: String)
+}
+
 /// The watch side of the link.
 ///
 /// State is whatever the phone last reported. It is deliberately not persisted:
@@ -27,16 +65,76 @@ final class AppleWatchLink: NSObject {
 
     private(set) var nowPlayingTitle: String?
     private(set) var isPlaying = false
+    /// The last entry another device left in the shared key-value store, and
+    /// when the phone last said anything. Both feed `nowPlaying`.
+    private(set) var remotePlayback: AppleRemotePlayback?
+    private var localUpdatedAt: Date?
+
+    private let cloud = NSUbiquitousKeyValueStore.default
+    private var cloudObserver: (any NSObjectProtocol)?
 
     override init() { super.init() }
 
+    /// What to show, phone and television resolved against each other.
+    ///
+    /// The phone wins ties: it is the device the watch is paired to, its state
+    /// arrives live rather than through an iCloud round trip, and it is the
+    /// only one the transport buttons can reach. The television only wins when
+    /// its entry is strictly newer. Mirrors `AppleDevicePlaybackPolicy.resolve`.
+    var nowPlaying: AppleWatchNowPlaying { resolved(now: Date()) }
+
+    func resolved(now: Date) -> AppleWatchNowPlaying {
+        let local = nowPlayingTitle.flatMap { $0.isEmpty ? nil : $0 }
+        let fresh = remotePlayback.flatMap { $0.isShowable(now: now) ? $0 : nil }
+        switch (local, fresh) {
+        case (nil, nil):
+            return .nothing
+        case (nil, .some(let entry)):
+            return .remote(deviceName: entry.deviceName, title: entry.title)
+        case (.some(let title), nil):
+            return .local(title: title, isPlaying: isPlaying)
+        case (.some(let title), .some(let entry)):
+            guard let localUpdatedAt, entry.updatedAt > localUpdatedAt.timeIntervalSince1970 else {
+                return .local(title: title, isPlaying: isPlaying)
+            }
+            return .remote(deviceName: entry.deviceName, title: entry.title)
+        }
+    }
+
     func activate() {
         #if canImport(WatchConnectivity)
-        guard WCSession.isSupported() else { return }
-        let session = WCSession.default
-        session.delegate = self
-        session.activate()
+        if WCSession.isSupported() {
+            let session = WCSession.default
+            session.delegate = self
+            session.activate()
+        }
         #endif
+        guard cloudObserver == nil else {
+            refreshRemote()
+            return
+        }
+        // iCloud pushes the change when another device writes; the periodic
+        // refresh in the view is only there to retire an entry that stopped
+        // arriving, which no notification can announce.
+        cloudObserver = NotificationCenter.default.addObserver(
+            forName: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
+            object: cloud,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.refreshRemote() }
+        }
+        cloud.synchronize()
+        refreshRemote()
+    }
+
+    /// Re-reads the shared entry. Cheap — a local plist read, not a network
+    /// call — so the view can call it on a timer to let a stale entry expire.
+    func refreshRemote() {
+        guard let data = cloud.data(forKey: AppleRemotePlayback.cloudKey) else {
+            remotePlayback = nil
+            return
+        }
+        remotePlayback = try? JSONDecoder().decode(AppleRemotePlayback.self, from: data)
     }
 
     func send(_ command: AppleWatchCommand) {
@@ -63,6 +161,7 @@ final class AppleWatchLink: NSObject {
     fileprivate func apply(title: String?, isPlaying: Bool) {
         nowPlayingTitle = title
         self.isPlaying = isPlaying
+        localUpdatedAt = Date()
     }
 }
 

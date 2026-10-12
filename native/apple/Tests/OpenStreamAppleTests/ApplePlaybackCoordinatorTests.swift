@@ -18,6 +18,27 @@ import Testing
 
     // MARK: - Phase mapping (policy table rows)
 
+    @Test func livePlaybackBlocksHealthProbesUntilEveryPlayerStops() async {
+        let store = AppleChannelHealthStore()
+        store.setLineup([AppleIPTVChannel(id: "fixture", sourceID: UUID(), name: "Fixture",
+            streamURL: URL(string: "https://fixture.example/live.m3u8")!)])
+        let first = ApplePlaybackCoordinator(engine: FakePlaybackEngine())
+        let second = ApplePlaybackCoordinator(engine: FakePlaybackEngine())
+        store.beginLivePlayback(first)
+        store.beginLivePlayback(second)
+        #expect(store.hasLivePlayback)
+        store.startSweep()
+        #expect(!store.isSweeping)
+        store.endLivePlayback(first)
+        #expect(store.hasLivePlayback)
+        store.endLivePlayback(second)
+        #expect(!store.hasLivePlayback)
+        await first.begin(makeRequest(isLive: true, sourceKind: .iptv))
+        #expect(AppleChannelHealthStore.shared.tracksLivePlayback(first))
+        first.stop()
+        #expect(AppleChannelHealthStore.shared.tracksLivePlayback(first) == false)
+    }
+
     @Test func supersededLoadFailureCannotReplaceNewPlayback() async throws {
         let engine = FakePlaybackEngine()
         var oldLoad: CheckedContinuation<Void, any Error>?
@@ -56,6 +77,23 @@ import Testing
         coordinator.stop()
     }
 
+    @Test func liveOpenReopensOnceBeforeTryingTheAlternate() async {
+        let engine = FakePlaybackEngine()
+        let first = ApplePlaybackRequest(url: URL(string: "https://fixture.example/dead.m3u8")!, isLive: true,
+            mediaID: "dead", sourceKind: .iptv)
+        let backup = ApplePlaybackRequest(url: URL(string: "https://fixture.example/backup.m3u8")!, isLive: true,
+            mediaID: "backup", sourceKind: .iptv)
+        engine.loadHandler = { request in
+            if request.mediaID == "dead" { throw ApplePlaybackFailure(kind: .network, message: "Fixture offline") }
+            engine.phase = .playing
+        }
+        let coordinator = ApplePlaybackCoordinator(engine: engine)
+        await coordinator.begin(first, fallbackCandidates: [backup])
+        #expect(engine.loadedRequests.map(\.mediaID) == ["dead", "dead", "backup"])
+        #expect(coordinator.phase == .playing)
+        coordinator.stop()
+    }
+
     @Test func authenticationFailureKeepsItsActionableReasonWithAlternatives() async {
         let engine = FakePlaybackEngine()
         engine.failOnLoad = .init(kind: .authentication, message: "The source rejected authentication (HTTP 403).")
@@ -88,7 +126,7 @@ import Testing
         let engine = FakePlaybackEngine()
         engine.script([.playing])
         var coordinator: ApplePlaybackCoordinator? = ApplePlaybackCoordinator(engine: engine)
-        weak var reference = coordinator
+        weak let reference = coordinator
         await coordinator?.begin(makeRequest())
         try? await Task.sleep(for: .milliseconds(20))
         coordinator = nil
@@ -236,6 +274,8 @@ import Testing
 
     // MARK: - Live retry
 
+    /// A live stream that ends mid-play goes through the bounded reconnect
+    /// (`AppleLiveReconnectPolicy`); here one try, so the second end fails.
     @Test func liveEndedRetriesOnceThenFailsOnSecondEnded() async {
         let engine = FakePlaybackEngine()
         engine.script([.loading, .playing])
@@ -245,13 +285,14 @@ import Testing
             timeout: .seconds(60),
             retryDelay: .milliseconds(50)
         )
+        coordinator.liveReconnectPolicy = AppleLiveReconnectPolicy(maxAttempts: 1, delays: [.milliseconds(50)])
         await coordinator.begin(makeRequest(isLive: true))
         #expect(coordinator.phase == .playing)
 
         try? await Task.sleep(for: .milliseconds(10))
         engine.emit(.phase(.ended))
         try? await Task.sleep(for: .milliseconds(20))
-        #expect(coordinator.phase == .waiting("Stream ended. Reconnecting…"))
+        #expect(coordinator.phase == .waiting("Reconnecting…"))
 
         try? await Task.sleep(for: .milliseconds(120))
         #expect(coordinator.phase == .playing)
@@ -325,4 +366,45 @@ private func coordinatorWaitUntil(
         try? await Task.sleep(for: .milliseconds(20))
     }
     return await condition()
+}
+
+@Suite("Live channel failure wording")
+struct AppleLiveFailureWordingTests {
+    @Test func playerDiagnosticsBecomeAnActionableChannelMessage() {
+        let failure = ApplePlaybackFailure(kind: .player, message: "Failed to load: custom source probe failed")
+        #expect(failure.liveChannelMessage == "This channel could not start playing. Try again or choose another channel.")
+    }
+
+    @Test func channelDenialDoesNotBlameSavedCredentials() {
+        let failure = ApplePlaybackFailure(kind: .authentication, message: "Provider rejected account (HTTP 403)")
+        #expect(failure.liveChannelMessage.contains("403"))
+        #expect(!failure.liveChannelMessage.contains("account"))
+        #expect(failure.liveChannelMessage.contains("another channel"))
+    }
+
+    @Test func unsupportedFormatDetailsRemainAvailable() {
+        let failure = ApplePlaybackFailure(kind: .unsupportedMedia, message: "This video format is not supported.")
+        #expect(failure.liveChannelMessage == failure.message)
+    }
+}
+
+@Suite("Playback diagnostic presentation")
+struct ApplePlaybackDiagnosticPresentationTests {
+    @Test func engineDiagnosticsStayOutOfUserMessages() {
+        for kind in [ApplePlaybackFailure.Kind.player, .unsupportedMedia, .unavailable] {
+            let raw = "HLSVideoEngine: open failed (Demuxer could not open input)"
+            let failure = ApplePlaybackFailure(kind: kind, message: raw)
+            #expect(!failure.userMessage.contains("Demuxer"))
+            #expect(!failure.userMessage.contains("HLSVideoEngine"))
+            #expect(failure.message == raw)
+            #expect(ApplePlaybackEngineFallback.afterEveryStreamFailed(failure,
+                engine: .openStream, alreadyFellBack: false) == .alert(failure.userMessage))
+        }
+    }
+
+    @Test func sourceGuidanceIsPreserved() {
+        let failure = ApplePlaybackFailure(kind: .unavailable,
+            message: "Add an enabled stream source in Settings to play this title.")
+        #expect(failure.userMessage == failure.message)
+    }
 }

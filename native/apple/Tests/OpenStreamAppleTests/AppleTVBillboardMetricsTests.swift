@@ -12,6 +12,13 @@ struct AppleTVBillboardMetricsTests {
         #expect(M.artHeight < M.screenSize.height)
     }
 
+    /// N43: the buttons' focus section spans the screen inside the gutters,
+    /// so a tab anywhere along the bar is above it.
+    @Test func theButtonsFocusSectionSpansTheSafeZone() {
+        #expect(M.actionsFocusWidth == M.screenSize.width - 2 * M.copyLeadingInset)
+        #expect(M.actionsFocusWidth > M.copyColumnWidth)
+    }
+
     @Test func copySitsInTheSafeZoneAboveTheFirstRow() {
         #expect(M.copyLeadingInset == AppleTVChromeMetrics.horizontalSafeInset)
         #expect(M.copyBottom < M.firstRowTop)

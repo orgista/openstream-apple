@@ -41,21 +41,14 @@ struct AppleLandscapeExtremesTests {
         #expect(AppleDetailMetrics.featuredHeroHeight(in: smallestPhone) == min(byHeight, byWidth))
     }
 
-    /// Owner's rule: the phone hides the tab bar in landscape so content fills
-    /// the screen. Both extremes are compact, so both hide it.
-    @Test func bothExtremesHideTheTabBar() {
-        for viewport in [smallestPhone, largestPhone] {
-            #expect(OpenStreamTabBarVisibility.isHidden(
-                viewport: viewport, horizontalSizeClassIsCompact: true))
-        }
+    @Test func closingThePhonePlayerRestoresPortrait() {
+        #expect(AppleOrientationPolicy.supportedOrientations(isPhone: true, allowsLandscape: true) == .allButUpsideDown)
+        #expect(AppleOrientationPolicy.supportedOrientations(isPhone: true, allowsLandscape: false) == .portrait)
     }
 
-    /// Rotating back has to bring it straight back.
-    @Test func rotatingBackToPortraitRestoresTheTabBar() {
+    @Test func portraitHeroHeightIsUnchanged() {
         for viewport in [smallestPhone, largestPhone] {
             let portrait = CGSize(width: viewport.height, height: viewport.width)
-            #expect(!OpenStreamTabBarVisibility.isHidden(
-                viewport: portrait, horizontalSizeClassIsCompact: true))
             #expect(AppleDetailMetrics.featuredHeroHeight(in: portrait)
                     == AppleDetailMetrics.featuredHeroPortraitHeight)
         }

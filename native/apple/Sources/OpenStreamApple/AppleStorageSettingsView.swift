@@ -35,8 +35,7 @@ actor AppleStorageMaintenance {
         self.cacheDirectory = cacheDirectory
             ?? caches.appending(path: "OpenStream", directoryHint: .isDirectory)
 
-        let applicationSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-            ?? fileManager.temporaryDirectory
+        let applicationSupport = AppleStorageLocation.directory(.applicationSupport, fileManager: fileManager)
         self.metadataDirectory = metadataDirectory
             ?? applicationSupport.appending(path: "OpenStream/Metadata", directoryHint: .isDirectory)
     }
@@ -130,20 +129,11 @@ struct AppleStorageSettingsView: View {
                 LabeledContent("Downloaded Items", value: String(snapshot.downloadCount))
             }
 
-            Section("Actions") {
-                actionButton("Clear Cache", action: .cache)
-                    .disabled(snapshot.cacheBytes == 0 || workingAction != nil)
-
-                Button("Clear Metadata", role: .destructive) {
-                    confirmation = .metadata
-                }
-                .disabled(snapshot.metadataBytes == 0 || workingAction != nil)
-
-                Button("Delete All Downloads", role: .destructive) {
-                    confirmation = .downloads
-                }
-                .disabled(snapshot.downloadCount == 0 || workingAction != nil)
-            }
+            #if os(macOS)
+            AppleFormActionSection { actions }
+            #else
+            Section("Actions") { actions }
+            #endif
 
             if let statusMessage {
                 Section {
@@ -151,6 +141,11 @@ struct AppleStorageSettingsView: View {
                         .foregroundStyle(statusMessage == "Done" ? Color.primary : Color.red)
                 }
             }
+
+            #if os(tvOS)
+            // Apple TV has no Backup & Sync page, so Reset lives here.
+            Section { AppleResetEntry() }
+            #endif
         }
         .appleSettingsPane("Storage", embedded: embeddedInSplit)
         .task {
@@ -168,15 +163,29 @@ struct AppleStorageSettingsView: View {
     }
 
     @ViewBuilder
-    private func actionButton(_ title: String, action: AppleStorageAction) -> some View {
-        Button {
-            run(action)
+    private var actions: some View {
+        actionButton("Clear Cache", action: .cache) { run(.cache) }
+            .disabled(snapshot.cacheBytes == 0 || workingAction != nil)
+
+        actionButton("Clear Metadata", role: .destructive, action: .metadata) { confirmation = .metadata }
+            .disabled(snapshot.metadataBytes == 0 || workingAction != nil)
+
+        actionButton("Delete All Downloads", role: .destructive, action: .downloads) { confirmation = .downloads }
+            .disabled(snapshot.downloadCount == 0 || workingAction != nil)
+    }
+
+    @ViewBuilder
+    private func actionButton(_ title: String, role: ButtonRole? = nil, action: AppleStorageAction, perform: @escaping () -> Void) -> some View {
+        Button(role: role) {
+            perform()
         } label: {
-            if workingAction == action {
-                ProgressView()
-            } else {
-                Text(title)
-            }
+            AppleWorkingButtonLabel(
+                title: LocalizedStringKey(title),
+                workingTitle: LocalizedStringKey(action.workingLabel),
+                isWorking: workingAction == action,
+                alignment: .leading
+            )
+            .accessibilityLabel(workingAction == action ? action.inProgressLabel : title)
         }
     }
 
@@ -227,6 +236,21 @@ private enum AppleStorageAction: String, Identifiable {
         switch self {
         case .cache, .metadata: "Clear"
         case .downloads: "Delete"
+        }
+    }
+
+    var inProgressLabel: String {
+        switch self {
+        case .cache: "Clearing cache"
+        case .metadata: "Clearing metadata"
+        case .downloads: "Deleting downloads"
+        }
+    }
+
+    var workingLabel: String {
+        switch self {
+        case .cache, .metadata: "Clearing…"
+        case .downloads: "Deleting…"
         }
     }
 }

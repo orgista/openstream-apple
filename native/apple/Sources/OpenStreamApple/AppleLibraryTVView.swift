@@ -36,6 +36,7 @@ struct AppleLibraryTVView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 20) {
                             if let program = activeProgram {
+                                // Shares Live's cue layer and subtitle control on both video routes.
                                 AppleLiveInlinePlayer(request: program.request, coordinator: coordinator,
                                                       playbackRevision: playbackRevision, logoURL: program.artworkURL,
                                                       sharedChannel: nil)

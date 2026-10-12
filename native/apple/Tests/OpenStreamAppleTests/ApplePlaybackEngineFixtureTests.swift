@@ -200,6 +200,9 @@ func libraryPreparationLetsOpenStreamPlayMatroska() async throws {
     try await engine.load(.init(url: prepared.url, mediaID: "library-preparation-fixture", sourceKind: .files))
     await waitForPosition(engine, atLeast: 1, timeout: 8)
     #expect(engine.position >= 1)
+    // Inside `swift test` the fixture's tone must be silent: the software
+    // host's audio output is created during load, after the init's mute.
+    #expect(engine.aetherEngine.volume == 0)
 }
 
 @Test(.enabled(if: fixtureEnabled))

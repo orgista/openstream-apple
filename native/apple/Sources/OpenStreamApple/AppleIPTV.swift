@@ -12,6 +12,52 @@ public struct AppleIPTVChannel: Identifiable, Equatable, Sendable, Codable {
     public let origin: String?
     public let guideID: String?
     public let guideURL: URL?
+    /// Exact playlist metadata, retained for working-channel export. Not health history.
+    public var originalEXTINF: String? = nil
+    /// What a play-time probe found the stream to be; nil until probed.
+    /// Optional so cached channels written before it decode unchanged.
+    public var probedMediaKind: AppleIPTVStreamProbeResult.MediaKind? = nil
+
+    /// nil offers undeclared HLS captions on the first play; false suppresses
+    /// the wrapper after a completed negative probe. The engine validates the
+    /// playlist shape before asking the proxy for a declaring master.
+    public var wrapsInCaptionMaster: Bool? = nil
+
+    /// Days of catch-up the panel keeps for this channel (Xtream
+    /// `tv_archive` + `tv_archive_duration`); nil when it reports none.
+    /// Optional so cached channels written before it decode unchanged.
+    public var catchUpDays: Int? = nil
+    /// The panel's clock (Xtream `server_info.timezone`), which is the zone
+    /// its catch-up start times are written in; nil reads as UTC.
+    public var catchUpTimeZoneID: String? = nil
+    /// How the playlist says the archive is reached (M3U `catchup` /
+    /// `catchup-source`); nil for Xtream panels, whose shape is derived.
+    public var catchUp: AppleIPTVCatchUpSpec? = nil
+    /// The playlist's own channel number (M3U `tvg-chno`, Xtream `num`);
+    /// nil when it gives none. Optional so cached channels decode unchanged.
+    public var channelNumber: Int? = nil
+    public var guideDefaultOffsetHours: Double? = nil
+    public var guideShiftHours: Double? = nil
+
+    /// A playlist channel number as the guide shows it: a positive whole
+    /// number, nothing else ("5.1", "", "0", "-3" are not numbers here).
+    static func playlistChannelNumber(_ raw: String?) -> Int? {
+        guard let raw = raw?.trimmingCharacters(in: .whitespacesAndNewlines),
+              let value = Int(raw), value > 0, value < 1_000_000 else { return nil }
+        return value
+    }
+
+    public func withProbedMediaKind(_ kind: AppleIPTVStreamProbeResult.MediaKind?) -> AppleIPTVChannel {
+        var copy = self
+        copy.probedMediaKind = kind
+        return copy
+    }
+
+    public func withCaptionMaster(_ wraps: Bool?) -> AppleIPTVChannel {
+        var copy = self
+        copy.wrapsInCaptionMaster = wraps
+        return copy
+    }
 
     public init(
         id: String,
@@ -24,7 +70,8 @@ public struct AppleIPTVChannel: Identifiable, Equatable, Sendable, Codable {
         referer: String? = nil,
         origin: String? = nil,
         guideID: String? = nil,
-        guideURL: URL? = nil
+        guideURL: URL? = nil,
+        originalEXTINF: String? = nil
     ) {
         self.id = id
         self.sourceID = sourceID
@@ -37,6 +84,7 @@ public struct AppleIPTVChannel: Identifiable, Equatable, Sendable, Codable {
         self.origin = origin
         self.guideID = guideID
         self.guideURL = guideURL
+        self.originalEXTINF = originalEXTINF
     }
 
     /// HTTP headers to attach to the media request, from the playlist's
@@ -51,7 +99,7 @@ public struct AppleIPTVChannel: Identifiable, Equatable, Sendable, Codable {
     }
 
     public func withGuideURL(_ guideURL: URL?) -> Self {
-        Self(
+        var copy = Self(
             id: id,
             sourceID: sourceID,
             name: name,
@@ -62,8 +110,18 @@ public struct AppleIPTVChannel: Identifiable, Equatable, Sendable, Codable {
             referer: referer,
             origin: origin,
             guideID: guideID,
-            guideURL: guideURL
+            guideURL: guideURL,
+            originalEXTINF: originalEXTINF
         )
+        copy.probedMediaKind = probedMediaKind
+        copy.wrapsInCaptionMaster = wrapsInCaptionMaster
+        copy.catchUpDays = catchUpDays
+        copy.catchUpTimeZoneID = catchUpTimeZoneID
+        copy.catchUp = catchUp
+        copy.channelNumber = channelNumber
+        copy.guideDefaultOffsetHours = guideDefaultOffsetHours
+        copy.guideShiftHours = guideShiftHours
+        return copy
     }
 }
 
@@ -139,7 +197,7 @@ public enum AppleChannelVisibilityPolicy {
             guard let normalizedZIP = AppleZIPCodePolicy.normalize(zipCode) else { return false }
             let text = normalizedRegionalText("\(channel.name) \(channel.group)")
             return text.contains(normalizedZIP) || text.contains("local") ||
-                (try? AppleChannelLineupPresets.premierUS()).map {
+                (try? AppleChannelLineupPresets.completeUS()).map {
                     AppleChannelLineupPresets.matchesLocalChannel(
                         name: channel.name,
                         zip: normalizedZIP,
@@ -190,8 +248,6 @@ public enum AppleChannelVisibilityPolicy {
             let scopeMatches: Bool = switch scope {
             case .providerLineup:
                 true
-            case .regional:
-                isRegional(channel, zipCode: regionalZIPCode)
             case .favorites:
                 favoriteIDs.contains(channel.id)
             }
@@ -258,7 +314,7 @@ public enum AppleChannelProjection {
         .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
-    public static func premierGuideGroups(from channels: [AppleIPTVChannel], entries: [AppleChannelLineupEntry]) -> [AppleIPTVChannelGroup] {
+    public static func completeGuideGroups(from channels: [AppleIPTVChannel], entries: [AppleChannelLineupEntry]) -> [AppleIPTVChannelGroup] {
         let index = AppleChannelLineupIndex(entries)
         let east = AppleChannelVisibilityPolicy.deduplicatedEastChannels(channels)
         var seenLineupNumbers = Set<Int>()
@@ -269,7 +325,7 @@ public enum AppleChannelProjection {
         }.sorted { $0.0.number == $1.0.number ? $0.1.name.localizedCaseInsensitiveCompare($1.1.name) == .orderedAscending : $0.0.number < $1.0.number }
         let other = east.filter { index.match($0.name) == nil }
         return [
-            numbered.isEmpty ? nil : AppleIPTVChannelGroup(name: "Premier Guide", channels: numbered.map { $0.1 }),
+            numbered.isEmpty ? nil : AppleIPTVChannelGroup(name: "Complete Guide", channels: numbered.map { $0.1 }),
             other.isEmpty ? nil : AppleIPTVChannelGroup(name: "Other", channels: other),
         ].compactMap { $0 }
     }
@@ -312,6 +368,7 @@ public enum AppleIPTVError: Error, Equatable, LocalizedError, Sendable {
     case invalidEndpoint
     case invalidSource
     case missingCredentials
+    case credentialsContainWhitespace
     case authenticationFailed(status: String?)
     case unreachable(String)
     case httpStatus(Int)
@@ -322,20 +379,33 @@ public enum AppleIPTVError: Error, Equatable, LocalizedError, Sendable {
     case invalidPlaylist
     case noChannels
     case streamUnavailable
+    case streamRequestFailed(Int)
+    case invalidStreamResponse
+
+    /// "The request timed out." without its final full stop.
+    static func trimmingFinalPeriod(_ text: String) -> String {
+        var value = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        while value.hasSuffix(".") { value.removeLast() }
+        return value
+    }
 
     public var errorDescription: String? {
         switch self {
         case .invalidEndpoint: "Enter an HTTP or HTTPS IPTV address."
         case .invalidSource: "This Live TV source is invalid."
         case .missingCredentials: "Username and password are required."
+        case .credentialsContainWhitespace: "Username and password must not contain spaces."
         case .authenticationFailed(let status):
-            if let status, !status.isEmpty {
-                "The IPTV provider rejected the account (auth=0, status: \(status)). Check the username and password, including capitalization."
-            } else {
-                "The IPTV provider rejected the account (auth=0). Check the username and password, including capitalization."
+            switch status?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+            case "expired": "Your Live TV account has expired. Contact your provider."
+            case "disabled", "banned": "Your Live TV account is disabled. Contact your provider."
+            case "maxconnections": "Your Live TV account has reached its stream limit. Stop playback on another device."
+            default: "The Live TV username or password is incorrect."
             }
         case .unreachable(let reason):
-            "Could not reach the IPTV panel: \(reason). Check the network and that the address includes the port."
+            // URLError reasons end in their own full stop ("The request timed
+            // out."), which read as ".." here (iPhone 27 v2 re-run).
+            "Could not reach the IPTV panel: \(AppleIPTVError.trimmingFinalPeriod(reason)). Check the network and that the address includes the port."
         case .httpStatus(let code):
             "The IPTV panel answered HTTP \(code) instead of account data."
         case .unexpectedResponse(let contentType):
@@ -345,12 +415,31 @@ public enum AppleIPTVError: Error, Equatable, LocalizedError, Sendable {
         case .responseTooLarge: "The IPTV playlist is too large."
         case .invalidPlaylist: "The server did not return an M3U playlist."
         case .noChannels: "No playable channels were found."
-        case .streamUnavailable: "The provider returned channels, but no tested channel delivered media data."
+        case .streamUnavailable: "This channel did not deliver media. Try another channel or retry later."
+        case .invalidStreamResponse: "This channel returned a web page instead of video. Check the playlist address or try another channel."
+        case .streamRequestFailed(let status):
+            switch status {
+            case 401, 403: "The provider denied access to this channel (HTTP \(status)). Try another channel or check access with your provider."
+            case 404: "This channel is no longer available at this address (HTTP 404). Refresh the playlist or try another channel."
+            case 429: "The provider is limiting requests (HTTP 429). Wait a moment before retrying."
+            default: "This channel is unavailable (HTTP \(status)). Try another channel or retry later."
+            }
         }
     }
 }
 
 public enum AppleIPTVEndpointPolicy {
+    public static func sanitizeCredential(_ value: String) -> String {
+        String(value.filter { !$0.isWhitespace })
+    }
+
+    public static func validateCredentials(username: String, password: String) throws {
+        guard !username.isEmpty, !password.isEmpty else { throw AppleIPTVError.missingCredentials }
+        guard !username.contains(where: \.isWhitespace), !password.contains(where: \.isWhitespace) else {
+            throw AppleIPTVError.credentialsContainWhitespace
+        }
+    }
+
     public static func normalize(_ value: String) throws -> URL {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         // Pasted/uploaded playlists live in the app (`openstream-playlist://local/…`).
@@ -407,7 +496,18 @@ public struct AppleIPTVClient: Sendable {
     /// under what the bytes could ever deliver.
     public static let maximumChannels = 25_000
 
+    /// The Xtream login probe is a few hundred bytes, but a busy panel can
+    /// take a while to answer it. It was 7 s to fail a dead panel fast (Apple
+    /// TV regression 2026-10-01); the owner's panel then missed it on an
+    /// iPhone simulator (2026-10-08 trace: "Could not reach the IPTV panel:
+    /// The request timed out" at 7.6 s), which failed the whole lineup and,
+    /// with nothing saved yet, left Live empty. A dead panel no longer holds
+    /// the tab (playlists load in parallel over the saved lineup), so the
+    /// probe waits as long as the channel downloads do.
+    static let accountProbeTimeout: TimeInterval = 20
+
     private let loader: Loader
+    private let usesLiveLoader: Bool
     private let protectedPlaybackURL: ProtectedPlaybackURL
 
     public init(
@@ -415,6 +515,7 @@ public struct AppleIPTVClient: Sendable {
         protectedPlaybackURL: @escaping ProtectedPlaybackURL = AppleIPTVClient.liveProtectedPlaybackURL
     ) {
         self.loader = loader
+        self.usesLiveLoader = false
         self.protectedPlaybackURL = protectedPlaybackURL
     }
 
@@ -422,6 +523,7 @@ public struct AppleIPTVClient: Sendable {
         protectedPlaybackURL: @escaping ProtectedPlaybackURL = AppleIPTVClient.liveProtectedPlaybackURL
     ) {
         self.loader = { request in try await AppleIPTVClient.liveLoader(request) }
+        self.usesLiveLoader = true
         self.protectedPlaybackURL = protectedPlaybackURL
     }
 
@@ -429,6 +531,13 @@ public struct AppleIPTVClient: Sendable {
         source: AppleSource,
         credentials: AppleIPTVCredentials? = nil
     ) async throws -> [AppleIPTVChannel] {
+        try await AppleImportStore.shared.run(title: source.name, unit: "channels") { progress in
+            try await channelsImport(source: source, credentials: credentials, progress: progress)
+        }
+    }
+
+    private func channelsImport(source: AppleSource, credentials: AppleIPTVCredentials?,
+        progress: @escaping @Sendable (AppleImportProgress) -> Void) async throws -> [AppleIPTVChannel] {
         guard source.kind == .liveTV, source.isEnabled, let type = source.iptvType else {
             throw AppleIPTVError.invalidSource
         }
@@ -438,7 +547,7 @@ public struct AppleIPTVClient: Sendable {
             endpoint = try AppleIPTVEndpointPolicy.normalize(source.url.absoluteString)
             if AppleLocalPlaylistStore.isLocal(endpoint) {
                 let data = try AppleLocalPlaylistStore.shared.read(endpoint)
-                let values = try Self.parseM3U(data, sourceID: source.id, baseURL: endpoint)
+                let values = try await Self.parseM3UOffMain(data, sourceID: source.id, baseURL: endpoint, progress: progress)
                 guard !values.isEmpty else { throw AppleIPTVError.noChannels }
                 return source.epgURL.map { epgURL in
                     values.map { channel in channel.withGuideURL(channel.guideURL ?? epgURL) }
@@ -450,6 +559,7 @@ public struct AppleIPTVClient: Sendable {
                   !credentials.password.isEmpty else {
                 throw AppleIPTVError.missingCredentials
             }
+            try AppleIPTVEndpointPolicy.validateCredentials(username: credentials.username, password: credentials.password)
             return try await xtreamChannels(source: source, credentials: credentials)
         }
 
@@ -460,7 +570,13 @@ public struct AppleIPTVClient: Sendable {
             forHTTPHeaderField: "Accept"
         )
         request.setValue("OpenStream/1.0 Apple", forHTTPHeaderField: "User-Agent")
-        let (data, response) = try await loader(request)
+        let data: Data
+        let response: URLResponse
+        if usesLiveLoader {
+            (data, response) = try await Self.liveLoader(request) { bytes, total in
+                progress(.init(items: 0, bytes: bytes, totalBytes: total > 0 ? Int(total) : 0, phase: .downloading))
+            }
+        } else { (data, response) = try await loader(request) }
         guard data.count <= Self.maximumResponseBytes,
               response.expectedContentLength <= Int64(Self.maximumResponseBytes) else {
             throw AppleIPTVError.responseTooLarge
@@ -469,7 +585,7 @@ public struct AppleIPTVClient: Sendable {
         guard (200 ... 299).contains(http.statusCode) else { throw AppleIPTVError.requestFailed(http.statusCode) }
         let finalURL = http.url ?? endpoint
         guard AppleIPTVEndpointPolicy.isPlayable(finalURL) else { throw AppleIPTVError.invalidEndpoint }
-        let values = try Self.parseM3U(data, sourceID: source.id, baseURL: finalURL)
+        let values = try await Self.parseM3UOffMain(data, sourceID: source.id, baseURL: finalURL, progress: progress)
         guard !values.isEmpty else { throw AppleIPTVError.noChannels }
         return source.epgURL.map { epgURL in
             values.map { channel in channel.withGuideURL(channel.guideURL ?? epgURL) }
@@ -501,7 +617,9 @@ public struct AppleIPTVClient: Sendable {
         source: AppleSource,
         credentials: AppleIPTVCredentials
     ) async throws -> [AppleIPTVChannel] {
-        let preferredExtension = try await verifyXtreamAccount(source: source, credentials: credentials)
+        let account = try await verifyXtreamAccount(source: source, credentials: credentials)
+        await AppleIPTVAccountLimits.shared.record(account.info, sourceID: source.id)
+        let preferredExtension = account.preferredExtension
 
         let categoryURL = try Self.xtreamAPIURL(
             baseURL: source.url,
@@ -542,15 +660,24 @@ public struct AppleIPTVClient: Sendable {
                   ),
                   seen.insert(streamID).inserted else { continue }
             let cleanName = (stream.name ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            channels.append(AppleIPTVChannel(
+            // The panel's guide id is what another list calls the same
+            // channel by (`tvg-id`), so a dead feed can be matched across lists.
+            let epgID = stream.epgChannelID?.value.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            var channel = AppleIPTVChannel(
                 id: "\(source.id.uuidString):\(streamID)",
                 sourceID: source.id,
                 name: String((cleanName.isEmpty ? "Channel \(channels.count + 1)" : cleanName).prefix(160)),
                 group: String((stream.categoryID.flatMap { categories[$0.value] } ?? "").prefix(120)),
                 logoURL: Self.safeArtworkURL(stream.streamIcon),
                 streamURL: upstreamURL,
-                userAgent: "OpenStream/1.0 Apple"
-            ))
+                userAgent: "OpenStream/1.0 Apple",
+                guideID: epgID.isEmpty ? nil : String(epgID.prefix(160))
+            )
+            channel.catchUpDays = AppleIPTVCatchUp.archiveDays(
+                tvArchive: stream.tvArchive?.value, duration: stream.tvArchiveDuration?.value)
+            channel.catchUpTimeZoneID = channel.catchUpDays == nil ? nil : account.timeZoneID
+            channel.channelNumber = AppleIPTVChannel.playlistChannelNumber(stream.num?.value)
+            channels.append(channel)
             if channels.count == Self.maximumChannels { break }
         }
         guard !channels.isEmpty else { throw AppleIPTVError.noChannels }
@@ -565,11 +692,13 @@ public struct AppleIPTVClient: Sendable {
     /// generic "rejected" error.
     private func verifyXtreamAccount(
         source: AppleSource,
-        credentials: AppleIPTVCredentials
-    ) async throws -> String? {
+        credentials: AppleIPTVCredentials,
+        checkConnections: Bool = true,
+        validateAccount: Bool = true
+    ) async throws -> XtreamAccount {
         let accountURL = try Self.xtreamAPIURL(baseURL: source.url, credentials: credentials, action: nil)
         var request = URLRequest(url: accountURL)
-        request.timeoutInterval = 20
+        request.timeoutInterval = Self.accountProbeTimeout
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("OpenStream/1.0 Apple", forHTTPHeaderField: "User-Agent")
 
@@ -598,12 +727,56 @@ public struct AppleIPTVClient: Sendable {
               let userInfo = account.userInfo else {
             throw AppleIPTVError.unexpectedResponse(contentType: contentType)
         }
+        let info = AppleIPTVAccountInfo(expiration: userInfo.expiration?.value,
+            maxConnections: userInfo.maxConnections?.value, activeConnections: userInfo.activeConnections?.value,
+            status: userInfo.status?.value)
+        if validateAccount, let status = info.rejection(checkConnections: false) {
+            throw AppleIPTVError.authenticationFailed(status: status)
+        }
         guard userInfo.auth?.value == "1" else {
             throw AppleIPTVError.authenticationFailed(status: userInfo.status?.value)
         }
-        return AppleXtreamOutputFormat.preferred(
-            allowedOutputFormats: userInfo.allowedOutputFormats ?? []
-        ).rawValue
+        if validateAccount, let status = info.rejection(checkConnections: checkConnections) {
+            throw AppleIPTVError.authenticationFailed(status: status)
+        }
+        return XtreamAccount(
+            preferredExtension: AppleXtreamOutputFormat.preferred(
+                allowedOutputFormats: userInfo.allowedOutputFormats ?? []
+            ).rawValue,
+            timeZoneID: Self.serverTimeZoneID(account.serverInfo?.timezone?.value),
+            info: info
+        )
+    }
+
+    public func accountInfo(source: AppleSource, credentials: AppleIPTVCredentials) async throws -> AppleIPTVAccountInfo {
+        try await verifyXtreamAccount(source: source, credentials: credentials, checkConnections: false, validateAccount: false).info
+    }
+
+    /// What the login told us beyond "yes": the stream extension to use and
+    /// the panel's clock for catch-up start times.
+    struct XtreamAccount {
+        var preferredExtension: String?
+        var timeZoneID: String?
+        var info: AppleIPTVAccountInfo
+    }
+
+    /// The panel's `server_info.timezone` as a zone the system knows
+    /// (`Europe/London`, `UTC`, `GMT+2`); nil when it is absent or unknown,
+    /// which catch-up reads as UTC.
+    static func serverTimeZoneID(_ raw: String?) -> String? {
+        guard let raw = raw?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else { return nil }
+        if let zone = TimeZone(identifier: raw) { return zone.identifier }
+        if let zone = TimeZone(abbreviation: raw) { return zone.identifier }
+        // "+03:00" / "UTC+3" / "GMT-05:00" style offsets.
+        let digits = raw.replacingOccurrences(of: "UTC", with: "").replacingOccurrences(of: "GMT", with: "")
+            .replacingOccurrences(of: ":", with: "")
+        guard let sign = digits.first, sign == "+" || sign == "-",
+              let value = Int(digits.dropFirst()), digits.count <= 5 else { return nil }
+        let hours = digits.count <= 3 ? value : value / 100
+        let minutes = digits.count <= 3 ? 0 : value % 100
+        guard hours <= 14, minutes < 60 else { return nil }
+        let seconds = (hours * 3600 + minutes * 60) * (sign == "-" ? -1 : 1)
+        return TimeZone(secondsFromGMT: seconds)?.identifier
     }
 
     private func load(_ url: URL, accept: String) async throws -> Data {
@@ -626,11 +799,19 @@ public struct AppleIPTVClient: Sendable {
         return data
     }
 
+    @concurrent
+    static func parseM3UOffMain(_ data: Data, sourceID: AppleSource.ID, baseURL: URL,
+        progress: @Sendable (AppleImportProgress) -> Void) async throws -> [AppleIPTVChannel] {
+        try parseM3U(data, sourceID: sourceID, baseURL: baseURL, progress: progress)
+    }
+
     public static func parseM3U(
         _ data: Data,
         sourceID: AppleSource.ID,
-        baseURL: URL
+        baseURL: URL,
+        progress: @Sendable (AppleImportProgress) -> Void = { _ in }
     ) throws -> [AppleIPTVChannel] {
+        try Task.checkCancellation()
         guard data.count <= maximumResponseBytes,
               let text = String(data: data, encoding: .utf8)
                 ?? String(data: data, encoding: .isoLatin1) else {
@@ -657,11 +838,17 @@ public struct AppleIPTVClient: Sendable {
         var seenEntries = Set<String>()
         var channels: [AppleIPTVChannel] = []
 
-        for rawLine in lines {
+        var parsedBytes = 0
+        for (index, rawLine) in lines.enumerated() {
+            try Task.checkCancellation()
+            parsedBytes += rawLine.utf8.count + 1
+            if index.isMultiple(of: 256) {
+                progress(AppleImportProgress(items: channels.count, bytes: parsedBytes, totalBytes: data.count))
+            }
             let line = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !line.isEmpty else { continue }
             if line.uppercased().hasPrefix("#EXTINF:") {
-                pending = PendingChannel(extinf: line)
+                pending = PendingChannel(extinf: rawLine)
                 userAgent = nil
                 referer = nil
                 origin = nil
@@ -708,7 +895,7 @@ public struct AppleIPTVClient: Sendable {
                 : "\(providerID)|\(cleanName)|\(url.absoluteString)"
             guard seenEntries.insert(entryKey).inserted else { continue }
             let stableID = ApplePlaybackIdentity.digest(for: "\(providerID)|\(url.absoluteString)")
-            channels.append(AppleIPTVChannel(
+            var channel = AppleIPTVChannel(
                 id: "\(sourceID.uuidString):\(stableID)",
                 sourceID: sourceID,
                 name: String(cleanName.prefix(160)),
@@ -719,8 +906,17 @@ public struct AppleIPTVClient: Sendable {
                 referer: referer,
                 origin: origin,
                 guideID: providerID.isEmpty ? nil : providerID,
-                guideURL: guideURL
-            ))
+                guideURL: guideURL,
+                originalEXTINF: details.extinf
+            )
+            channel.channelNumber = AppleIPTVChannel.playlistChannelNumber(details.attributes["tvg-chno"])
+            channel.guideDefaultOffsetHours = (attributes["tvg-shift"] ?? guideURL.flatMap { URLComponents(url: $0, resolvingAgainstBaseURL: false)?.queryItems?.first { ["tvg-shift", "offset"].contains($0.name.lowercased()) }?.value }).flatMap(Double.init).flatMap { $0.isFinite ? min(14, max(-12, $0)) : nil }
+            channel.guideShiftHours = details.attributes["tvg-shift"].flatMap(Double.init).flatMap { $0.isFinite ? min(14, max(-12, $0)) : nil }
+            if let spec = AppleIPTVCatchUpSpec.from(attributes: details.attributes) {
+                channel.catchUp = spec
+                channel.catchUpDays = AppleIPTVCatchUpSpec.days(attributes: details.attributes) ?? 1
+            }
+            channels.append(channel)
             if channels.count == maximumChannels {
                 // Never silently. The viewer sees a guide missing its tail and
                 // has no way to know the playlist was cut, so say so where the
@@ -730,6 +926,8 @@ public struct AppleIPTVClient: Sendable {
                 break
             }
         }
+        try Task.checkCancellation()
+        progress(AppleImportProgress(items: channels.count, bytes: data.count, totalBytes: data.count))
         return channels
     }
 
@@ -807,10 +1005,16 @@ public struct AppleIPTVClient: Sendable {
     }
 
     public static func liveLoader(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        try await liveLoader(request, progress: { _, _ in })
+    }
+
+    private static func liveLoader(_ request: URLRequest,
+        progress: @escaping @Sendable (Int, Int64) -> Void) async throws -> (Data, URLResponse) {
         do {
             return try await AppleBoundedHTTPDataLoader.load(
                 request,
-                maximumBytes: maximumResponseBytes
+                maximumBytes: maximumResponseBytes,
+                progress: progress
             )
         } catch AppleBoundedHTTPError.responseTooLarge {
             throw AppleIPTVError.responseTooLarge
@@ -825,10 +1029,12 @@ public struct AppleIPTVClient: Sendable {
     }
 
     private struct PendingChannel {
+        let extinf: String
         let name: String
         let attributes: [String: String]
 
         init(extinf: String) {
+            self.extinf = extinf
             let metadataEnd = extinf.lastIndex(of: "\"")
                 .map { extinf.index(after: $0) }
                 ?? extinf.startIndex
@@ -874,7 +1080,7 @@ public struct AppleIPTVClient: Sendable {
 }
 
 public struct AppleIPTVStreamProbeResult: Equatable, Sendable {
-    public enum MediaKind: Equatable, Sendable {
+    public enum MediaKind: String, Equatable, Sendable, Codable {
         case hlsPlaylist
         case rawMPEGTransportStream
         case other
@@ -903,11 +1109,15 @@ public struct AppleIPTVStreamProbe: Sendable {
 
     public func validate(
         channels: [AppleIPTVChannel],
-        maximumAttempts: Int = 3
+        maximumAttempts: Int = 5
     ) async throws -> AppleIPTVStreamProbeResult {
         guard !channels.isEmpty else { throw AppleIPTVError.noChannels }
         var lastError: (any Error)?
-        for channel in channels.prefix(min(max(maximumAttempts, 1), 5)) {
+        let attempts = min(channels.count, min(max(maximumAttempts, 1), 5))
+        for attempt in 0..<attempts {
+            try Task.checkCancellation()
+            let index = attempts == 1 ? 0 : attempt * (channels.count - 1) / (attempts - 1)
+            let channel = channels[index]
             do {
                 return try await validate(channel: channel)
             } catch is CancellationError {
@@ -930,16 +1140,26 @@ public struct AppleIPTVStreamProbe: Sendable {
         request.setValue("video/mp2t, application/vnd.apple.mpegurl, application/octet-stream, */*", forHTTPHeaderField: "Accept")
         request.setValue(channel.userAgent ?? "OpenStream/1.0 Apple", forHTTPHeaderField: "User-Agent")
         if let referer = channel.referer { request.setValue(referer, forHTTPHeaderField: "Referer") }
+        if let origin = channel.origin { request.setValue(origin, forHTTPHeaderField: "Origin") }
 
-        let (data, response) = try await loader(request)
-        guard let http = response as? HTTPURLResponse else { throw AppleIPTVError.nonHTTPResponse }
-        if http.statusCode == 401 || http.statusCode == 403 {
-            throw AppleIPTVError.authenticationFailed(status: nil)
+        var (data, response) = try await loader(request)
+        // Some live endpoints reject byte ranges but accept ordinary GETs.
+        // The loader still caps the response, so retrying cannot read forever.
+        if (response as? HTTPURLResponse)?.statusCode == 416 {
+            try Task.checkCancellation()
+            request.setValue(nil, forHTTPHeaderField: "Range")
+            (data, response) = try await loader(request)
         }
+        guard let http = response as? HTTPURLResponse else { throw AppleIPTVError.nonHTTPResponse }
         guard http.statusCode == 200 || http.statusCode == 206 else {
-            throw AppleIPTVError.requestFailed(http.statusCode)
+            throw AppleIPTVError.streamRequestFailed(http.statusCode)
         }
         guard !data.isEmpty else { throw AppleIPTVError.streamUnavailable }
+        let contentType = http.value(forHTTPHeaderField: "Content-Type")?.lowercased() ?? ""
+        let prefix = String(decoding: data.prefix(256), as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !contentType.contains("text/html"), !prefix.hasPrefix("<!doctype html"), !prefix.hasPrefix("<html") else {
+            throw AppleIPTVError.invalidStreamResponse
+        }
         return AppleIPTVStreamProbeResult(
             statusCode: http.statusCode,
             bytesReceived: min(data.count, Self.maximumProbeBytes),
@@ -997,18 +1217,29 @@ private struct XtreamFlexibleString: Decodable {
 
 private struct XtreamAccountEnvelope: Decodable {
     let userInfo: XtreamUserInfo?
-    private enum CodingKeys: String, CodingKey { case userInfo = "user_info" }
+    let serverInfo: XtreamServerInfo?
+    private enum CodingKeys: String, CodingKey { case userInfo = "user_info", serverInfo = "server_info" }
+}
+
+private struct XtreamServerInfo: Decodable {
+    let timezone: XtreamFlexibleString?
 }
 
 private struct XtreamUserInfo: Decodable {
     let auth: XtreamFlexibleString?
     let status: XtreamFlexibleString?
     let allowedOutputFormats: [String]?
+    let expiration: XtreamFlexibleString?
+    let maxConnections: XtreamFlexibleString?
+    let activeConnections: XtreamFlexibleString?
 
     private enum CodingKeys: String, CodingKey {
         case auth
         case status
         case allowedOutputFormats = "allowed_output_formats"
+        case expiration = "exp_date"
+        case maxConnections = "max_connections"
+        case activeConnections = "active_cons"
     }
 }
 
@@ -1028,14 +1259,38 @@ private struct XtreamLiveStream: Decodable {
     let categoryID: XtreamFlexibleString?
     let directSource: String?
     let containerExtension: String?
+    let epgChannelID: XtreamFlexibleString?
+    let tvArchive: XtreamFlexibleString?
+    let tvArchiveDuration: XtreamFlexibleString?
+    let num: XtreamFlexibleString?
 
     private enum CodingKeys: String, CodingKey {
+        case num
         case streamID = "stream_id"
         case name
         case streamIcon = "stream_icon"
         case categoryID = "category_id"
         case directSource = "direct_source"
         case containerExtension = "container_extension"
+        case epgChannelID = "epg_channel_id"
+        case tvArchive = "tv_archive"
+        case tvArchiveDuration = "tv_archive_duration"
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        streamID = try values.decodeIfPresent(XtreamFlexibleString.self, forKey: .streamID)
+        name = try values.decodeIfPresent(String.self, forKey: .name)
+        streamIcon = try values.decodeIfPresent(String.self, forKey: .streamIcon)
+        categoryID = try values.decodeIfPresent(XtreamFlexibleString.self, forKey: .categoryID)
+        directSource = try values.decodeIfPresent(String.self, forKey: .directSource)
+        containerExtension = try values.decodeIfPresent(String.self, forKey: .containerExtension)
+        // Optional extras: a panel that sends them in an odd shape must not
+        // lose the channel itself.
+        epgChannelID = try? values.decodeIfPresent(XtreamFlexibleString.self, forKey: .epgChannelID)
+        tvArchive = try? values.decodeIfPresent(XtreamFlexibleString.self, forKey: .tvArchive)
+        tvArchiveDuration = try? values.decodeIfPresent(XtreamFlexibleString.self, forKey: .tvArchiveDuration)
+        num = try? values.decodeIfPresent(XtreamFlexibleString.self, forKey: .num)
     }
 }
 

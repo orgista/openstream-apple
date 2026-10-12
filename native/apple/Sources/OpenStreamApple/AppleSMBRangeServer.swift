@@ -7,7 +7,7 @@ public enum AppleSMBRangeServerError: Error, LocalizedError, Sendable {
 
     public var errorDescription: String? {
         switch self {
-        case .listenerUnavailable: "OpenStream couldn’t start its private SMB playback bridge."
+        case .listenerUnavailable: "oStream couldn’t start its private SMB playback bridge."
         case .invalidMedia: "The selected SMB file is no longer available."
         }
     }

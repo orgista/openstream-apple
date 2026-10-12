@@ -131,6 +131,7 @@ public final class AppleAudioSessionCoordinator: NSObject {
 
     private let session: AVAudioSession
     private let access: AppleAudioSessionAccess
+    private var hasPlaybackRequest = false
 
     public init(session: AVAudioSession = .sharedInstance()) {
         self.session = session
@@ -189,12 +190,18 @@ public final class AppleAudioSessionCoordinator: NSObject {
     /// playback. iOS uses the long-form-video sharing policy so system route
     /// selection keeps audio and video together; tvOS manages that policy.
     public func prepareForPlayback() async throws {
+        try Task.checkCancellation()
+        hasPlaybackRequest = true
+        ApplePlaybackSessionPolicy.activeAudioPolicy = .playback
         let access = access
         try await AppleAudioSessionWorkQueue.shared.perform { try access.prepare() }
         refreshState()
     }
 
     public func deactivate() {
+        hasPlaybackRequest = false
+        guard ApplePlaybackSessionPolicy.activeAudioPolicy == .playback else { return }
+        ApplePlaybackSessionPolicy.activeAudioPolicy = nil
         let access = access
         AppleAudioSessionWorkQueue.shared.enqueue { try? access.deactivate() }
     }
@@ -241,6 +248,11 @@ public final class AppleAudioSessionCoordinator: NSObject {
     nonisolated private func mediaServicesWereReset(_: Notification) {
         Task { @MainActor [weak self] in
             guard let self else { return }
+            guard ApplePlaybackSessionPolicy.activeAudioPolicy?
+                .shouldRestoreAudioSession(hasPlaybackRequest: hasPlaybackRequest) == true else {
+                refreshState()
+                return
+            }
             do {
                 try await prepareForPlayback()
             } catch {
@@ -262,12 +274,17 @@ public final class AppleAudioSessionCoordinator: NSObject {
                 onInterruption?(.began)
             case .ended:
                 let shouldResume = AVAudioSession.InterruptionOptions(rawValue: rawOptions).contains(.shouldResume)
-                if shouldResume {
+                let ownsPlayback = ApplePlaybackSessionPolicy.activeAudioPolicy?
+                    .shouldRestoreAudioSession(hasPlaybackRequest: hasPlaybackRequest) == true
+                if shouldResume && ownsPlayback {
                     let access = access
                     try? await AppleAudioSessionWorkQueue.shared.perform { try access.activate() }
                 }
                 refreshState(isInterrupted: false)
-                onInterruption?(.ended(shouldResume: shouldResume))
+                // A trailer may take over while activation is suspended.
+                let stillOwnsPlayback = ApplePlaybackSessionPolicy.activeAudioPolicy?
+                    .shouldRestoreAudioSession(hasPlaybackRequest: hasPlaybackRequest) == true
+                onInterruption?(.ended(shouldResume: shouldResume && stillOwnsPlayback))
             @unknown default:
                 refreshState()
             }

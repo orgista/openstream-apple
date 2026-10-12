@@ -93,7 +93,7 @@ private struct AppleDiagnosticFixture: AppleSavedSourceDiagnosticsOperations {
         (#"{"streams":[{"url":"https://media.example/movie.mp4"}]}"#, nil),
         (#"{"streams":[{"url":"https://media.example/master.m3u8","behaviorHints":{"proxyHeaders":{"request":{"Referer":"https://provider.example"}}}}]}"#, nil),
         (#"{"streams":[{"externalUrl":"stremio:///detail/movie/tt123"}]}"#, .externalStream),
-        (#"{"streams":[{"infoHash":"0123456789abcdef0123456789abcdef01234567","sources":["tracker:udp://tracker.example:80"]}]}"#, .torrentStream),
+        (#"{"streams":[{"infoHash":"0123456789abcdef0123456789abcdef01234567","fileIdx":0}]}"#, .malformedStream),
         (#"{"streams":[{"url":"file:///private/movie.mp4"}]}"#, .malformedStream),
         (#"{"streams":[]}"#, .emptyStreamResponse),
     ]
@@ -113,7 +113,6 @@ private struct AppleDiagnosticFixture: AppleSavedSourceDiagnosticsOperations {
     let expected: [(AppleSavedSourceDiagnosticsError, AppleSavedSourceDiagnosticStatus, String)] = [
         (.noStreamProvider, .blocked, "no-stream-provider"),
         (.externalStream, .blocked, "external-link"),
-        (.torrentStream, .blocked, "torrent-service-required"),
         (.youtubeStream, .blocked, "youtube-link"),
         (.malformedStream, .fail, "malformed-stream"),
         (.emptyStreamResponse, .fail, "empty-streams"),

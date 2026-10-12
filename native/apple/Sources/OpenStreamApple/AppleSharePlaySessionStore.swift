@@ -12,7 +12,7 @@ struct AppleLiveWatchingActivity: GroupActivity, Sendable {
         var value = GroupActivityMetadata()
         value.type = .watchTogether
         value.title = channel.title
-        value.subtitle = "Live TV in OpenStream"
+        value.subtitle = "Live TV in oStream"
         return value
     }
 }

@@ -10,8 +10,16 @@ public struct AppleGuideGridCell: Sendable, Equatable, Identifiable {
     public let title: String
     public let subtitle: String?
     public let isLive: Bool
+    /// The programme's own times; `start`/`end` are clamped to the guide's
+    /// window and to the programme before it, so a programme that began
+    /// before the window would read as starting with it.
+    public let airStart: Date
+    public let airEnd: Date
 
-    public init(id: String, channelID: String, start: Date, end: Date, columnOffset: Double, columnSpan: Double, title: String, subtitle: String?, isLive: Bool) {
+    public init(id: String, channelID: String, start: Date, end: Date, columnOffset: Double, columnSpan: Double, title: String, subtitle: String?, isLive: Bool,
+                airStart: Date? = nil, airEnd: Date? = nil) {
+        self.airStart = airStart ?? start
+        self.airEnd = airEnd ?? end
         self.id = id
         self.channelID = channelID
         self.start = start
@@ -21,6 +29,15 @@ public struct AppleGuideGridCell: Sendable, Equatable, Identifiable {
         self.title = title
         self.subtitle = subtitle
         self.isLive = isLive
+    }
+}
+
+extension AppleGuideGridCell {
+    /// The programme this cell draws, with its own (unclamped) times — what
+    /// catch-up plays. Gap cells have no programme.
+    public var programme: AppleIPTVProgramme {
+        AppleIPTVProgramme(id: id, channelID: channelID, title: title, subtitle: nil, description: subtitle,
+                           start: airStart, end: airEnd, category: nil, isLive: isLive)
     }
 }
 
@@ -82,6 +99,11 @@ public struct AppleGuideGridIndex: Sendable, Equatable {
 }
 
 public enum AppleGuideGridModel: Sendable {
+    /// How much of a programme lies behind the channel rail after scrolling.
+    public static func visibleTitleInset(start: Double, width: Double, scrollOffset: Double) -> Double {
+        min(max(0, width), max(0, scrollOffset - start))
+    }
+
     /// The whole grid for `channels` in one pass, pulling each channel's
     /// programmes out of `guide`. Duplicate ids are dropped, like `build`.
     public static func index(
@@ -179,7 +201,9 @@ public enum AppleGuideGridModel: Sendable {
                         columnSpan: span,
                         title: prog.title,
                         subtitle: prog.subtitle ?? prog.description,
-                        isLive: prog.isLive
+                        isLive: prog.isLive,
+                        airStart: prog.start,
+                        airEnd: prog.end
                     ))
                 }
                 currentCellStart = max(currentCellStart, clampedEnd)

@@ -2,6 +2,12 @@ import Foundation
 import CoreGraphics
 import ImageIO
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
+#if canImport(AppKit)
+import AppKit
+#endif
 
 enum AppleRemoteImageContentMode: Equatable {
     case fill
@@ -29,16 +35,35 @@ struct AppleRemoteImage: View {
     /// nothing until the art lands (owner's recurring "GUI with no content",
     /// seen again 2026-09-15). A hero passes a real surface instead.
     var loadingFill: Color = .white.opacity(0.025)
+    /// Keeps the current image on screen while a new URL or size loads, and
+    /// swaps only once the replacement has decoded. A full-bleed hero opts in:
+    /// its backdrop upgrades mid-view, and clearing first painted the hero
+    /// black between the two stills (sim finding f, 2026-09-22).
+    var keepsImageWhileReloading = false
+    /// Decodes once at this pixel budget, whatever size the view is drawn at,
+    /// so resizing a window never reloads the image. The Mac hero opts in: a
+    /// live resize otherwise asked for a new decode at every size it passed
+    /// through. Nil decodes near the rendered size.
+    var fixedPixelDimension: Int? = nil
+    /// Where a filled image that overhangs its frame is pinned. Nil keeps the
+    /// `GeometryReader`'s top-leading corner, which every other caller is laid
+    /// out and measured against (`AppleHeroLuminanceMap.reading`). The Mac
+    /// heroes centre it, as the trailer's cover over it is centred: pinned
+    /// top-leading, the art jumped by the overhang when the trailer mounted
+    /// (67 pt in a 1440 pt window, 627 pt in a 3440 pt one; N44).
+    var fillAlignment: Alignment? = nil
 
     @Environment(\.displayScale) private var displayScale
     @State private var image: CGImage?
     @State private var failed = false
+    /// The load `image` belongs to.
+    @State private var imageIdentity: String?
 
     var body: some View {
         GeometryReader { geometry in
             Group {
-                if let image {
-                    rendered(image)
+                if let image = displayedImage(size: geometry.size) {
+                    rendered(image, in: geometry.size)
                 } else if failed {
                     placeholder
                 } else {
@@ -50,24 +75,32 @@ struct AppleRemoteImage: View {
                 }
             }
             .task(id: loadIdentity(url: url, size: geometry.size)) {
-                image = nil
+                if !keepsImageWhileReloading { image = nil }
                 failed = false
                 guard let url else {
+                    image = nil
                     failed = true
                     onFailure?()
                     return
                 }
-                let maximumDimension = max(64, Int(max(geometry.size.width, geometry.size.height) * displayScale))
                 do {
                     let loaded = try await AppleRemoteImageCache.shared.image(
                         url: url,
-                        maximumPixelDimension: min(maximumDimension, 2_560)
+                        maximumPixelDimension: maximumPixelDimension(for: geometry.size)
                     )
+                    guard !Task.isCancelled else { return }
                     image = loaded
+                    imageIdentity = loadIdentity(url: url, size: geometry.size)
+                    #if DEBUG
+                    AppleLaunchClock.count(fixedPixelDimension != nil || keepsImageWhileReloading ? "image.hero" : "image.card",
+                                           marking: [1, 8, 16, 32])
+                    #endif
                     onLoad?(loaded)
                 } catch is CancellationError {
                     return
                 } catch {
+                    guard !Task.isCancelled else { return }
+                    image = nil
                     failed = true
                     onFailure?()
                 }
@@ -78,10 +111,13 @@ struct AppleRemoteImage: View {
     }
 
     @ViewBuilder
-    private func rendered(_ image: CGImage) -> some View {
+    private func rendered(_ image: CGImage, in size: CGSize) -> some View {
         let value = Image(decorative: image, scale: displayScale)
             .resizable()
-        if contentMode == .fill {
+        if contentMode == .fill, let fillAlignment {
+            value.scaledToFill()
+                .frame(width: size.width, height: size.height, alignment: fillAlignment)
+        } else if contentMode == .fill {
             value.scaledToFill()
         } else {
             value.scaledToFit()
@@ -97,8 +133,27 @@ struct AppleRemoteImage: View {
         }
     }
 
+    /// What to draw this frame. A view that keeps its image across reloads
+    /// draws the new one on the very frame its URL changes when the memory
+    /// cache already holds it, rather than one async hop later: the rotating
+    /// hero swaps its copy and art together, and on a busy main thread that
+    /// hop left the previous title's still under the next title's copy for
+    /// ~270 ms (iPad sim trace, 2026-09-22).
+    private func displayedImage(size: CGSize) -> CGImage? {
+        guard keepsImageWhileReloading, let url,
+              imageIdentity != loadIdentity(url: url, size: size) else { return image }
+        return AppleRemoteImageCache.shared.cachedImage(url: url, maximumPixelDimension: maximumPixelDimension(for: size))
+            ?? image
+    }
+
+    private func maximumPixelDimension(for size: CGSize) -> Int {
+        if let fixedPixelDimension { return fixedPixelDimension }
+        return min(max(64, Int(max(size.width, size.height) * displayScale)), 2_560)
+    }
+
     private func loadIdentity(url: URL?, size: CGSize) -> String {
-        "\(url?.absoluteString ?? "")|\(Int(size.width))x\(Int(size.height))@\(displayScale)"
+        if let fixedPixelDimension { return "\(url?.absoluteString ?? "")|fixed\(fixedPixelDimension)" }
+        return "\(url?.absoluteString ?? "")|\(Int(size.width))x\(Int(size.height))@\(displayScale)"
     }
 }
 
@@ -123,7 +178,15 @@ struct AppleTrimmedTitleLogo: View {
 
     @Environment(\.displayScale) private var displayScale
     @State private var image: CGImage?
-    @State private var reportedResult: Bool?
+    /// The result last reported, and for which wordmark. Keyed by URL: the
+    /// hero carousel reuses this view for the next page, and a bare flag
+    /// swallowed the new page's `true` as a repeat, so its lockup drew the
+    /// text title over a wordmark that was on screen (owner, 2026-09-24:
+    /// "Dark Matter (2024)" over the DARK MATTER mark on the Mac).
+    @State private var reported: (url: URL, loaded: Bool)?
+    /// Which wordmark `image` is, so a reused view never shows the last
+    /// page's mark while the new one loads.
+    @State private var imageURL: URL?
 
     var body: some View {
         GeometryReader { geometry in
@@ -140,17 +203,46 @@ struct AppleTrimmedTitleLogo: View {
             }
             .task(id: "\(url.absoluteString)|\(Int(geometry.size.width))x\(Int(geometry.size.height))@\(displayScale)") {
                 guard !Task.isCancelled else { return }
+                if imageURL != url { image = nil }
                 do {
+                    if let cachedData = await AppleArtworkDiskCache.shared.data(for: url, variant: "logo-trimmed"),
+                       let source = CGImageSourceCreateWithData(cachedData as CFData, nil),
+                       let cachedImage = CGImageSourceCreateImageAtIndex(source, 0, nil) {
+                        guard !Task.isCancelled else { return }
+                        image = cachedImage
+                        imageURL = url
+                        report(true)
+                        return
+                    }
+
                     let decoded = try await AppleRemoteImageCache.shared.image(
                         url: url,
                         maximumPixelDimension: min(2_560, max(256, Int(max(geometry.size.width, geometry.size.height) * displayScale * 4)))
                     )
                     guard !Task.isCancelled else { return }
                     image = AppleRemoteImageDecoder.trimmedToAlphaBounds(decoded)
+                    imageURL = url
+
+                    if let finalImage = image {
+                        #if canImport(AppKit)
+                        let rep = NSBitmapImageRep(cgImage: finalImage)
+                        if let pngData = rep.representation(using: .png, properties: [:]) {
+                            await AppleArtworkDiskCache.shared.store(pngData, for: url, variant: "logo-trimmed")
+                        }
+                        #else
+                        let uiImage = UIImage(cgImage: finalImage)
+                        if let pngData = uiImage.pngData() {
+                            await AppleArtworkDiskCache.shared.store(pngData, for: url, variant: "logo-trimmed")
+                        }
+                        #endif
+                    }
+
+                    guard !Task.isCancelled else { return }
                     report(image != nil)
                 } catch is CancellationError {
                     return
                 } catch {
+                    guard !Task.isCancelled else { return }
                     image = nil
                     report(false)
                 }
@@ -161,8 +253,8 @@ struct AppleTrimmedTitleLogo: View {
     }
 
     private func report(_ loaded: Bool) {
-        guard reportedResult != loaded else { return }
-        reportedResult = loaded
+        if let reported, reported.url == url, reported.loaded == loaded { return }
+        reported = (url, loaded)
         onLoadResult(loaded)
     }
 }
@@ -177,7 +269,7 @@ actor AppleRemoteImageCache {
         init(_ image: CGImage) { self.image = image }
     }
 
-    private let cache = NSCache<NSString, Entry>()
+    nonisolated(unsafe) private let cache = NSCache<NSString, Entry>()
     private var inFlight: [NSString: Task<CGImage, any Error>] = [:]
     private let loader: Loader
 
@@ -185,6 +277,18 @@ actor AppleRemoteImageCache {
         self.loader = loader
         cache.countLimit = 300
         cache.totalCostLimit = 160 * 1_024 * 1_024
+    }
+
+    /// Reset OpenStream empties the decoded artwork too. `NSCache` is
+    /// thread-safe.
+    nonisolated func removeAllCached() {
+        cache.removeAllObjects()
+    }
+
+    /// The decoded image if it is already in memory, without waiting on the
+    /// actor. `NSCache` is thread-safe.
+    nonisolated func cachedImage(url: URL, maximumPixelDimension: Int) -> CGImage? {
+        cache.object(forKey: "\(url.absoluteString)|\(maximumPixelDimension)" as NSString)?.image
     }
 
     func image(url: URL, maximumPixelDimension: Int) async throws -> CGImage {
@@ -210,18 +314,75 @@ actor AppleRemoteImageCache {
         return decoded
     }
 
+    public func prefetch(_ urls: [URL]) async {
+        var uniqueURLs: [URL] = []
+        var seen: Set<URL> = []
+        for url in urls {
+            if !seen.contains(url) {
+                seen.insert(url)
+                uniqueURLs.append(url)
+            }
+        }
+
+        await withTaskGroup(of: Void.self) { group in
+            var inFlight = 0
+            for url in uniqueURLs {
+                if Task.isCancelled { break }
+                let exists = await AppleArtworkDiskCache.shared.contains(url: url, variant: "raw")
+                if !exists {
+                    if inFlight >= 4 {
+                        await group.next()
+                        inFlight -= 1
+                    }
+                    if Task.isCancelled { break }
+                    inFlight += 1
+                    group.addTask(priority: .utility) {
+                        do {
+                            var request = URLRequest(url: url)
+                            request.timeoutInterval = 15
+                            let (data, response) = try await AppleBoundedHTTPDataLoader.load(
+                                request,
+                                maximumBytes: 12 * 1_024 * 1_024
+                            )
+                            guard let http = response as? HTTPURLResponse,
+                                  (200 ... 299).contains(http.statusCode) else {
+                                return
+                            }
+                            await AppleArtworkDiskCache.shared.store(data, for: url, variant: "raw")
+                        } catch {
+                            // Never throws, never logs
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private static func load(url: URL, maximumPixelDimension: Int) async throws -> CGImage {
+        if let cachedData = await AppleArtworkDiskCache.shared.data(for: url, variant: "raw") {
+            return try await Task.detached(priority: .utility) {
+                try AppleRemoteImageDecoder.downsample(
+                    data: cachedData,
+                    maximumPixelDimension: maximumPixelDimension
+                )
+            }.value
+        }
+
         var request = URLRequest(url: url)
         request.timeoutInterval = 15
-        request.cachePolicy = .reloadIgnoringLocalCacheData
         let (data, response) = try await AppleBoundedHTTPDataLoader.load(
             request,
             maximumBytes: 12 * 1_024 * 1_024
         )
+        #if DEBUG
+        AppleInteractionTrace.record(.network,
+            "artwork image=\(AppleCatalogArtworkPolicy.traceID(url)) HTTP=\((response as? HTTPURLResponse)?.statusCode ?? 0)")
+        #endif
         guard let http = response as? HTTPURLResponse,
               (200 ... 299).contains(http.statusCode) else {
             throw URLError(.cannotDecodeContentData)
         }
+        await AppleArtworkDiskCache.shared.store(data, for: url, variant: "raw")
         return try await Task.detached(priority: .utility) {
             try AppleRemoteImageDecoder.downsample(
                 data: data,

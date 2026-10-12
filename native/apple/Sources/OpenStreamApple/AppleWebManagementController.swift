@@ -9,13 +9,16 @@ public final class AppleWebManagementController: AppleWebManagementServing {
             for observer in sessionObservers.values { observer.yield(session) }
         }
     }
+    public private(set) var connectedBrowsers: [AppleWebManagementServer.ConnectedBrowser] = []
     public private(set) var error: String?
     public private(set) var isRunning = false
 
     public var running: Bool { isRunning }
 
     @ObservationIgnored private let configuration: AppleWebManagementServer.Configuration
+    #if OPENSTREAM_ADDONS
     @ObservationIgnored private let manifestClient: AppleManifestClient
+    #endif
     @ObservationIgnored private var server: AppleWebManagementServer?
     @ObservationIgnored private var sessionObservers: [
         UUID: AsyncStream<AppleWebManagementSession?>.Continuation
@@ -23,7 +26,9 @@ public final class AppleWebManagementController: AppleWebManagementServing {
 
     public init() {
         configuration = .init()
+        #if OPENSTREAM_ADDONS
         manifestClient = AppleManifestClient()
+        #endif
     }
 
     public func sessionUpdates() -> AsyncStream<AppleWebManagementSession?> {
@@ -39,6 +44,7 @@ public final class AppleWebManagementController: AppleWebManagementServing {
         }
     }
 
+#if OPENSTREAM_ADDONS
     init(
         configuration: AppleWebManagementServer.Configuration,
         manifestClient: AppleManifestClient
@@ -46,15 +52,23 @@ public final class AppleWebManagementController: AppleWebManagementServing {
         self.configuration = configuration
         self.manifestClient = manifestClient
     }
+#else
+    init(configuration: AppleWebManagementServer.Configuration) { self.configuration = configuration }
+#endif
 
     @discardableResult
     public func start(sourceStore: AppleSourceStore) async throws -> AppleWebManagementSession {
         stopActiveServer(clearError: true)
 
+#if OPENSTREAM_ADDONS
         let newServer = AppleWebManagementServer(
             configuration: configuration,
             manifestClient: manifestClient
         )
+#else
+        let newServer = AppleWebManagementServer(configuration: configuration)
+
+#endif
         newServer.onStop = { [weak self, weak newServer] reason in
             guard let self, let newServer, self.server === newServer else { return }
             self.server = nil
@@ -68,6 +82,15 @@ public final class AppleWebManagementController: AppleWebManagementServing {
             case .completed, .stopped:
                 self.error = nil
             }
+        }
+        newServer.onSessionChange = { [weak self, weak newServer] updated in
+            guard let self, let newServer, self.server === newServer else { return }
+            self.session = updated
+        }
+        newServer.onBrowsersChange = { [weak self, weak newServer] browsers in
+            guard let self, let newServer, self.server === newServer else { return }
+            self.connectedBrowsers = browsers
+            for observer in self.sessionObservers.values { observer.yield(self.session) }
         }
         server = newServer
 
@@ -91,6 +114,14 @@ public final class AppleWebManagementController: AppleWebManagementServing {
         }
     }
 
+    public func endBrowser(id: UUID) {
+        server?.endBrowser(id: id)
+    }
+
+    public func endAllBrowsers() {
+        server?.endAllBrowsers()
+    }
+
     public func stop() async {
         stopActiveServer(clearError: true)
     }
@@ -105,6 +136,7 @@ public final class AppleWebManagementController: AppleWebManagementServing {
         activeServer?.onStop = nil
         activeServer?.dispose()
         session = nil
+        connectedBrowsers = []
         isRunning = false
         if clearError { error = nil }
     }

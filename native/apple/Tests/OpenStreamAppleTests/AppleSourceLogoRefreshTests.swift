@@ -294,7 +294,7 @@ struct AppleSourceLogoRefreshTests {
         await waitUntil { store.sources.first(where: { $0.id == saved.id })?.logoURL != nil }
         #expect(store.sources.first(where: { $0.id == saved.id })?.logoURL?.absoluteString == openSubtitlesHTTPLogo)
         #expect(counter.value == 1)
-        #expect(defaults.stringArray(forKey: "openstream.sources.v1.logo-backfill") == [saved.id.uuidString])
+        #expect(defaults.stringArray(forKey: "openstream.sources.v1.logo-backfill.v2") == [saved.id.uuidString])
 
         // Persisted, and a further load has nothing left to fetch.
         let reloaded = makeStore(
@@ -325,7 +325,7 @@ struct AppleSourceLogoRefreshTests {
             client: stubManifestClient(returning: manifestJSON(logo: nil), counter: counter),
             backfillDelay: .zero
         )
-        await waitUntil { defaults.stringArray(forKey: "openstream.sources.v1.logo-backfill") != nil }
+        await waitUntil { defaults.stringArray(forKey: "openstream.sources.v1.logo-backfill.v2") != nil }
         #expect(first.sources.first(where: { $0.id == saved.id })?.logoURL == nil)
         #expect(counter.value == 1)
 
@@ -360,7 +360,7 @@ struct AppleSourceLogoRefreshTests {
         await waitUntil { failures.value >= 1 }
         try? await Task.sleep(for: .milliseconds(50))
         #expect(failing.sources.first(where: { $0.id == saved.id })?.logoURL == nil)
-        #expect(defaults.stringArray(forKey: "openstream.sources.v1.logo-backfill") == nil)
+        #expect(defaults.stringArray(forKey: "openstream.sources.v1.logo-backfill.v2") == nil)
 
         let store = makeStore(
             defaults: defaults,

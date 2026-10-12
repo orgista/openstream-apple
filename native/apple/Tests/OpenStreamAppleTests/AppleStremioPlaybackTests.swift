@@ -151,13 +151,12 @@ private actor ResolutionLoadProbe {
         {"title":"HTTPS","url":"https://media.example/film.mkv"},
         {"title":"Duplicate","url":"https://media.example/film.mkv"},
         {"name":"HTTP","url":"http://192.168.1.20/live.m3u8"},
-        {"title":"Torrent","infoHash":"0123456789abcdef0123456789abcdef01234567","fileIdx":2,"sources":["tracker:udp://tracker.example:80","dht:0123456789abcdef0123456789abcdef01234567"]},
-        {"title":"Base32","infoHash":"ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"},
+        {"title":"Hash only","infoHash":"0123456789abcdef0123456789abcdef01234567","fileIdx":2},
         {"title":"YouTube","ytId":"dQw4w9WgXcQ"},
         {"title":"Related","externalUrl":"stremio:///detail/movie/tt123"},
         {"title":"Unsafe","url":"file:///private/movie.mp4"},
         {"title":"Credentials","url":"https://user:pass@media.example/movie.mp4"},
-        {"title":"Invalid hash","infoHash":"not-a-hash"},
+        {"title":"Invalid video id","ytId":"not a valid id!"},
         {"title":"Missing"},
         42
       ]
@@ -168,26 +167,16 @@ private actor ResolutionLoadProbe {
 
     #expect(result.httpCandidates.map(\.title) == ["HTTPS", "HTTP"])
     #expect(result.httpCandidates.map(\.sourceURL.scheme) == ["https", "http"])
-    #expect(result.unsupported.count == 8)
-    #expect(result.unsupported[0].reason == .torrent(
-        infoHash: "0123456789abcdef0123456789abcdef01234567",
-        fileIndex: 2,
-        sources: [
-            "tracker:udp://tracker.example:80",
-            "dht:0123456789abcdef0123456789abcdef01234567",
-        ]
-    ))
-    #expect(result.unsupported[1].reason == .torrent(
-        infoHash: "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567",
-        fileIndex: nil,
-        sources: []
-    ))
-    #expect(result.unsupported[2].reason == .youtube(videoID: "dQw4w9WgXcQ"))
-    #expect(result.unsupported[3].reason == .externalLink(URL(string: "stremio:///detail/movie/tt123")!))
+    #expect(result.unsupported.count == 7)
+    // A peer-to-peer hash is not a locator the app understands: it is dropped
+    // the same way as a result with no locator at all.
+    #expect(result.unsupported[0].reason == .missingLocator)
+    #expect(result.unsupported[1].reason == .youtube(videoID: "dQw4w9WgXcQ"))
+    #expect(result.unsupported[2].reason == .externalLink(URL(string: "stremio:///detail/movie/tt123")!))
+    #expect(result.unsupported[3].reason == .invalidHTTPURL)
     #expect(result.unsupported[4].reason == .invalidHTTPURL)
-    #expect(result.unsupported[5].reason == .invalidHTTPURL)
-    #expect(result.unsupported[6].reason == .invalidLocator)
-    #expect(result.unsupported[7].reason == .missingLocator)
+    #expect(result.unsupported[5].reason == .invalidLocator)
+    #expect(result.unsupported[6].reason == .missingLocator)
 }
 
 @Test func stremioStreamParsingHonorsWebReadinessAndSafeProxyHeaders() throws {
@@ -742,7 +731,7 @@ private actor ResolutionLoadProbe {
 @Test func stremioPlaybackResolverReportsUnsupportedOnlyResultsWithoutInspecting() async throws {
     let recorder = PlaybackResolutionRecorder()
     let client = AppleStremioPlaybackClient { request in
-        let data = Data(#"{"streams":[{"title":"Torrent","infoHash":"0123456789abcdef0123456789abcdef01234567"}]}"#.utf8)
+        let data = Data(#"{"streams":[{"title":"Hash only","infoHash":"0123456789abcdef0123456789abcdef01234567"}]}"#.utf8)
         return (
             data,
             HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
@@ -764,12 +753,8 @@ private actor ResolutionLoadProbe {
         )
         Issue.record("Expected the unsupported locator to remain non-playable")
     } catch let error as AppleStremioPlaybackResolutionError {
-        #expect(error == .unsupportedOnly(.torrent(
-            infoHash: "0123456789abcdef0123456789abcdef01234567",
-            fileIndex: nil,
-            sources: []
-        )))
-        #expect(error.localizedDescription == "Torrent resolver required.")
+        #expect(error == .unsupportedOnly(.missingLocator))
+        #expect(error.localizedDescription == "No playable stream.")
     }
     #expect(await recorder.inspected.isEmpty)
 }
@@ -1043,4 +1028,32 @@ private actor PlaybackConcurrencyRecorder {
     let candidates = try await AppleStremioPlaybackResolver(client: client).rankedCandidates(sources: [source],
         item: .init(mediaID: "tt123", type: "movie", name: "Film"))
     #expect(candidates.map(\.sourceURL.lastPathComponent) == ["ready.mkv"])
+}
+
+/// Playback sweep 2026-10-08: a stream add-on that answers with no streams
+/// for a title was reported as "This catalog provides details only. Add an
+/// enabled stream source" — to a viewer who has one and whose add-on was
+/// asked. It now says nothing was found.
+@Test func rankedStreamsSayNothingWasFoundWhenEveryStreamSourceAnsweredEmpty() async throws {
+    let client = AppleStremioPlaybackClient { request in
+        (Data(#"{"streams":[]}"#.utf8), HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+    }
+    let resolver = AppleStremioPlaybackResolver(client: client)
+    do {
+        _ = try await resolver.rankedCandidates(sources: [stremioSource()], item: .init(mediaID: "tt123", type: "movie", name: "Fixture"))
+        Issue.record("Expected nothing found")
+    } catch let error as AppleStremioPlaybackResolutionError {
+        #expect(error == .providerFailure(AppleStremioPlaybackResolver.nothingFound))
+        #expect(ApplePlaybackFailure.classify(error).message.contains("No stream was found"))
+    }
+}
+
+@Test func rankedStreamsStillAskForAStreamSourceWhenThereIsNone() async throws {
+    let resolver = AppleStremioPlaybackResolver(client: AppleStremioPlaybackClient { request in
+        (Data(#"{"streams":[]}"#.utf8), HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+    })
+    await #expect(throws: AppleStremioPlaybackResolutionError.noStreams) {
+        _ = try await resolver.rankedCandidates(sources: [stremioSource(resources: ["catalog"])],
+            item: .init(mediaID: "tt123", type: "movie", name: "Fixture"))
+    }
 }

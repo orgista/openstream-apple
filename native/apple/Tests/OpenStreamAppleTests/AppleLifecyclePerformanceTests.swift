@@ -18,6 +18,30 @@ import MediaPlayer
     gate.end()
 }
 
+/// A reload asked for while one runs (a playlist added at launch, Try Again)
+/// waits for it instead of being dropped (sim 2026-10-08: "No Live Channels"
+/// after the dev playlist was added during the launch reload).
+@MainActor
+@Test func reloadGateLetsAWaitingReloadRunOnceTheFirstEnds() async {
+    let gate = AppleReloadGate()
+    #expect(gate.begin())
+    let waiter = Task { @MainActor in await gate.waitUntilIdle() && gate.begin() }
+    try? await Task.sleep(for: .milliseconds(120))
+    gate.end()
+    #expect(await waiter.value)
+    gate.end()
+}
+
+@MainActor
+@Test func reloadGateStopsWaitingWhenTheWaiterIsCancelled() async {
+    let gate = AppleReloadGate()
+    #expect(gate.begin())
+    let waiter = Task { @MainActor in await gate.waitUntilIdle() }
+    waiter.cancel()
+    #expect(await waiter.value == false)
+    gate.end()
+}
+
 @Test func remoteImageDecoderBoundsDecodedPixelMemory() throws {
     let colorSpace = CGColorSpaceCreateDeviceRGB()
     let context = try #require(CGContext(

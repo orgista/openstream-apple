@@ -14,9 +14,15 @@ import AppKit
 /// reads as a filled-in value from across the room (owner item S9).
 private func appleSecondaryFieldPrompt(_ title: String) -> Text {
     #if os(visionOS)
-    Text(title).foregroundColor(.white)
+    Text(title).foregroundStyle(.white)
     #elseif os(tvOS)
-    Text(title).italic().foregroundStyle(.tertiary)
+    // Tertiary italic on black could not be read from the couch (full test
+    // 2026-10-01); secondary is the contrast tvOS gives its own placeholders.
+    Text(title).foregroundStyle(.secondary)
+    #elseif os(iOS)
+    // Use the system label color directly; hierarchical secondary styling
+    // compounds the text field's placeholder dimming on a dark form.
+    Text(title).foregroundStyle(Color(uiColor: .secondaryLabel))
     #else
     Text(title).foregroundStyle(.secondary)
     #endif
@@ -25,10 +31,19 @@ private func appleSecondaryFieldPrompt(_ title: String) -> Text {
 @MainActor
 public protocol AppleWebManagementServing: AnyObject {
     var session: AppleWebManagementSession? { get }
+    var connectedBrowsers: [AppleWebManagementServer.ConnectedBrowser] { get }
+    func endBrowser(id: UUID)
+    func endAllBrowsers()
 
     func sessionUpdates() -> AsyncStream<AppleWebManagementSession?>
     func start(sourceStore: AppleSourceStore) async throws -> AppleWebManagementSession
     func stop() async
+}
+
+public extension AppleWebManagementServing {
+    var connectedBrowsers: [AppleWebManagementServer.ConnectedBrowser] { [] }
+    func endBrowser(id: UUID) {}
+    func endAllBrowsers() {}
 }
 
 public struct AppleWebManagementUnavailableError: LocalizedError, Sendable {
@@ -66,6 +81,11 @@ struct AppleSourcesSettingsView: View {
     #if DEBUG
     @State private var debugDetailSourceID: AppleSource.ID?
     #endif
+    #if os(tvOS)
+    /// Apple TV has no Backup & Sync page, so what iCloud sync last did is
+    /// shown here instead (`AppleConfigurationSyncStatus`).
+    @AppStorage(AppleConfigurationSyncStatus.defaultsKey) private var syncStatusData: Data?
+    #endif
 
     let sourceStore: AppleSourceStore
     let settings: AppleSettingsStore
@@ -75,39 +95,57 @@ struct AppleSourcesSettingsView: View {
     var embeddedInSplit = false
 
     var body: some View {
-        List {
-            Section {
+        AppleSettingsCollection {
+            Section("Add") {
+                NavigationLink(value: AppleSourceRoute.addMediaServer) {
+                    AppleTVNavigationLabel("Media Server", systemImage: "server.rack")
+                }
+                .appleTVReadableFocus()
+                NavigationLink(value: AppleSourceRoute.addNetworkShare) {
+                    AppleTVNavigationLabel("Network Share", systemImage: "externaldrive.badge.plus")
+                }
+                .appleTVReadableFocus()
+                NavigationLink(value: AppleSourceRoute.addLiveTV) {
+                    AppleTVNavigationLabel("Live TV", systemImage: "dot.radiowaves.left.and.right")
+                }
+                .appleTVReadableFocus()
                 NavigationLink(value: AppleSourceRoute.addFiles) {
-                    AppleTVNavigationLabel("Add Files", systemImage: "folder.badge.plus")
+                    AppleTVNavigationLabel("Files", systemImage: "folder.badge.plus")
                 }
                 .appleTVReadableFocus()
                 NavigationLink(value: AppleSourceRoute.addInstance) {
-                    AppleTVNavigationLabel("Add Instance", systemImage: "plus.circle")
+                    AppleTVNavigationLabel("Instance", systemImage: "plus.circle")
                 }
                 .appleTVReadableFocus()
-
+#if OPENSTREAM_ADDONS
                 NavigationLink(value: AppleSourceRoute.addManifest) {
                     AppleTVNavigationLabel("Add Catalog", systemImage: "square.stack.3d.up")
                 }
                 .appleTVReadableFocus()
-                NavigationLink(value: AppleSourceRoute.addLiveTV) {
-                    AppleTVNavigationLabel("Add Live TV", systemImage: "dot.radiowaves.left.and.right")
-                }
-                .appleTVReadableFocus()
-
+#endif
                 NavigationLink(value: AppleSourceRoute.webManagement) {
                     AppleTVNavigationLabel("Web Management", systemImage: "network")
                 }
                 .appleTVReadableFocus()
+                Button {
+                    AppleSetupTransferCenter.shared.presentReceiver()
+                } label: {
+                    AppleTVNavigationLabel(AppleSetupTransferDevice.receiveTitle, systemImage: "qrcode")
+                }
+                .foregroundStyle(.primary)
+                .appleTVReadableFocus()
+                .accessibilityIdentifier("sources.setupFromPhone")
             }
 
             // Not "Sources" again: the pane is already titled Sources, so the
             // screen read "Sources … Sources" (review 2026-09-14).
-            // Uppercased explicitly: this pane is a `List` while the other
-            // settings panes are `Form`s, and on tvOS a Form uppercases its
-            // section headers while a List does not — so this one header read
-            // "Your Sources" beside "CHANNEL PREFERENCES" and "CONNECTION"
-            // everywhere else.
+            // Uppercased on Apple TV only: this pane is a `List` there while
+            // the other settings panes are `Form`s, and a tvOS Form uppercases
+            // its section headers while a List does not — so this one header
+            // read "Your Sources" beside "CHANNEL PREFERENCES" and
+            // "CONNECTION". Everywhere else the header takes the platform's
+            // own case like its neighbours; forcing it read "YOUR SOURCES"
+            // among the Mac's title-case headers (N54 #13).
             Section {
                 if sourceStore.sources.isEmpty {
                     Text("No sources")
@@ -124,8 +162,21 @@ struct AppleSourcesSettingsView: View {
                 // Scoped to the header on purpose: `.textCase` on the Section
                 // uppercases its *rows* too, which turned every source name
                 // into "TORRENTIO TB".
-                Text("Your Sources").textCase(.uppercase)
+                Text("Your Sources")
+                    #if os(tvOS)
+                    .textCase(.uppercase)
+                    #endif
             }
+            #if os(tvOS)
+            Section {
+                AppleConfigurationSyncStatusLines(status: syncStatusData
+                    .flatMap { try? JSONDecoder().decode(AppleConfigurationSyncStatus.self, from: $0) }
+                    ?? AppleConfigurationSyncStatus())
+                    .focusable()
+            } header: {
+                Text("iCloud Sync").textCase(.uppercase)
+            }
+            #endif
         }
         .appleSettingsPane("Sources", embedded: embeddedInSplit)
         .scrollIndicators(AppleDesignTokens.scrollIndicatorVisibility)
@@ -140,12 +191,20 @@ struct AppleSourcesSettingsView: View {
                 )
             case .addInstance:
                 AppleAddInstanceView()
+            #if OPENSTREAM_ADDONS
             case .addManifest:
                 AppleAddManifestSourceView(sourceStore: sourceStore)
+            #endif
             case .addLiveTV:
                 AppleAddLiveTVSourceView(sourceStore: sourceStore)
+            case .addMediaServer:
+                AppleAddMediaServerView(sourceStore: sourceStore)
             case .addNetworkShare:
-                AppleAddNetworkShareView(sourceStore: sourceStore)
+                AppleNetworkShareConnectView(start: .add(nil), flow: .shared, sourceStore: sourceStore)
+            case .networkShareServer(let server):
+                AppleNetworkShareConnectView(start: .add(server), flow: .shared, sourceStore: sourceStore)
+            case .editNetworkShare(let id, let part):
+                AppleNetworkShareConnectView(start: .edit(id, part), flow: .shared, sourceStore: sourceStore)
             case .addARR:
                 AppleServerDownloadsSettingsView(settings: settings)
             case .webManagement:
@@ -153,6 +212,9 @@ struct AppleSourcesSettingsView: View {
             case .detail(let sourceID):
                 AppleSourceDetailView(sourceID: sourceID, sourceStore: sourceStore, settings: settings)
             }
+        }
+        .navigationDestination(for: AppleNetworkShareRoute.self) { route in
+            AppleNetworkShareStepView(route: route, flow: .shared, sourceStore: sourceStore)
         }
         #if DEBUG
         // Simulator-only: opens a real saved source's detail page so it can be
@@ -213,9 +275,15 @@ struct AppleSourcesSettingsView: View {
 enum AppleSourceRoute: Hashable {
     case addFiles
     case addInstance
+    #if OPENSTREAM_ADDONS
     case addManifest
+    #endif
     case addLiveTV
+    case addMediaServer
     case addNetworkShare
+    /// A server found on the network: Connect with its address filled in.
+    case networkShareServer(AppleNetworkShareServer)
+    case editNetworkShare(AppleSource.ID, AppleNetworkShareEditPart)
     case addARR
     case webManagement
     case detail(AppleSource.ID)
@@ -272,9 +340,7 @@ private struct AppleAddFilesView: View {
                 }
                 #endif
                 ForEach(discovered) { server in
-                    NavigationLink {
-                        AppleAddNetworkShareView(sourceStore: sourceStore, initialServer: server)
-                    } label: {
+                    NavigationLink(value: AppleSourceRoute.networkShareServer(AppleNetworkShareServer(server))) {
                         LabeledContent(server.name, value: endpointLabel(for: server))
                     }
                     .appleTVReadableFocus()
@@ -312,6 +378,7 @@ private struct AppleAddFilesView: View {
                 .appleTVReadableFocus()
                 .alert("Direct URL", isPresented: $showingDirectURL) {
                     TextField("URL", text: $directURL, prompt: appleSecondaryFieldPrompt("URL"))
+                        .accessibilityLabel("URL")
                         #if os(iOS) || os(tvOS) || os(visionOS)
                         .textInputAutocapitalization(.never)
                         #endif
@@ -335,18 +402,29 @@ private struct AppleAddFilesView: View {
         }
         .appleSettingsPage("Add Files")
         .scrollIndicators(AppleDesignTokens.scrollIndicatorVisibility)
-        #if DEBUG && os(visionOS)
+        #if DEBUG
         .task {
             if let raw = UserDefaults.standard.string(forKey: "OpenStreamVisionPlaybackURL"),
-               let url = AppleDirectPlaybackInput.url(raw) {
-                playback = AppleStremioPlayerPresentation(
-                    request: ApplePlaybackRequest(url: url,
-                        mediaID: ApplePlaybackIdentity.digest(for: url.absoluteString),
-                        title: url.lastPathComponent, sourceKind: .files), settings: settings)
+               let url = AppleDirectPlaybackInput.url(raw) ?? URL(string: raw).flatMap({ $0.isFileURL ? $0 : nil }) {
+                let mediaID = ApplePlaybackIdentity.digest(for: url.absoluteString)
+                let request: ApplePlaybackRequest
+                if UserDefaults.standard.bool(forKey: "OpenStreamVisionPlaybackIsLive") {
+                    request = AppleIPTVChannel(id: mediaID, sourceID: UUID(), name: "Caption fixture",
+                                               streamURL: url).playbackRequest()
+                } else {
+                    request = ApplePlaybackRequest(url: url, mediaID: mediaID,
+                                                   title: url.lastPathComponent, sourceKind: .files)
+                }
+                playback = AppleStremioPlayerPresentation(request: request, settings: settings)
             }
         }
         #endif
         .task(id: discoveryTaskIdentity) {
+            #if DEBUG
+            // The local playback proof needs no LAN discovery or saved source.
+            if let raw = UserDefaults.standard.string(forKey: "OpenStreamVisionPlaybackURL"),
+               let url = URL(string: raw), url.host == "127.0.0.1" || url.isFileURL { return }
+            #endif
             isDiscovering = true
             // `defer`, not a trailing assignment: the cancellation guard below
             // returns early, and without this the flag stayed true for the
@@ -438,9 +516,6 @@ private struct AppleSourceRow: View {
     /// that row stops retrying it every redraw and shows the same deliberate
     /// fallback as a manifest with no logo at all.
     @State private var logoFailed = false
-    /// Same idea for the Stremio mark: one failure and the row goes back to
-    /// its monogram rather than refetching on every redraw.
-    @State private var brandIconFailed = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -461,7 +536,6 @@ private struct AppleSourceRow: View {
         .onChange(of: source.logoURL) { _, _ in
             logoIsWordmark = false
             logoFailed = false
-            brandIconFailed = false
         }
     }
 
@@ -471,7 +545,8 @@ private struct AppleSourceRow: View {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(.secondary.opacity(0.15))
 
-            if source.kind == .stremio, let logoURL = source.logoURL, !logoIsWordmark, !logoFailed {
+            if source.isAddon, let logoURL = source.logoURL.flatMap(AppleAddonLogoURLPolicy.displayURL(for:)),
+               !logoIsWordmark, !logoFailed {
                 AppleRemoteImage(
                     url: logoURL,
                     contentMode: .fit,
@@ -480,16 +555,6 @@ private struct AppleSourceRow: View {
                         logoIsWordmark = CGFloat(image.width) > CGFloat(image.height) * Self.wordmarkAspectRatio
                     },
                     onFailure: { logoFailed = true }
-                )
-                .padding(6)
-            } else if let brandURL = AppleStremioBrandIcon.fallbackURL(kind: source.kind, manifestURL: source.url),
-                      !brandIconFailed {
-                AppleRemoteImage(
-                    url: brandURL,
-                    contentMode: .fit,
-                    placeholderSystemImage: source.kind.systemImage,
-                    onLoad: { _ in },
-                    onFailure: { brandIconFailed = true }
                 )
                 .padding(6)
             } else {
@@ -506,10 +571,10 @@ private struct AppleSourceRow: View {
     /// otherwise fell back to the exact same glyph as a source with no
     /// manifest at all, which read as broken rather than "no icon." An
     /// add-on keeps its own mark, its initial, instead; only the truly
-    /// iconless kinds (IPTV, ServerPlus, Library) use the shared glyph.
+    /// iconless kinds (IPTV, a home server, Library) use the shared glyph.
     private var sourceFallbackIcon: some View {
         Group {
-            if source.kind == .stremio, let initial = source.name.trimmingCharacters(in: .whitespaces).first {
+            if source.isAddon, let initial = source.name.trimmingCharacters(in: .whitespaces).first {
                 Text(String(initial).uppercased())
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(.secondary)
@@ -527,10 +592,13 @@ private extension AppleSourceKind {
     var systemImage: String {
         switch self {
         case .library: "books.vertical"
+        #if OPENSTREAM_ADDONS
         case .stremio: "square.stack.3d.up"
+        #endif
         case .youtube: "play.rectangle"
         case .liveTV: "dot.radiowaves.left.and.right"
         case .nas: "externaldrive.connected.to.line.below"
+        case .mediaServer: "server.rack"
         }
     }
 }
@@ -561,7 +629,10 @@ private struct AppleSourceDetailView: View {
                 Form {
                     Section {
                         LabeledContent("Type", value: source.kind.title)
-                        AppleTruncatingValue(locationLabel(source), value: sourceLocation(source))
+                        if source.kind != .nas {
+                            // A share's server and folder are rows of their own below.
+                            AppleTruncatingValue(locationLabel(source), value: sourceLocation(source))
+                        }
                         LabeledContent("Health", value: healthLabel(source))
                         if let lastValidatedAt = source.lastValidatedAt {
                             LabeledContent(
@@ -580,7 +651,7 @@ private struct AppleSourceDetailView: View {
                         if !source.capabilities.isEmpty {
                             AppleTruncatingValue("Capabilities", value: source.capabilities.joined(separator: ", "))
                         }
-                        if let lastFailureAt = source.lastValidationFailureAt {
+                        if source.hasCurrentValidationFailure, let lastFailureAt = source.lastValidationFailureAt {
                             LabeledContent(
                                 "Last Failure",
                                 value: lastFailureAt.formatted(date: .abbreviated, time: .shortened)
@@ -589,7 +660,30 @@ private struct AppleSourceDetailView: View {
                                 LabeledContent("Failure", value: failure)
                             }
                         }
-                        Toggle("Enabled", isOn: enabled)
+                        switch AppleSourceEnableControl.control(for: source) {
+                        case .toggle:
+                            Toggle("Enabled", isOn: enabled)
+                        case .signIn:
+                            // It cannot be switched on until it is signed in.
+                            NavigationLink {
+                                AppleSourceSignInDestination(source: source, store: sourceStore)
+                            } label: {
+                                AppleTVNavigationLabel("Sign In")
+                            }
+                            .appleTVReadableFocus()
+                            .accessibilityIdentifier("source.detail.signIn")
+                        }
+                    }
+
+                    if source.kind == .liveTV {
+                        AppleGuideTimeOffsetSection(sourceID: source.id, settings: settings)
+                        if source.iptvType == .xtream {
+                            AppleIPTVAccountSection(source: source, sourceStore: sourceStore)
+                        }
+                    }
+
+                    if source.kind == .nas {
+                        AppleNetworkShareEditRows(source: source, sourceStore: sourceStore)
                     }
 
                     if AppleSubtitleLanguages.declaresSubtitles(resources: source.resources) {
@@ -602,6 +696,25 @@ private struct AppleSourceDetailView: View {
                             .appleTVReadableFocus()
                         }
                     }
+
+                    let catalogs = AppleCatalogDiscoveryPolicy.browsableCatalogs(for: source)
+#if OPENSTREAM_ADDONS
+                    if source.isAddon, catalogs.count > 1 {
+                        Section("Catalogs") {
+                            let shown = Set(AppleCatalogDiscoveryPolicy.catalogs(for: source)
+                                .map(AppleCatalogDiscoveryPolicy.choiceKey))
+                            let titles = catalogTitles(catalogs)
+                            ForEach(Array(zip(catalogs, titles)), id: \.1.key) { catalog, title in
+                                Toggle(title.text, isOn: Binding(
+                                    get: { shown.contains(AppleCatalogDiscoveryPolicy.choiceKey(catalog)) },
+                                    set: { sourceStore.setCatalog(catalog, shown: $0, id: sourceID) }
+                                ))
+                                .accessibilityIdentifier(
+                                    "source.detail.catalog.\(AppleCatalogDiscoveryPolicy.choiceKey(catalog))")
+                            }
+                        }
+                    }
+#endif
 
                     Section {
                         Button("Delete Source", role: .destructive) {
@@ -629,9 +742,22 @@ private struct AppleSourceDetailView: View {
         }
     }
 
+    /// Each catalog's row title; a name used by more than one catalog reads
+    /// "Popular Movies" / "Popular Shows", as on Discover.
+    private func catalogTitles(_ catalogs: [AppleStremioCatalog]) -> [(key: String, text: String)] {
+        let titles = catalogs.map(AppleCatalogShelfPolicy.title(for:))
+        let counts = Dictionary(titles.map { ($0.lowercased(), 1) }, uniquingKeysWith: +)
+        return zip(catalogs, titles).map { catalog, title in
+            (AppleCatalogDiscoveryPolicy.choiceKey(catalog),
+             (counts[title.lowercased()] ?? 0) > 1 ? AppleCatalogShelfPolicy.typedTitle(title, type: catalog.type) : title)
+        }
+    }
+
     private func locationLabel(_ source: AppleSource) -> String {
         switch source.kind {
+        #if OPENSTREAM_ADDONS
         case .stremio: "Manifest Host"
+        #endif
         case .library: "Folder"
         case .liveTV: "Server"
         default: "Location"
@@ -639,8 +765,7 @@ private struct AppleSourceDetailView: View {
     }
 
     private func healthLabel(_ source: AppleSource) -> String {
-        if let failure = source.lastValidationFailureAt,
-           failure > (source.lastValidatedAt ?? .distantPast) {
+        if source.hasCurrentValidationFailure {
             return "Needs attention"
         }
         if source.lastValidatedAt != nil { return "Connected" }
@@ -656,12 +781,17 @@ private struct AppleSourceDetailView: View {
     }
 }
 
+ #if OPENSTREAM_ADDONS
 @MainActor
 private struct AppleAddManifestSourceView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var manifestURL = ""
     @State private var isAdding = false
     @State private var errorMessage: String?
+    /// Set when the add-on must be configured on its own site first.
+    @State private var configureURL: URL?
+    /// The add-on answered "configure me first": a state, not a failure.
+    @State private var needsConfiguration = false
 
     let sourceStore: AppleSourceStore
 
@@ -679,6 +809,7 @@ private struct AppleAddManifestSourceView: View {
             text: $manifestURL,
             prompt: appleSecondaryFieldPrompt("Manifest URL")
         )
+            .appleTVFieldOutline()
             #if os(iOS) || os(tvOS) || os(visionOS)
             .textInputAutocapitalization(.never)
             #endif
@@ -718,7 +849,17 @@ private struct AppleAddManifestSourceView: View {
                 .focusSection()
 
                 if let errorMessage {
-                    AppleTVFormMessage(text: errorMessage, isError: true)
+                    if needsConfiguration {
+                        // Plain secondary text: no browser on the Apple TV,
+                        // so no link either.
+                        Text(errorMessage)
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: metrics.formColumnWidth, alignment: .leading)
+                            .accessibilityIdentifier("sources.form.message")
+                    } else {
+                        AppleTVFormMessage(text: errorMessage, isError: true)
+                    }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -733,26 +874,47 @@ private struct AppleAddManifestSourceView: View {
         Form {
             Section("Manifest URL") {
                 manifestField
+                    #if os(macOS)
+                    // A macOS form draws a text field's own title as a leading
+                    // label, so this row said "Manifest URL" twice — once as
+                    // the section header, once beside the field (macOS sweep,
+                    // 2026-09-21). iOS and visionOS never show that title (the
+                    // field carries a `prompt`), which is why it went unseen.
+                    // The header keeps the name and the field takes the row.
+                    .labelsHidden()
+                    #endif
             }
 
             if let errorMessage {
                 Section {
+                    // "Configure first" is a state, not a failure: plain text.
                     Text(errorMessage)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(needsConfiguration ? AnyShapeStyle(.primary) : AnyShapeStyle(.red))
+                    if let configureURL {
+                        Link("Open Configuration", destination: configureURL)
+                            .accessibilityIdentifier("sources.catalog.configure")
+                    }
                 }
             }
 
-            Section {
+            AppleFormActionSection {
                 Button {
                     addManifest()
                 } label: {
                     if isAdding {
                         ProgressView()
+                            #if os(macOS)
+                            .controlSize(.small)
+                            #endif
                     } else {
                         Text("Add Catalog")
                     }
                 }
                 .disabled(isAdding || !hasManifestURL)
+                .appleMacFormPrimaryAction()
+                #if os(macOS)
+                .keyboardShortcut(.defaultAction)
+                #endif
                 .appleTVReadableFocus()
             }
         }
@@ -767,6 +929,8 @@ private struct AppleAddManifestSourceView: View {
         }
         isAdding = true
         errorMessage = nil
+        configureURL = nil
+        needsConfiguration = false
 
         Task { @MainActor in
             defer { isAdding = false }
@@ -775,16 +939,32 @@ private struct AppleAddManifestSourceView: View {
                 // page, so adding a catalog just returns to Sources.
                 _ = try await sourceStore.addStremio(manifestValue: manifestURL)
                 dismiss()
+            } catch AppleManifestClientError.manifestNeedsSetup(let url) {
+                errorMessage = AppleManifestClientError.manifestNeedsSetup(configureURL: url).errorDescription
+                configureURL = url
+                needsConfiguration = true
+            } catch AppleManifestClientError.manifestNeedsConfiguration {
+                needsConfiguration = true
+                errorMessage = AppleManifestClientError.manifestNeedsConfiguration.errorDescription
+                configureURL = (try? AppleManifestURLPolicy.normalize(manifestURL))
+                    .flatMap(AppleManifestURLPolicy.configureURL(forManifest:))
             } catch {
                 errorMessage = error.localizedDescription
             }
         }
     }
 }
+#endif
 
 private enum AppleInstanceConnectionAction: Equatable {
     case test(UUID)
     case save(UUID)
+
+    var requestID: UUID {
+        switch self {
+        case .test(let id), .save(let id): return id
+        }
+    }
 
     var shouldSave: Bool {
         if case .save = self { return true }
@@ -795,7 +975,7 @@ private enum AppleInstanceConnectionAction: Equatable {
 #if os(tvOS)
 /// One Apple TV form field: a Caption 1 (25 pt) label above the stock field,
 /// whose focused chrome the system draws (rework plan task 8).
-private struct AppleTVFormField<Field: View>: View {
+struct AppleTVFormField<Field: View>: View {
     let label: String
     @ViewBuilder let field: () -> Field
 
@@ -815,7 +995,7 @@ private struct AppleTVFormField<Field: View>: View {
 }
 
 /// A titled group of fields (Server, Share, Account), title in Caption 1.
-private struct AppleTVFormGroup<Content: View>: View {
+struct AppleTVFormGroup<Content: View>: View {
     let title: String
     @ViewBuilder let content: () -> Content
 
@@ -836,7 +1016,7 @@ private struct AppleTVFormGroup<Content: View>: View {
 
 /// The result line under a form's pills: the exact failure reason in red or
 /// the success summary in primary, both Body 29.
-private struct AppleTVFormMessage: View {
+struct AppleTVFormMessage: View {
     let text: String
     let isError: Bool
 
@@ -851,7 +1031,7 @@ private struct AppleTVFormMessage: View {
 
 /// Two or more choices shown as pills (Xtream Account / M3U Playlist, the
 /// server's shares); the chosen one is white.
-private struct AppleTVChoicePill: View {
+struct AppleTVChoicePill: View {
     let title: String
     let isSelected: Bool
     let action: () -> Void
@@ -881,12 +1061,15 @@ private struct AppleTVChoicePill: View {
 #endif
 
 /// Stock field chrome on Apple TV (the focused field lifts the way the system
-/// Settings app's do); the plain in-row style inside forms elsewhere.
-private extension View {
+/// Settings app's do) and on the Mac (the outlined field System Settings
+/// draws, N56); the plain in-row style inside iPhone, iPad and visionOS forms.
+extension View {
     @ViewBuilder
     func appleSourceFieldStyle() -> some View {
         #if os(tvOS)
         self
+        #elseif os(macOS)
+        self.appleMacFormFields()
         #else
         self.textFieldStyle(.plain)
         #endif
@@ -898,7 +1081,7 @@ private extension View {
 /// the eye is an inline focusable glyph beside the field, not a separate
 /// "Show password" toggle row (owner item S10).
 @MainActor
-private struct AppleRevealableSecureField: View {
+struct AppleRevealableSecureField: View {
     private let title: String
     @Binding private var text: String
     @Binding private var isRevealed: Bool
@@ -931,6 +1114,8 @@ private struct AppleRevealableSecureField: View {
             } label: {
                 Image(systemName: isRevealed ? "eye.slash" : "eye")
                     .foregroundStyle(.secondary)
+                    .frame(minWidth: AppleDesignTokens.minimumActionSize, minHeight: AppleDesignTokens.minimumActionSize)
+                    .contentShape(.rect)
             }
             .buttonStyle(.plain)
             .appleVisionActionTarget()
@@ -943,6 +1128,8 @@ private struct AppleRevealableSecureField: View {
     private var field: some View {
         if isRevealed {
             TextField(title, text: $text, prompt: appleSecondaryFieldPrompt(title))
+                .accessibilityLabel(Text(title))
+                .appleTVFieldOutline()
                 .textContentType(.password)
                 #if os(iOS) || os(tvOS) || os(visionOS)
                 .textInputAutocapitalization(.never)
@@ -950,6 +1137,7 @@ private struct AppleRevealableSecureField: View {
                 .autocorrectionDisabled()
         } else {
                 SecureField(title, text: $text, prompt: appleSecondaryFieldPrompt(title))
+                    .appleTVFieldOutline()
                 .textContentType(.password)
                 #if os(iOS) || os(tvOS) || os(visionOS)
                 .textInputAutocapitalization(.never)
@@ -973,23 +1161,39 @@ private struct AppleAddLiveTVSourceView: View {
     @State private var message: String?
     @State private var isError = false
     @State private var connectionAction: AppleInstanceConnectionAction?
+    /// Each press runs once; a task rerun on reappear must not repeat it.
+    @State private var actionLedger = AppleOneShotRequestLedger()
 
-    /// M3U text pasted or read from a chosen file. Saved into the one local
-    /// playlist (`AppleLocalPlaylistStore.pastedURL`), so every paste joins
-    /// the same source row.
+    /// File imports join the existing local playlist only when Save is pressed.
     @State private var pastedPlaylist = ""
     @State private var isChoosingFile = false
+    @State private var playlistFileName: String?
 
     let sourceStore: AppleSourceStore
     private let client = AppleIPTVClient()
     private let streamProbe = AppleIPTVStreamProbe()
 
     var body: some View {
-        #if os(tvOS)
-        tvOSBody
-        #else
-        standardBody
-        #endif
+        Group {
+            #if os(tvOS)
+            tvOSBody
+            #else
+            standardBody
+            #endif
+        }
+        .onChange(of: username) { _, value in
+            username = AppleIPTVEndpointPolicy.sanitizeCredential(value)
+        }
+        .onChange(of: password) { _, value in
+            password = AppleIPTVEndpointPolicy.sanitizeCredential(value)
+        }
+        .onChange(of: endpoint) { _, value in
+            endpoint = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        .onChange(of: [type.rawValue, name, endpoint, username, password, pastedPlaylist]) { _, _ in
+            message = nil
+            isError = false
+        }
     }
 
     private var endpointTitle: String {
@@ -1004,12 +1208,16 @@ private struct AppleAddLiveTVSourceView: View {
 
     private var nameField: some View {
         TextField("Name", text: $name, prompt: appleSecondaryFieldPrompt("Name"))
+            .accessibilityLabel("Name")
+            .appleTVFieldOutline()
             .textContentType(.name)
             .appleSourceFieldStyle()
     }
 
     private var endpointField: some View {
         TextField(endpointTitle, text: $endpoint, prompt: appleSecondaryFieldPrompt(endpointTitle))
+            .accessibilityLabel(Text(endpointTitle))
+            .appleTVFieldOutline()
             .textContentType(.URL)
             .appleSourceFieldStyle()
             .tint(.primary)
@@ -1024,6 +1232,8 @@ private struct AppleAddLiveTVSourceView: View {
 
     private var usernameField: some View {
         TextField("Username", text: $username, prompt: appleSecondaryFieldPrompt("Username"))
+            .accessibilityLabel("Username")
+            .appleTVFieldOutline()
             .textContentType(.username)
             .appleSourceFieldStyle()
             #if os(iOS) || os(tvOS) || os(visionOS)
@@ -1103,16 +1313,17 @@ private struct AppleAddLiveTVSourceView: View {
                 }
                 .frame(maxWidth: metrics.formColumnWidth, alignment: .leading)
                 .focusSection()
+                .disabled(isWorking)
 
                 HStack(spacing: metrics.pillSpacing) {
-                    Button("Save") { connectionAction = .save(UUID()) }
+                    Button { connectionAction = .save(UUID()) } label: { connectionLabel(saving: true) }
                         .buttonStyle(AppleTVPillStyle(isSelected: true, minimumSize: metrics.pillSize, fontSize: metrics.pillFontSize))
                         .disabled(isWorking)
                         .accessibilityIdentifier("sources.live.save")
                     Button {
                         connectionAction = .test(UUID())
                     } label: {
-                        if isWorking { ProgressView() } else { Text("Test Connection") }
+                        connectionLabel(saving: false)
                     }
                     .buttonStyle(AppleTVPillStyle(isSelected: false, minimumSize: metrics.pillSize, fontSize: metrics.pillFontSize))
                     .disabled(isWorking)
@@ -1131,7 +1342,7 @@ private struct AppleAddLiveTVSourceView: View {
         .defaultFocus($focusedField, .name)
         .appleSettingsPageTitle("Add Live TV")
         .task(id: connectionAction) {
-            guard let connectionAction else { return }
+            guard let connectionAction, actionLedger.consume(connectionAction.requestID) else { return }
             await perform(connectionAction)
         }
     }
@@ -1145,6 +1356,7 @@ private struct AppleAddLiveTVSourceView: View {
                     }
                 }
             }
+            .disabled(isWorking)
 
             Section("Connection") {
                 nameField.appleFormSubmit(.name, chain: fieldChain, focus: $focusedField)
@@ -1154,27 +1366,45 @@ private struct AppleAddLiveTVSourceView: View {
                     passwordField
                 }
             }
+            .disabled(isWorking)
 
             if type == .m3u {
-                Section("Playlist Text") {
-                    TextEditor(text: $pastedPlaylist)
-                        .font(.footnote.monospaced())
-                        .frame(minHeight: 120)
-                        .autocorrectionDisabled()
-                        .accessibilityLabel("Playlist text")
-                        .accessibilityIdentifier("sources.live.playlistText")
+                Section {
                     Button("Choose File…") { isChoosingFile = true }
                         .accessibilityIdentifier("sources.live.chooseFile")
+                    // The system Paste control reads the clipboard without
+                    // the "Allow Paste" prompt: a playlist copied as text,
+                    // or a playlist address for the URL field.
+                    PasteButton(payloadType: String.self) { strings in
+                        acceptPastedPlaylist(strings.joined(separator: "\n"))
+                    }
+                    .accessibilityIdentifier("sources.live.paste")
+                    if let playlistFileName {
+                        LabeledContent("File", value: playlistFileName)
+                        Button("Remove File", role: .destructive) {
+                            pastedPlaylist = ""
+                            self.playlistFileName = nil
+                        }
+                    }
                 }
+                .disabled(isWorking)
             }
 
             if let message {
                 Section {
                     Label(message, systemImage: isError ? "exclamationmark.circle" : "checkmark.circle")
-                        .foregroundStyle(isError ? .red : .primary)
+                        .foregroundStyle(.primary)
+                        .accessibilityIdentifier("sources.live.result")
                 }
             }
 
+            #if os(macOS)
+            // System Settings order: the default action at the trailing edge.
+            AppleFormActionSection {
+                testButton
+                saveButton
+            }
+            #else
             Section {
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 12) { connectionButtons }
@@ -1182,41 +1412,90 @@ private struct AppleAddLiveTVSourceView: View {
                 }
                 .controlSize(.large)
             }
+            .listRowBackground(Color.clear)
+            #endif
         }
+        .scrollIndicators(AppleDesignTokens.scrollIndicatorVisibility)
         .appleSettingsPage("Add Live TV")
         .fileImporter(isPresented: $isChoosingFile, allowedContentTypes: [.m3uPlaylist, .plainText, .text, .data]) { result in
-            guard case .success(let url) = result else { return }
-            let scoped = url.startAccessingSecurityScopedResource()
-            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-            if let data = try? Data(contentsOf: url),
-               let text = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1) {
+            do {
+                let url = try result.get()
+                let scoped = url.startAccessingSecurityScopedResource()
+                defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+                let data = try Data(contentsOf: url)
+                guard let text = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1) else {
+                    throw AppleIPTVError.invalidPlaylist
+                }
                 pastedPlaylist = text
+                playlistFileName = url.lastPathComponent
                 if name.isEmpty { name = url.deletingPathExtension().lastPathComponent }
+            } catch {
+                let failure = error as NSError
+                guard failure.domain != NSCocoaErrorDomain || failure.code != NSUserCancelledError else { return }
+                isError = true
+                message = "The playlist file could not be opened. Choose it again or enter a playlist URL."
             }
         }
         .task(id: connectionAction) {
-            guard let connectionAction else { return }
+            guard let connectionAction, actionLedger.consume(connectionAction.requestID) else { return }
             await perform(connectionAction)
         }
     }
 
-    @ViewBuilder
-    private var connectionButtons: some View {
-        Button("Save") {
-            connectionAction = .save(UUID())
+    /// A pasted single address goes into the URL field; pasted playlist text
+    /// is imported on Save, like a chosen file.
+    private func acceptPastedPlaylist(_ text: String) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.contains(where: \.isNewline), (try? AppleIPTVEndpointPolicy.normalize(trimmed)) != nil {
+            endpoint = trimmed
+            return
         }
-        .buttonStyle(PrimaryPillButtonStyle())
-        .disabled(!canSubmit || isWorking)
+        guard trimmed.contains("://") else {
+            isError = true
+            message = "The clipboard has no playlist."
+            return
+        }
+        pastedPlaylist = trimmed
+        playlistFileName = "Pasted Playlist"
+    }
 
-        Button {
-            connectionAction = .test(UUID())
-        } label: {
-            if isWorking { ProgressView() } else { Text("Test Connection") }
+    private var connectionButtons: some View {
+        Group {
+            saveButton
+            testButton
+        }
+    }
+
+    private var saveButton: some View {
+        Button { connectionAction = .save(UUID()) } label: {
+            connectionLabel(saving: true)
+        }
+        .buttonStyle(.brandPrimary)
+        #if os(macOS)
+        .keyboardShortcut(.defaultAction)
+        #endif
+        .disabled(!canSubmit || isWorking)
+        .accessibilityIdentifier("sources.live.save")
+    }
+
+    private var testButton: some View {
+        Button { connectionAction = .test(UUID()) } label: {
+            connectionLabel(saving: false)
         }
         .buttonStyle(.brandSecondary)
         .disabled(!canSubmit || isWorking)
+        .accessibilityIdentifier("sources.live.test")
     }
     #endif
+
+    private func connectionLabel(saving: Bool) -> some View {
+        let active = isWorking && (connectionAction?.shouldSave == saving)
+        return AppleWorkingButtonLabel(
+            title: saving ? "Save" : "Test Connection",
+            workingTitle: saving ? "Saving…" : "Testing…",
+            isWorking: active
+        )
+    }
 
     private var canSubmit: Bool {
         submissionProblem == nil
@@ -1231,8 +1510,12 @@ private struct AppleAddLiveTVSourceView: View {
                 ? "Enter the Xtream server URL, including the port."
                 : "Enter the playlist's HTTP or HTTPS URL."
         }
-        if type == .xtream, username.isEmpty || password.isEmpty {
-            return "Enter the Xtream username and password."
+        if type == .xtream {
+            do {
+                try AppleIPTVEndpointPolicy.validateCredentials(username: username, password: password)
+            } catch {
+                return error.localizedDescription
+            }
         }
         return nil
     }
@@ -1245,22 +1528,11 @@ private struct AppleAddLiveTVSourceView: View {
         }
         let submittedType = type
         var submittedName = name
-        var submittedEndpoint = endpoint
-        var mergeNote = ""
-        if usesPastedPlaylist {
-            do {
-                let merged = try AppleLocalPlaylistStore.shared.merge(text: pastedPlaylist)
-                submittedEndpoint = AppleLocalPlaylistStore.pastedURL.absoluteString
-                if submittedName.isEmpty { submittedName = "Playlists" }
-                mergeNote = " · \(merged.added) added, \(merged.total) total"
-            } catch {
-                isError = true
-                message = error.localizedDescription
-                return
-            }
-        }
-        let submittedUsername = username
-        let submittedPassword = password
+        let importingFile = usesPastedPlaylist
+        let submittedEndpoint = importingFile ? AppleLocalPlaylistStore.pastedURL.absoluteString : endpoint.trimmingCharacters(in: .whitespacesAndNewlines)
+        if importingFile && submittedName.isEmpty { submittedName = "Playlists" }
+        let submittedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
+        let submittedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
         isWorking = true
         message = nil
         defer { isWorking = false }
@@ -1274,11 +1546,21 @@ private struct AppleAddLiveTVSourceView: View {
             let credentials = submittedType == .xtream
                 ? AppleIPTVCredentials(username: submittedUsername, password: submittedPassword)
                 : nil
-            let channels = try await client.validate(source: source, credentials: credentials)
-            let probe = try await streamProbe.validate(channels: channels)
+            let channels: [AppleIPTVChannel]
+            if importingFile {
+                let data = Data(pastedPlaylist.utf8)
+                channels = try await AppleImportStore.shared.run(title: source.name, unit: "channels") { progress in
+                    try await AppleIPTVClient.parseM3UOffMain(data, sourceID: source.id, baseURL: source.url, progress: progress)
+                }
+                guard !channels.isEmpty else { throw AppleIPTVError.noChannels }
+            } else {
+                channels = try await client.validate(source: source, credentials: credentials)
+            }
             try Task.checkCancellation()
             if action.shouldSave {
-                let summary = "Connected · \(channels.count) channels\(mergeNote) · Playback verified (\(probe.bytesReceived.formatted()) bytes)"
+                let channelCount = importingFile
+                    ? try AppleLocalPlaylistStore.shared.merge(text: pastedPlaylist).total
+                    : channels.count
                 try sourceStore.addIPTV(
                     name: submittedName,
                     type: submittedType,
@@ -1286,536 +1568,32 @@ private struct AppleAddLiveTVSourceView: View {
                     username: submittedUsername,
                     password: submittedPassword,
                     lastValidatedAt: .now,
-                    validationSummary: summary,
-                    discoveredItemCount: channels.count,
-                    capabilities: ["Live channels", "Playback"]
+                    validationSummary: "Connected · \(channelCount) channels",
+                    discoveredItemCount: channelCount,
+                    capabilities: ["Live channels"]
                 )
                 dismiss()
                 return
             }
-            isError = false
-            message = "Connected · \(channels.count) channels\(mergeNote) · Playback verified (\(probe.bytesReceived.formatted()) bytes)"
-        } catch is CancellationError {
-            return
-        } catch {
-            isError = true
-            message = error.localizedDescription
-        }
-    }
-}
-
-@MainActor
-private struct AppleAddNetworkShareView: View {
-    /// Port and Domain sit inside DisclosureGroups, so they are not chain
-    /// stops: sending focus to a collapsed field is a dead end. Password is
-    /// out for the same reason as the Live TV form — it is a field plus a
-    /// reveal button, so focus would land on the wrapper.
-    private enum SubmitField: Hashable { case name, address, folder, username }
-    private static let chain: [SubmitField] = [.name, .address, .folder, .username]
-    @FocusState private var shareFocus: SubmitField?
-
-    @Environment(\.dismiss) private var dismiss
-    private let initialServer: AppleSMBServer?
-    @State private var name = ""
-    @State private var host = ""
-    @State private var port = "445"
-    @State private var address = ""
-    @State private var share = ""
-    @State private var path = ""
-    @State private var username = ""
-    @State private var password = ""
-    @State private var isPasswordRevealed = false
-    @State private var domain = ""
-    @State private var selectedDisplayHost: String?
-    @State private var shares: [AppleSMBShare] = []
-    @State private var isWorking = false
-    @State private var message: String?
-    @State private var isError = false
-    @State private var connectionAction: AppleInstanceConnectionAction?
-    @State private var showingAdvanced = false
-
-    let sourceStore: AppleSourceStore
-    private let client = AppleSMBClient()
-    private let discovery = AppleSMBDiscovery()
-
-    /// Which pill should show the spinner. Derived from the action already in
-    /// flight so there is no second piece of state to keep in step.
-    private var isSavingAction: Bool {
-        if case .save = connectionAction { return true }
-        return false
-    }
-
-    init(sourceStore: AppleSourceStore, initialServer: AppleSMBServer? = nil) {
-        self.sourceStore = sourceStore
-        self.initialServer = initialServer
-        _name = State(initialValue: initialServer?.name ?? "")
-        _host = State(initialValue: initialServer?.host ?? "")
-        _port = State(initialValue: String(initialServer?.port ?? 445))
-        _address = State(initialValue: initialServer.map { Self.addressLabel(host: $0.host, port: $0.port) } ?? "")
-        _selectedDisplayHost = State(initialValue: initialServer?.displayHost)
-    }
-
-    var body: some View {
-        #if os(tvOS)
-        tvOSBody
-        #else
-        standardBody
-        #endif
-    }
-
-    // MARK: Fields shared by every platform
-
-    private var nameField: some View {
-        TextField("Name", text: $name, prompt: appleSecondaryFieldPrompt("Name"))
-            .textContentType(.name)
-    }
-
-    private var addressField: some View {
-        TextField("Server URL", text: addressBinding, prompt: appleSecondaryFieldPrompt("Server URL"))
-            .textContentType(.URL)
-            #if os(iOS) || os(tvOS) || os(visionOS)
-            .textInputAutocapitalization(.never)
-            #endif
-            .autocorrectionDisabled()
-    }
-
-    private var portField: some View {
-        TextField("Port", text: $port, prompt: appleSecondaryFieldPrompt("Port"))
-            #if os(iOS) || os(visionOS)
-            .keyboardType(.numberPad)
-            #endif
-    }
-
-    private var folderField: some View {
-        TextField("Folder", text: $path, prompt: appleSecondaryFieldPrompt("Folder"))
-            .autocorrectionDisabled()
-    }
-
-    private var usernameField: some View {
-        TextField("Username", text: $username, prompt: appleSecondaryFieldPrompt("Username"))
-            .textContentType(.username)
-            #if os(iOS) || os(tvOS) || os(visionOS)
-            .textInputAutocapitalization(.never)
-            #endif
-            .autocorrectionDisabled()
-    }
-
-    private var passwordField: some View {
-        AppleRevealableSecureField(
-            "Password",
-            text: $password,
-            isRevealed: $isPasswordRevealed
-        )
-    }
-
-    private var domainField: some View {
-        TextField("Domain", text: $domain, prompt: appleSecondaryFieldPrompt("Domain"))
-            #if os(iOS) || os(tvOS) || os(visionOS)
-            .textInputAutocapitalization(.never)
-            #endif
-            .autocorrectionDisabled()
-    }
-
-    #if os(tvOS)
-    private enum Field: Hashable {
-        case name, address, port, folder, username, domain
-    }
-
-    @FocusState private var focusedField: Field?
-
-    /// Apple TV: Server, Share and Account groups with Caption 1 labels above
-    /// stock fields; the server's shares as pills once loaded; Save and Test
-    /// Connection as pills in their own focus section; the exact SMB reason
-    /// (authentication, access denied, unreachable) under them (owner W4).
-    private var tvOSBody: some View {
-        let metrics = AppleTVSettingsMetrics.standard
-        return ScrollView {
-            VStack(alignment: .leading, spacing: metrics.groupSpacing) {
-                VStack(alignment: .leading, spacing: metrics.groupSpacing) {
-                    AppleTVFormGroup("Server") {
-                        AppleTVFormField("Name") {
-                            nameField
-                                .focused($focusedField, equals: .name)
-                                .accessibilityIdentifier("sources.smb.name")
-                        }
-                        AppleTVFormField("Server URL") {
-                            addressField
-                                .focused($focusedField, equals: .address)
-                                .accessibilityIdentifier("sources.smb.address")
-                        }
-                        AppleTVFormField("Port") {
-                            portField
-                                .focused($focusedField, equals: .port)
-                                .accessibilityIdentifier("sources.smb.port")
-                        }
-                    }
-
-                    AppleTVFormGroup("Share") {
-                        if shares.isEmpty {
-                            Button("Load Shares") { loadShares() }
-                                .buttonStyle(AppleTVPillStyle(isSelected: false, minimumSize: metrics.pillSize, fontSize: metrics.pillFontSize))
-                                .disabled(isWorking)
-                                .accessibilityIdentifier("sources.smb.loadShares")
-                        } else {
-                            AppleTVFormField("Share") {
-                                LazyVGrid(
-                                    columns: [GridItem(.adaptive(minimum: 280), spacing: metrics.iconSpacing, alignment: .leading)],
-                                    alignment: .leading,
-                                    spacing: metrics.iconSpacing
-                                ) {
-                                    ForEach(shares) { value in
-                                        AppleTVChoicePill(title: shareLabel(value), isSelected: share == value.name) {
-                                            share = value.name
-                                        }
-                                        .accessibilityIdentifier("sources.smb.share.\(value.name)")
-                                    }
-                                }
-                            }
-                        }
-                        AppleTVFormField("Folder") {
-                            folderField
-                                .focused($focusedField, equals: .folder)
-                                .accessibilityIdentifier("sources.smb.folder")
-                        }
-                    }
-
-                    AppleTVFormGroup("Account") {
-                        AppleTVFormField("Username") {
-                            usernameField
-                                .focused($focusedField, equals: .username)
-                                .accessibilityIdentifier("sources.smb.username")
-                        }
-                        AppleTVFormField("Password") {
-                            passwordField
-                                .accessibilityIdentifier("sources.smb.password")
-                        }
-                        AppleTVFormField("Domain") {
-                            domainField
-                                .focused($focusedField, equals: .domain)
-                                .accessibilityIdentifier("sources.smb.domain")
-                        }
-                    }
-                }
-                .frame(maxWidth: metrics.formColumnWidth, alignment: .leading)
-                .focusSection()
-
-                // Neither button disables while work is in flight. Disabling
-                // the button the viewer just pressed takes focus off it, and
-                // tvOS then has nowhere obvious to put focus — which is why
-                // testing a share looked like the screen had locked up (owner
-                // 2026-09-15). Re-entry is guarded in the action instead, so
-                // focus stays put and the pill shows its own progress.
-                HStack(spacing: metrics.pillSpacing) {
-                    Button {
-                        guard !isWorking else { return }
-                        connectionAction = .save(UUID())
-                    } label: {
-                        if isWorking, isSavingAction { ProgressView() } else { Text("Save") }
-                    }
-                    .buttonStyle(AppleTVPillStyle(isSelected: true, minimumSize: metrics.pillSize, fontSize: metrics.pillFontSize))
-                    .accessibilityIdentifier("sources.smb.save")
-                    Button {
-                        guard !isWorking else { return }
-                        connectionAction = .test(UUID())
-                    } label: {
-                        if isWorking, !isSavingAction { ProgressView() } else { Text("Test Connection") }
-                    }
-                    .buttonStyle(AppleTVPillStyle(isSelected: false, minimumSize: metrics.pillSize, fontSize: metrics.pillFontSize))
-                    .accessibilityIdentifier("sources.smb.test")
-                }
-                .focusSection()
-
-                if let message {
-                    AppleTVFormMessage(text: message, isError: isError)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.bottom, AppleTVChromeMetrics.verticalSafeInset)
-        }
-        .scrollIndicators(AppleDesignTokens.scrollIndicatorVisibility)
-        .defaultFocus($focusedField, .name)
-        .appleSettingsPageTitle("Add Network Share")
-        .task(id: connectionAction) {
-            guard let connectionAction else { return }
-            await perform(connectionAction)
-        }
-        .onChange(of: host) { _, value in
-            address = Self.addressLabel(host: value, port: selectedPort ?? 445)
-        }
-        .onChange(of: port) { _, value in
-            address = Self.addressLabel(host: host, port: Int(value) ?? 445)
-        }
-    }
-    #else
-    private var standardBody: some View {
-        Form {
-            serverSection
-            shareSection
-            accountSection
-            Section {
-                Button("Test Connection") {
-                    connectionAction = .test(UUID())
-                }
-                .buttonStyle(SecondaryPillButtonStyle())
-                .disabled(isWorking)
-            }
-            if let message {
-                Section {
-                    Label(message, systemImage: isError ? "exclamationmark.circle" : "checkmark.circle")
-                        .foregroundStyle(isError ? .red : .primary)
-                }
-            }
-        }
-        .appleSettingsPage("Add Network Share")
-        .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") { connectionAction = .save(UUID()) }
-                    .disabled(isWorking)
-                    #if os(visionOS)
-                    .buttonStyle(.brandPrimary)
-                    #endif
-                    .accessibilityIdentifier("sources.smb.save")
-            }
-        }
-        .task(id: connectionAction) {
-            guard let connectionAction else { return }
-            await perform(connectionAction)
-        }
-        .onChange(of: host) { _, value in
-            address = Self.addressLabel(host: value, port: selectedPort ?? 445)
-        }
-        .onChange(of: port) { _, value in
-            address = Self.addressLabel(host: host, port: Int(value) ?? 445)
-        }
-    }
-
-    @ViewBuilder
-    private var serverSection: some View {
-        Section("Server") {
-            nameField.appleFormSubmit(.name, chain: Self.chain, focus: $shareFocus)
-            addressField.appleFormSubmit(.address, chain: Self.chain, focus: $shareFocus)
-            DisclosureGroup("Advanced", isExpanded: $showingAdvanced) {
-                portField
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var shareSection: some View {
-        Section("Share") {
-            if shares.isEmpty {
-                Button("Load Shares") { loadShares() }
-                    .disabled(!hasServer || isWorking)
-                    .appleTVReadableFocus()
-            } else {
-                Picker("Share", selection: $share) {
-                    Text("Share").tag("")
-                    ForEach(shares) { value in
-                        Text(shareLabel(value)).tag(value.name)
-                    }
-                }
-            }
-            folderField.appleFormSubmit(.folder, chain: Self.chain, focus: $shareFocus)
-        }
-    }
-
-    @ViewBuilder
-    private var accountSection: some View {
-        Section("Account") {
-            usernameField.appleFormSubmit(.username, chain: Self.chain, focus: $shareFocus)
-            passwordField
-            DisclosureGroup("Advanced") {
-                domainField
-            }
-        }
-    }
-    #endif
-
-    private func shareLabel(_ value: AppleSMBShare) -> String {
-        value.comment.isEmpty ? value.name : "\(value.name) · \(value.comment)"
-    }
-
-    private var selectedPort: Int? { Int(port) }
-    private var addressBinding: Binding<String> {
-        Binding(
-            get: { address },
-            set: { value in
-                address = value
-                if let parsed = Self.parseAddress(value) {
-                    host = parsed.host
-                    port = String(parsed.port)
-                } else {
-                    host = value
-                }
-            }
-        )
-    }
-
-    private var hasServer: Bool {
-        serverInput != nil
-    }
-    private var endpointInput: AppleSMBEndpointInput? {
-        let parsed = Self.parseAddress(address)
-        return try? AppleSMBEndpointPolicy.parseInput(
-            host: parsed?.host ?? host,
-            port: parsed?.port ?? selectedPort ?? 0,
-            share: share,
-            path: path
-        )
-    }
-    private var serverInput: AppleSMBEndpointInput? {
-        let parsed = Self.parseAddress(address)
-        return try? AppleSMBEndpointPolicy.parseInput(
-            host: parsed?.host ?? host,
-            port: parsed?.port ?? selectedPort ?? 0,
-            share: "",
-            path: "",
-            requiresShare: false
-        )
-    }
-    private var credentials: AppleSMBCredentials {
-        AppleSMBCredentials(username: username, password: password, domain: domain)
-    }
-
-    private func loadShares() {
-        guard serverInput != nil else {
-            isError = true
-            message = "Enter a valid server address and port."
-            return
-        }
-        let parsed = Self.parseAddress(address)
-        guard let listingInput = try? AppleSMBEndpointPolicy.parseInput(
-            host: parsed?.host ?? host,
-            port: parsed?.port ?? selectedPort ?? 0,
-            share: "IPC$",
-            path: ""
-        ) else { return }
-        let submittedCredentials = credentials
-        isWorking = true
-        message = nil
-        Task { @MainActor in
-            defer { isWorking = false }
             do {
-                let resolved = try await resolvedEndpoint(listingInput)
-                shares = try await client.listShares(
-                    host: resolved.host,
-                    port: resolved.port,
-                    credentials: submittedCredentials
-                )
+                _ = try await streamProbe.validate(channels: channels)
+                try Task.checkCancellation()
                 isError = false
-                message = shares.isEmpty ? "The server returned no visible shares." : nil
-            } catch {
-                isError = true
-                message = error.localizedDescription
-            }
-        }
-    }
-
-    private func perform(_ action: AppleInstanceConnectionAction) async {
-        guard let endpointInput else {
-            isError = true
-            message = "Enter a valid server address, port, and share."
-            return
-        }
-        guard !share.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            isError = true
-            message = "Choose a share before saving."
-            return
-        }
-        let submittedName = name
-        let submittedUsername = username
-        let submittedPassword = password
-        let submittedDomain = domain
-        let submittedDisplayHost = selectedDisplayHost ?? endpointInput.host
-        let submittedCredentials = credentials
-        isWorking = true
-        message = nil
-        defer { isWorking = false }
-        do {
-            let resolved = try await resolvedEndpoint(endpointInput)
-            let url = try AppleSMBEndpointPolicy.makeURL(
-                host: resolved.host,
-                port: resolved.port,
-                share: resolved.share,
-                path: resolved.path
-            )
-            let items = try await client.listDirectory(
-                url: url,
-                credentials: submittedCredentials,
-                recursive: true
-            )
-            try Task.checkCancellation()
-            let summary = "Connected · \(items.count) item\(items.count == 1 ? "" : "s")"
-            if action.shouldSave {
-                try sourceStore.addNetworkShare(
-                    name: submittedName,
-                    host: resolved.host,
-                    port: resolved.port,
-                    share: resolved.share,
-                    path: resolved.path,
-                    username: submittedUsername,
-                    password: submittedPassword,
-                    domain: submittedDomain,
-                    displayHost: submittedDisplayHost,
-                    lastValidatedAt: .now,
-                    validationSummary: summary,
-                    discoveredItemCount: items.count,
-                    capabilities: ["Browse", "Playback", "Seeking"]
-                )
-                dismiss()
+                message = "Connected · \(channels.count) channels · Sample stream responded"
+            } catch is CancellationError {
                 return
+            } catch {
+                guard !Task.isCancelled else { return }
+                isError = true
+                message = "Loaded \(channels.count) channels. Sample streams unavailable. \(error.localizedDescription)"
             }
-            isError = false
-            message = summary
         } catch is CancellationError {
             return
         } catch {
+            guard !Task.isCancelled else { return }
             isError = true
             message = error.localizedDescription
         }
-    }
-
-    private func resolvedEndpoint(_ input: AppleSMBEndpointInput) async throws -> AppleSMBEndpointInput {
-        guard let service = AppleSMBEndpointPolicy.bonjourService(from: input.host) else { return input }
-        guard let server = await discovery.resolve(service: service) else {
-            throw AppleSMBError.connectionFailed
-        }
-        return AppleSMBEndpointInput(
-            host: server.host,
-            port: server.port,
-            share: input.share,
-            path: input.path
-        )
-    }
-
-    private static func addressLabel(host: String, port: Int) -> String {
-        let value = host.contains(":") && !host.hasPrefix("[") ? "[\(host)]" : host
-        return "\(value):\(port)"
-    }
-
-    private static func parseAddress(_ value: String) -> (host: String, port: Int)? {
-        var clean = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        if clean.lowercased().hasPrefix("smb://"), let url = URL(string: clean) {
-            guard let host = url.host, !host.isEmpty else { return nil }
-            return (host, url.port ?? 445)
-        }
-        clean = clean.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        if clean.hasPrefix("["), let close = clean.firstIndex(of: "]") {
-            let host = String(clean[clean.index(after: clean.startIndex)..<close])
-            let suffix = String(clean[clean.index(after: close)...])
-            let port = suffix.hasPrefix(":") ? Int(suffix.dropFirst()) : 445
-            guard !host.isEmpty, let port, (1 ... 65_535).contains(port) else { return nil }
-            return (host, port)
-        }
-        if let separator = clean.lastIndex(of: ":"),
-           clean[clean.index(after: separator)...].allSatisfy(\.isNumber),
-           let port = Int(clean[clean.index(after: separator)...]) {
-            let host = String(clean[..<separator])
-            guard !host.isEmpty, (1 ... 65_535).contains(port) else { return nil }
-            return (host, port)
-        }
-        guard !clean.isEmpty, !clean.contains(":") else { return nil }
-        return (clean, 445)
     }
 }
 
@@ -1827,13 +1605,15 @@ private struct AppleWebManagementView: View {
     @State private var confirmStop = false
     @State private var confirmForget = false
     @State private var forgetNotice = false
+    @State private var connectedBrowsers: [AppleWebManagementServer.ConnectedBrowser] = []
+    @State private var addressWasCopied = false
+    @State private var copyReceipt: Task<Void, Never>?
 
     let sourceStore: AppleSourceStore
     let service: any AppleWebManagementServing
 
     private var activeSession: AppleWebManagementSession? {
-        guard let session, !session.isExpired else { return nil }
-        return session
+        session
     }
 
     var body: some View {
@@ -1868,7 +1648,7 @@ private struct AppleWebManagementView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         addressBlock(activeSession)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        AppleWebManagementQRCode(url: activeSession.friendlyURL)
+                        AppleWebManagementQRCode(url: activeSession.pairingURL)
                             .frame(width: 180, height: 180)
                             .frame(maxWidth: .infinity)
                     }
@@ -1884,12 +1664,19 @@ private struct AppleWebManagementView: View {
                     LabeledContent("Expires", value: activeSession.expiresAt.formatted(date: .omitted, time: .shortened))
                 }
 
+                #if os(macOS)
+                AppleFormActionSection { copyAddressButton(activeSession) }
+                #else
                 Section {
-                    Button("Copy Address") {
-                        copy(activeSession.friendlyURL)
+                    copyAddressButton(activeSession)
+                        .listRowBackground(Color.clear)
+                }
+                #endif
+
+                if !connectedBrowsers.isEmpty {
+                    Section("Connected browsers") {
+                        AppleWebManagementBrowserRows(browsers: connectedBrowsers, service: service)
                     }
-                    .buttonStyle(.brandSecondary)
-                    .listRowBackground(Color.clear)
                 }
 
                 Section {
@@ -1897,6 +1684,9 @@ private struct AppleWebManagementView: View {
                     forgetBrowsersButton
                 }
             } else {
+                #if os(macOS)
+                AppleFormActionSection { startButton }
+                #else
                 Section {
                     // Its own section with no row fill: `startButton` draws a
                     // filled capsule, and inside a grouped card that is two
@@ -1904,6 +1694,7 @@ private struct AppleWebManagementView: View {
                     startButton
                         .listRowBackground(Color.clear)
                 }
+                #endif
                 Section {
                     forgetBrowsersButton
                 }
@@ -1923,6 +1714,7 @@ private struct AppleWebManagementView: View {
         }
         .alert("Forget Paired Browsers?", isPresented: $confirmForget) {
             Button("Forget", role: .destructive) {
+                service.endAllBrowsers()
                 AppleWebManagementTrust().forgetAllBrowsers()
                 appleTrace("web management: all trusted browsers forgotten")
                 forgetNotice = true
@@ -1936,6 +1728,7 @@ private struct AppleWebManagementView: View {
             for await updatedSession in service.sessionUpdates() {
                 guard !Task.isCancelled else { return }
                 session = updatedSession
+                connectedBrowsers = service.connectedBrowsers
             }
         }
     }
@@ -1967,18 +1760,18 @@ private struct AppleWebManagementView: View {
                             }
                         }
 
-                        AppleWebManagementQRCode(url: activeSession.friendlyURL)
+                        AppleWebManagementQRCode(url: activeSession.pairingURL)
                             .frame(width: 260, height: 260)
                     }
                     .padding(30)
                     .background(Color(white: 0.11), in: .rect(cornerRadius: 18))
                 }
 
-                // Revocation belongs wherever the feature is used, and the
-                // television is where it is used. A browser stays trusted for
-                // thirty days; leaving the only way to untrust it on the phone
-                // layout would make that a one-way door on the device that
-                // actually shows the pairing code.
+                if !connectedBrowsers.isEmpty {
+                    Text("Connected browsers").font(.headline)
+                    AppleWebManagementBrowserRows(browsers: connectedBrowsers, service: service)
+                }
+
                 HStack(spacing: 24) {
                     if activeSession == nil {
                         startButton
@@ -2018,6 +1811,7 @@ private struct AppleWebManagementView: View {
         }
         .alert("Forget Paired Browsers?", isPresented: $confirmForget) {
             Button("Forget", role: .destructive) {
+                service.endAllBrowsers()
                 AppleWebManagementTrust().forgetAllBrowsers()
                 appleTrace("web management: all trusted browsers forgotten")
                 forgetNotice = true
@@ -2031,17 +1825,19 @@ private struct AppleWebManagementView: View {
             for await updatedSession in service.sessionUpdates() {
                 guard !Task.isCancelled else { return }
                 session = updatedSession
+                connectedBrowsers = service.connectedBrowsers
             }
         }
     }
     #endif
 
-    /// Revokes every remembered browser, so the pairing code is required again.
-    ///
-    /// Trusting a browser for thirty days is only safe if it can be untrusted;
-    /// without this the feature would be a one-way door.
+    /// Ends every active browser session.
     private var forgetBrowsersButton: some View {
-        Button("Forget Paired Browsers") { confirmForget = true }
+        Button { confirmForget = true } label: {
+            Text("Forget Paired Browsers")
+                .frame(minWidth: 44, minHeight: 44, alignment: .leading)
+                .contentShape(.rect)
+        }
         #if !os(tvOS)
             .buttonStyle(.plain)
         #endif
@@ -2067,11 +1863,32 @@ private struct AppleWebManagementView: View {
         // page and centres its own label, which is what put Start Web
         // Management in the middle of the screen while the heading above it was
         // flush left, and pushed Forget Paired Browsers off to the right.
-        #if !os(tvOS)
+        // On the Mac it is a content-sized button under the form instead
+        // (`AppleFormActionLayout`).
+        #if !os(tvOS) && !os(macOS)
         .frame(maxWidth: .infinity)
         #endif
         .buttonStyle(.brandPrimary)
         .disabled(isWorking)
+    }
+
+    private func copyAddressButton(_ session: AppleWebManagementSession) -> some View {
+        // The button says what it did. Copying is invisible — nothing on the
+        // screen changes and there is no way to tell it from a dead control
+        // (button crawl, 2026-09-19) — so the label carries the receipt and
+        // goes back on its own.
+        Button(addressWasCopied ? "Address Copied" : "Copy Address") {
+            copy(session.friendlyURL)
+            addressWasCopied = true
+            copyReceipt?.cancel()
+            copyReceipt = Task {
+                try? await Task.sleep(for: .seconds(2))
+                guard !Task.isCancelled else { return }
+                addressWasCopied = false
+            }
+        }
+        .buttonStyle(.brandSecondary)
+        .animation(nil, value: addressWasCopied)
     }
 
     private var stopButton: some View {
@@ -2079,14 +1896,18 @@ private struct AppleWebManagementView: View {
             guard !isWorking else { return }
             confirmStop = true
         } label: {
-            if isWorking {
-                HStack {
-                    ProgressView()
-                    Text("Stopping")
+            Group {
+                if isWorking {
+                    HStack {
+                        ProgressView()
+                        Text("Stopping")
+                    }
+                } else {
+                    Text("Stop Web Management")
                 }
-            } else {
-                Text("Stop Web Management")
             }
+            .frame(minWidth: 44, minHeight: 44, alignment: .leading)
+            .contentShape(.rect)
         }
         #if !os(tvOS)
         .buttonStyle(.plain)
@@ -2156,8 +1977,31 @@ private struct AppleWebManagementView: View {
     }
 }
 
-private struct AppleWebManagementQRCode: View {
+private struct AppleWebManagementBrowserRows: View {
+    let browsers: [AppleWebManagementServer.ConnectedBrowser]
+    let service: any AppleWebManagementServing
+
+    var body: some View {
+        ForEach(browsers) { browser in
+            HStack {
+                VStack(alignment: .leading) {
+                    Text(browser.name)
+                    Text(browser.lastActivity, style: .time)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button("End") { service.endBrowser(id: browser.id) }
+                    .buttonStyle(.brandSecondary)
+                    .accessibilityLabel("End \(browser.name) session")
+            }
+        }
+    }
+}
+
+struct AppleWebManagementQRCode: View {
     let url: URL
+    var accessibilityText = "Web Management QR code"
 
     var body: some View {
         if let image = Self.image(for: url) {
@@ -2171,7 +2015,7 @@ private struct AppleWebManagementQRCode: View {
             }
             .frame(maxWidth: 280, maxHeight: 280)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Web Management QR code")
+            .accessibilityLabel(accessibilityText)
         }
     }
 

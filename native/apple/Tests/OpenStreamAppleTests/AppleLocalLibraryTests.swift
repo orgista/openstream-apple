@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import Testing
 @testable import OpenStreamApple
 
@@ -55,4 +56,59 @@ import Testing
     }
     #expect(resumed?.season == 2)
     #expect(resumed?.episode == 3)
+}
+
+/// Library shelves read nothing but `sorted(...)` in their body. Once the
+/// sort is memoised, the cached answer must still register `groups` and
+/// `metadata`, or a title's metadata landing never redraws the shelf.
+@MainActor @Test func memoisedLibrarySortStillObservesTheLibrary() async throws {
+    let file = AppleLibraryItem(sourceID: UUID(), name: "Example.Film.2020.mkv",
+        url: URL(fileURLWithPath: "/Example.Film.2020.mkv"), relativePath: "Example.Film.2020.mkv", sizeBytes: 1)
+    let group = AppleLibrarySeries.groups([file])[0]
+    // `resolve` goes through the shared resolver, whose disk cache answers
+    // before any lookup; seed it so the metadata update needs no network.
+    let folder = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        .appendingPathComponent("LibraryTitles-v1").appendingPathComponent(file.sourceID.uuidString)
+    defer { try? FileManager.default.removeItem(at: folder) }
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    let item = AppleCatalogItem(mediaID: "tt0000001", type: "movie", name: "Example Film", releaseInfo: "2020")
+    try JSONEncoder().encode(SeededMetadataEntry(value: item, checkedAt: Date(), addedAt: Date(), schema: 1))
+        .write(to: folder.appendingPathComponent(AppleLibraryMetadataResolver.cacheKey(file) + ".json"))
+    let suite = "memoised-sort-\(UUID())"
+    let defaults = try #require(UserDefaults(suiteName: suite))
+    defer { defaults.removePersistentDomain(forName: suite) }
+    let sourceStore = AppleSourceStore(defaults: defaults, keychain: SortObservationCredentialStub(),
+        documentsDirectory: FileManager.default.temporaryDirectory.appending(path: suite))
+    let settings = AppleSettingsStore(defaults: defaults, keychain: SortObservationCredentialStub())
+
+    let store = AppleLocalLibraryStore()
+    _ = store.sorted(.title)
+    let flag = SortObservationChangeFlag()
+    withObservationTracking {
+        _ = store.sorted(.title)
+    } onChange: {
+        Task { @MainActor in flag.changed = true }
+    }
+    await store.resolve(group, sourceStore: sourceStore, settings: settings)
+    #expect(store.metadata[group.id] == item)
+    for _ in 0..<50 where !flag.changed { try await Task.sleep(for: .milliseconds(20)) }
+    #expect(flag.changed)
+}
+
+private struct SeededMetadataEntry: Encodable {
+    let value: AppleCatalogItem?
+    let checkedAt: Date
+    let addedAt: Date
+    let schema: Int
+}
+
+private struct SortObservationCredentialStub: AppleCredentialStoring {
+    func string(for account: String) throws -> String? { nil }
+    func set(_ value: String, for account: String) throws {}
+    func remove(_ account: String) throws {}
+}
+
+@MainActor
+private final class SortObservationChangeFlag {
+    var changed = false
 }

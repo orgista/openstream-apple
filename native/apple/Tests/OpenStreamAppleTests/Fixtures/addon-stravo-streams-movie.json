@@ -1,0 +1,52 @@
+{
+ "streams": [
+  {
+   "name": null,
+   "title": "🖥️ 1080P • Original • 1.93 GB\n  >>[💥 Go Premium]<<",
+   "externalUrl": "https://fixture.example/stravo/packages/WTbQSb1aJ5Pa/",
+   "type": "movie"
+  },
+  {
+   "name": null,
+   "title": "🖥️ 480P • Original • 356.83 MB",
+   "url": "https://fixture.example/stravo/bt/af7b78e850aca1cf8cd4ed084f0903b4.mp4",
+   "behaviorHints": {
+    "notWebReady": false,
+    "videoSize": 356828473,
+    "proxyHeaders": {
+     "request": {
+      "Referer": "https://fixture.example/stravo/",
+      "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36"
+     }
+    }
+   }
+  },
+  {
+   "name": null,
+   "title": "🖥️ 360P • Original • 276.97 MB",
+   "url": "https://fixture.example/stravo/bt/61e6861909de1781aaba17b0a297be74.mp4",
+   "behaviorHints": {
+    "notWebReady": false,
+    "videoSize": 276973223,
+    "proxyHeaders": {
+     "request": {
+      "Referer": "https://fixture.example/stravo/",
+      "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36"
+     }
+    }
+   }
+  },
+  {
+   "name": null,
+   "title": "$2/Month • Go Premium",
+   "externalUrl": "https://fixture.example/stravo/packages/WTbQSb1aJ5Pa/",
+   "type": "movie"
+  },
+  {
+   "name": null,
+   "title": "╰┈➤ FOLLOW STRAVO",
+   "externalUrl": "https://fixture.example/stravo/+fhwnEKK4h1kwMjk0",
+   "type": "movie"
+  }
+ ]
+}

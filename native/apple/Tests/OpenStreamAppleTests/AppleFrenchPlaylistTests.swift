@@ -40,13 +40,13 @@ struct AppleFrenchPlaylistTests {
     }
 
     /// The tester's bug, on the real playlist: under All with the default
-    /// Premier Guide package, a French list must show all 28, not the one or
+    /// Complete Guide package, a French list must show all 28, not the one or
     /// two that happen to share a name with a US lineup.
-    @Test func allShowsTheWholePlaylistUnderPremierGuide() throws {
+    @Test func allShowsTheWholePlaylistUnderCompleteGuide() throws {
         let channels = try playlist()
-        let entries = try AppleChannelLineupPresets.premierUS()
+        let entries = try AppleChannelLineupPresets.completeUS()
         let snapshot = AppleLiveChannelSnapshot.build(
-            groups: [.init(name: "All", channels: channels)], package: .premierGuide,
+            groups: [.init(name: "All", channels: channels)], package: .completeGuide,
             custom: .init(), entries: entries, favoriteIDs: [], category: "All")
         #expect(snapshot.channelIDs.count == 28, "All showed \(snapshot.channelIDs.count) of 28")
     }

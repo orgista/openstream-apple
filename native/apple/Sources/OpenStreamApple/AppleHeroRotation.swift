@@ -54,4 +54,27 @@ public enum AppleHeroRotation: Sendable {
         }
         return result
     }
+
+    /// The same, keeping only the values `hasBackdrop` accepts — the Apple TV
+    /// app's hero never shows a title without art, and a page drawn from the
+    /// poster or the placeholder was a hero with no picture and no title
+    /// (Binnelanders, iPhone sim 2026-09-23). When nothing has a backdrop the
+    /// rotation is left as it was rather than emptied.
+    public static func candidates<Value>(
+        _ values: [Value],
+        id: (Value) -> String,
+        hasBackdrop: (Value) -> Bool,
+        limit: Int = maximumCandidates
+    ) -> [Value] {
+        let unique = candidates(values, id: id, limit: .max)
+        let withArt = unique.filter(hasBackdrop)
+        return Array((withArt.isEmpty ? unique : withArt).prefix(limit))
+    }
+
+    /// Whether `item` has art a hero can stand on: a real backdrop, not a
+    /// missing one and not the poster handed back as its own background.
+    public static func hasBackdrop(_ item: AppleCatalogItem) -> Bool {
+        guard let background = item.backgroundURL else { return false }
+        return background != item.posterURL
+    }
 }

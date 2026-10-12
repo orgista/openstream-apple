@@ -6,6 +6,14 @@ import SwiftUI
 @MainActor @Observable
 final class AppleLocalLibraryStore {
     static let shared = AppleLocalLibraryStore()
+    #if DEBUG
+    /// False under the Library titles fixture (`AppleLibraryTitlesDebugView`):
+    /// a fixture scan must never replace the real library's snapshot or its
+    /// last-scan stamp, which live in the same container.
+    static var persistsScanResults = true
+    #else
+    static let persistsScanResults = true
+    #endif
     static let downloadsID = UUID(uuidString: "EB7EF704-5724-4CEB-88B9-2860E474BD70")!
     private(set) var groups: [AppleLibrarySeries] = []
     private(set) var sources: [AppleSource] = []
@@ -14,15 +22,137 @@ final class AppleLocalLibraryStore {
     private(set) var errorMessage: String?
     private(set) var progress: [String: ApplePlaybackProgress] = [:]
     private var offlineIDs: [String: String] = [:]
+    private(set) var lastScan: Date?
+    
+    struct AppleLibraryGroupSnapshot: Codable {
+        let id: String
+        let title: String
+        let year: Int?
+        let kind: AppleLibraryTitle.Kind
+        struct Item: Codable {
+            let id: String
+            let sourceID: UUID
+            let name: String
+            let url: URL
+            let relativePath: String
+            let sizeBytes: Int64
+            let addedAt: Date
+        }
+        let items: [Item]
+    }
+
+    /// Reset OpenStream: the saved index is gone, so is this copy.
+    func discardAfterReset() {
+        groups = []
+        sources = []
+        metadata = [:]
+        isLoading = false
+        errorMessage = nil
+        progress = [:]
+        offlineIDs = [:]
+        lastScan = nil
+        contentDidChange()
+    }
+
+    func publishPersistedIndex(activeSources: [AppleSource]) async -> Bool {
+        let activeSourceIDs = Set(activeSources.map(\.id))
+        
+        let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("OpenStream")
+        let snapshotURL = caches.appendingPathComponent("LibraryGroups-v1.json")
+        
+        guard let data = try? Data(contentsOf: snapshotURL),
+              let snapshots = try? JSONDecoder().decode([AppleLibraryGroupSnapshot].self, from: data) else {
+            appleTrace("library persisted index unusable: no snapshot found")
+            return false
+        }
+        
+        var realGroups: [AppleLibrarySeries] = []
+        var publishedCount = 0
+        
+        for snapshot in snapshots {
+            let activeItems = snapshot.items.filter { activeSourceIDs.contains($0.sourceID) }
+            guard !activeItems.isEmpty else { continue }
+            
+            let parsed = AppleLibraryTitle(title: snapshot.title, year: snapshot.year, season: nil, episode: nil, kind: snapshot.kind)
+            let items = activeItems.map { AppleLibraryItem(sourceID: $0.sourceID, name: $0.name, url: $0.url, relativePath: $0.relativePath, sizeBytes: $0.sizeBytes, addedAt: $0.addedAt) }
+            
+            let group = AppleLibrarySeries(id: snapshot.id, parsed: parsed, items: items)
+            realGroups.append(group)
+            publishedCount += 1
+        }
+        
+        guard publishedCount > 0 else {
+            appleTrace("library persisted index unusable: empty after filtering")
+            return false
+        }
+        
+        self.sources = activeSources
+        self.groups = realGroups
+        contentDidChange()
+        appleTrace("library published from persisted index: \(publishedCount) titles")
+        return true
+    }
     /// Bumped whenever `groups` or `metadata` changes, so `sortedCache` knows
     /// when its answer is stale. `@Observable` forbids property observers, so
     /// every mutation site calls `contentDidChange()` by hand.
-    @ObservationIgnored private var contentRevision = 0
+    private(set) var contentRevision = 0
     @ObservationIgnored private var sortedCache: [AppleLibrarySort: (revision: Int, value: [AppleLibrarySeries])] = [:]
 
     private func contentDidChange() {
         contentRevision &+= 1
         sortedCache.removeAll(keepingCapacity: true)
+        publishDiscKeys()
+    }
+
+    /// Groups holding a disc image (`AppleDiscImagePolicy`), worked out once
+    /// per scan rather than on every metadata change.
+    @ObservationIgnored private var discGroupIDs: Set<String> = []
+    @ObservationIgnored private var discGroupSignature = -1
+
+    /// The catalog keys whose posters carry the disc badge: each disc
+    /// group's own card and the title it resolved to, so Discover, Search and
+    /// Library all mark it.
+    private func publishDiscKeys() {
+        let signature = groups.count &+ groups.reduce(0) { $0 &+ $1.items.count }
+        if signature != discGroupSignature {
+            discGroupSignature = signature
+            discGroupIDs = Set(groups.filter { $0.items.contains(where: AppleDiscImagePolicy.isDiscImage) }.map(\.id))
+        }
+        var keys = Set<String>()
+        for group in groups where discGroupIDs.contains(group.id) {
+            let item = catalogItem(for: group)
+            keys.insert(item.id)
+            keys.insert(AppleDiscCatalog.matchKey(item))
+        }
+        AppleDiscCatalog.shared.replaceKeys(keys)
+    }
+
+    /// The disc file among a title's files, if any.
+    func discFile(in files: [AppleLibraryItem]) -> AppleLibraryItem? {
+        files.first(where: AppleDiscImagePolicy.isDiscImage)
+    }
+
+    /// What a local file is, read once per file: the engine's probe for the
+    /// format badges, and for a disc image the titles on it. Only files on
+    /// this device (a folder or a download), never a share: no network.
+    @ObservationIgnored private var inspections: [String: AppleLocalFileInspection] = [:]
+
+    func inspection(for file: AppleLibraryItem) async -> AppleLocalFileInspection? {
+        if let cached = inspections[file.id] { return cached }
+        guard file.url.isFileURL, let source = sources.first(where: { $0.id == file.sourceID }),
+              source.kind == .library else { return nil }
+        let root = file.sourceID == Self.downloadsID ? nil : try? AppleLibraryBookmark.resolve(source)
+        let url = file.url
+        let isDisc = AppleDiscImagePolicy.isDiscImage(file)
+        let result = await Task.detached(priority: .utility) { () -> AppleLocalFileInspection in
+            let access = root.map { AppleSecurityScopedAccess(url: $0) }
+            defer { withExtendedLifetime(access) {} }
+            return AppleLocalFileInspection.inspect(url: url, isDisc: isDisc)
+        }.value
+        inspections[file.id] = result
+        if !result.discTitles.isEmpty { AppleDiscCatalog.shared.record(result.discTitles, for: url) }
+        appleTrace("local inspect \(url.lastPathComponent.suffix(40)): badges=\(result.badges.map(\.title)) discTitles=\(result.discTitles.count)")
+        return result
     }
 
     static func matches(_ lhs: AppleCatalogItem, _ rhs: AppleCatalogItem) -> Bool {
@@ -61,6 +191,19 @@ final class AppleLocalLibraryStore {
             id: \.id
         )
     }
+    /// One card per film. Files whose names differ ("Tony.2026.1080p",
+    /// "Tony 4K") land in separate groups but resolve to one IMDb title —
+    /// N32 #13 drew "Tony" twice. The first in display order stays; the rest
+    /// are still found by `matchingGroups`, so the title page lists every
+    /// file under Other Sources.
+    nonisolated static func collapsingVersions(_ decorated: [(group: AppleLibrarySeries, item: AppleCatalogItem)]) -> [AppleLibrarySeries] {
+        var seen = Set<String>()
+        return decorated.compactMap { group, item in
+            guard group.parsed.kind == .movie, item.mediaID.hasPrefix("tt"),
+                  let sourceID = group.items.first?.sourceID else { return group }
+            return seen.insert("\(sourceID):\(item.mediaID)").inserted ? group : nil
+        }
+    }
     /// Decorate once, sort, undecorate — and remember the answer until the
     /// content changes.
     ///
@@ -72,10 +215,16 @@ final class AppleLocalLibraryStore {
     /// seconds after its scan had already finished at 2.5s, and why scrolling
     /// it crawled (owner, 2026-09-15). Decorating drops it to one call per
     /// group; the memo drops repeat passes to nothing.
+    ///
+    /// The memo is not observed, so a hit reads `groups` and `metadata` first:
+    /// a shelf whose body reads only this still redraws when the scan or a
+    /// title's metadata lands.
     func sorted(_ sort: AppleLibrarySort) -> [AppleLibrarySeries] {
+        _ = groups
+        _ = metadata
         if let cached = sortedCache[sort], cached.revision == contentRevision { return cached.value }
         let decorated = groups.map { (group: $0, item: catalogItem(for: $0)) }
-        let value = decorated.sorted {
+        let ordered = decorated.sorted {
             if sort == .added, $0.group.addedAt != $1.group.addedAt { return $0.group.addedAt > $1.group.addedAt }
             if sort == .year, $0.item.releaseInfo != $1.item.releaseInfo {
                 return ($0.item.releaseInfo ?? "") > ($1.item.releaseInfo ?? "")
@@ -83,12 +232,19 @@ final class AppleLocalLibraryStore {
             return $0.item.name == $1.item.name
                 ? $0.group.id < $1.group.id
                 : $0.item.name.localizedStandardCompare($1.item.name) == .orderedAscending
-        }.map(\.group)
+        }
+        let value = Self.collapsingVersions(ordered)
         sortedCache[sort] = (contentRevision, value)
         return value
     }
     var continueWatching: [AppleLibrarySeries] {
-        groups.filter { progress[$0.id] != nil }.sorted { progress[$0.id]!.updatedAt > progress[$1.id]!.updatedAt }
+        let store = ApplePlaybackStore()
+        return groups.filter { group in
+            progress[group.id] != nil && group.items.contains { file in
+                store.progress(for: playbackID(file))?.resumePosition != nil
+                    && !store.isRemovedFromContinueWatching(mediaID: playbackID(file))
+            }
+        }.sorted { progress[$0.id]!.updatedAt > progress[$1.id]!.updatedAt }
     }
     func refreshProgress() {
         let store = ApplePlaybackStore()
@@ -145,27 +301,29 @@ final class AppleLocalLibraryStore {
         appleTrace("library scans done, \(files.count) files")
         let downloads = await AppleOfflineMediaStore().allRecords()
         appleTrace("library downloads read: \(downloads.count)")
-        offlineIDs = [:]
+        var newOfflineIDs: [String: String] = [:]
+        var newMetadata: [String: AppleCatalogItem] = [:]
         if !downloads.isEmpty {
             sources.append(AppleSource(id: Self.downloadsID, kind: .library, name: "Downloads", url: downloads[0].localURL.deletingLastPathComponent()))
             for record in downloads {
-                let indexed = mediaIndex.records.first { record.mediaID == $0.id || record.mediaID.hasPrefix($0.id + ":") }
+                let indexed = mediaIndex.record(matchingMediaID: record.mediaID)
                 let filename = [record.title ?? indexed?.title ?? record.localURL.deletingPathExtension().lastPathComponent,
                     indexed?.year.map(String.init), record.subtitle].compactMap { $0 }.joined(separator: " ")
                 let file = AppleLibraryItem(sourceID: Self.downloadsID, name: filename,
                     url: record.localURL, relativePath: record.localURL.lastPathComponent, sizeBytes: 0, addedAt: record.storedAt)
                 files.append(file)
-                offlineIDs[file.id] = record.mediaID
+                newOfflineIDs[file.id] = record.mediaID
                 // Download record ids are index identities, not necessarily IMDb ids.
                 let group = AppleLibrarySeries.groups([file])[0]
-                metadata[group.id] = AppleCatalogItem(mediaID: indexed?.canonicalID ?? "local-" + ApplePlaybackIdentity.digest(for: record.mediaID),
+                newMetadata[group.id] = AppleCatalogItem(mediaID: indexed?.canonicalID ?? "local-" + ApplePlaybackIdentity.digest(for: record.mediaID),
                     type: group.parsed.kind == .show ? "series" : "movie", name: indexed?.title ?? record.title ?? group.parsed.title,
                     posterURL: record.artworkURL, summary: indexed?.summary, releaseInfo: (indexed?.year ?? group.parsed.year).map(String.init))
-                contentDidChange()
             }
         }
         let snapshot = files
         groups = await Task.detached { AppleLibrarySeries.groups(snapshot) }.value
+        offlineIDs = newOfflineIDs
+        metadata.merge(newMetadata) { current, _ in current }
         contentDidChange()
         appleTrace("library grouped: \(groups.count) titles")
         // Everything the shelves need is in `groups` now, so the tab can draw.
@@ -182,9 +340,12 @@ final class AppleLocalLibraryStore {
                 try await mediaIndex.replace(instanceID: source.id, with: AppleMediaIngestion.libraryRecords(source: source, items: items))
             } catch is CancellationError { return }
             catch {
-                appleTraceFailure("library index write \"\(source.name)\" failed: \(error.localizedDescription)")
-                errors.append("\(source.name): \(error.localizedDescription)")
-                sourceStore.recordValidationFailure(id: source.id, summary: error.localizedDescription)
+                // This device's own storage, not the source: the shelves are
+                // already drawn from `groups`, and the next scan writes the
+                // index again. Nothing for the viewer to read or fix (build
+                // 17 showed Apple TV's raw "You don't have permission to save
+                // the file …" under the NAS), so it goes to the trace only.
+                appleTraceFailure("library index write failed: \(appleErrorLabel(error))")
             }
         }
         appleTrace("library index written")
@@ -229,6 +390,29 @@ final class AppleLocalLibraryStore {
             await resolve(group, sourceStore: sourceStore, settings: settings)
         }
         appleTrace("library eager metadata resolved")
+        lastScan = Date()
+        let sourceDigest = ApplePlaybackIdentity.digest(for: sources.map(\.id.uuidString).sorted().joined(separator: ","))
+        
+        let snapshots = groups.map { group in
+            AppleLibraryGroupSnapshot(
+                id: group.id,
+                title: group.parsed.title,
+                year: group.parsed.year,
+                kind: group.parsed.kind,
+                items: group.items.map { AppleLibraryGroupSnapshot.Item(id: $0.id, sourceID: $0.sourceID, name: $0.name, url: $0.url, relativePath: $0.relativePath, sizeBytes: $0.sizeBytes, addedAt: $0.addedAt) }
+            )
+        }
+        guard Self.persistsScanResults else { return }
+        if let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first {
+            let dir = caches.appendingPathComponent("OpenStream")
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true, attributes: nil)
+            let url = dir.appendingPathComponent("LibraryGroups-v1.json")
+            if let data = try? JSONEncoder().encode(snapshots) {
+                try? data.write(to: url, options: .atomic)
+            }
+        }
+        
+        AppleLaunchWorkPolicy.recordScan(sourceDigest: sourceDigest, date: lastScan ?? Date())
     }
     func localFiles(for item: AppleCatalogItem, group: AppleLibrarySeries? = nil, episode: AppleStremioEpisode? = nil) -> [AppleLibraryItem] {
         let matches = matchingGroups(item)
@@ -284,22 +468,32 @@ final class AppleLocalLibraryStore {
         let resolution = file.name.range(of: #"(?i)\b(?:\d{3,4}p|[48]K)\b"#, options: .regularExpression).map { String(file.name[$0]).uppercased() }
         return [resolution, file.url.pathExtension.uppercased()].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
     }
-    func presentation(for file: AppleLibraryItem, sourceStore: AppleSourceStore, settings: AppleSettingsStore) async throws -> AppleStremioPlayerPresentation {
+    func presentation(for file: AppleLibraryItem, sourceStore: AppleSourceStore, settings: AppleSettingsStore,
+                      fromBeginning: Bool = false,
+                      disc: AppleDiscPlaybackChoice? = nil) async throws -> AppleStremioPlayerPresentation {
+        // A disc image always opens through one start choice (Play Disc
+        // unless the page said otherwise), carried to the engine.
+        let disc = AppleDiscImagePolicy.isDiscImage(file) ? disc ?? AppleDiscPlaybackChoice(start: .menu, titleID: nil) : nil
+        let resume = AppleTitlePagePolicy.startPosition(
+            saved: ApplePlaybackStore().progress(for: playbackID(file))?.resumePosition, fromBeginning: fromBeginning)
         guard let source = sources.first(where: { $0.id == file.sourceID }) else { throw AppleLibrarySourceError.unavailable }
         let title = AppleLibraryTitleParser.parse(file).title
         if source.kind == .nas {
             let credentials = try sourceStore.networkCredentials(for: source) ?? AppleSMBCredentials(username: "", password: "")
             let url = try await AppleSMBRangeServer.shared.playbackURL(sourceURL: file.url, credentials: credentials, sizeBytes: file.sizeBytes)
             var request = AppleSMBPlaybackRequestFactory.make(source: source, item: file, playbackURL: url)
-            request.resumePosition = ApplePlaybackStore().progress(for: playbackID(file))?.resumePosition
+            request.resumePosition = resume
+            request.hints.disc = disc
             return tracked(AppleStremioPlayerPresentation(request: request, settings: settings), file: file)
         }
         let root = file.sourceID == Self.downloadsID ? nil : try AppleLibraryBookmark.resolve(source)
         let access = root.map { AppleSecurityScopedAccess(url: $0) }
         defer { withExtendedLifetime(access) {} }
         let prepared = try await ApplePlaybackPreparer().prepareLibraryMedia(sourceURL: file.url, preferredEngine: settings.playbackEngine)
+        var hints = ApplePlaybackRequest.Hints(libraryFileURL: file.url)
+        hints.disc = disc
         return tracked(AppleStremioPlayerPresentation(request: ApplePlaybackRequest(url: prepared.url, headers: prepared.requestHeaders,
-            resumePosition: ApplePlaybackStore().progress(for: playbackID(file))?.resumePosition, mediaID: playbackID(file), title: title, sourceKind: .files), settings: settings, securityScopedURL: root), file: file)
+            resumePosition: resume, mediaID: playbackID(file), title: title, sourceKind: .files, hints: hints), settings: settings, securityScopedURL: root), file: file)
     }
     private func tracked(_ presentation: AppleStremioPlayerPresentation, file: AppleLibraryItem) -> AppleStremioPlayerPresentation {
         let store = ApplePlaybackStore()
@@ -319,39 +513,59 @@ struct AppleLocalTitleShelf: View {
     let mediaIndex: AppleMediaIndexStore
     let settings: AppleSettingsStore
     let openSettings: () -> Void
+    /// The bar of the tab the shelf sits on, for the title pages it opens.
+    let tabToolbar: AppleTabToolbarContext?
     var showsProgress = false
     var accessory: AnyView? = nil
+    var previewLimit: Int? = nil
+    var opensFullList = true
     @State private var library = AppleLocalLibraryStore.shared
+    @FocusState private var focusedItemID: String?
+
     var body: some View {
-        AppleMediaShelf(title: title, accessory: accessory) {
-            ForEach(groups) { group in
+        AppleHomeShelf(title: title, accessory: accessory, headingIdentifier: "library.shelf.\(title)", opensFullList: opensFullList) {
+            ForEach(Array(groups.prefix(previewLimit ?? groups.count))) { group in
+                tile(group).focused($focusedItemID, equals: group.id)
+            }
+        } destination: {
+            List(groups) { group in
                 NavigationLink {
-                    AppleLocalTitleDestination(group: group, sourceStore: sourceStore, mediaIndex: mediaIndex, settings: settings, openSettings: openSettings)
+                    AppleLocalTitleDestination(group: group, sourceStore: sourceStore, mediaIndex: mediaIndex,
+                        settings: settings, openSettings: openSettings, tabToolbar: tabToolbar)
                 } label: {
-                    VStack(alignment: .leading, spacing: 8) {
-                        AppleCatalogCard(item: library.catalogItem(for: group))
-                        if showsProgress, let value = library.progress[group.id] {
-                            // Same two faults the Discover shelf had and had
-                            // fixed; this copy was missed. A fixed 140 pt is
-                            // wider than a 100 pt phone poster and less than
-                            // half a 300 pt TV one, so the bar sat short and
-                            // off to one side — the owner's "these progress
-                            // bars are not symetrical" (2026-09-15). And
-                            // `position / duration` is NaN when the duration
-                            // has not been read yet, which renders as an empty
-                            // track rather than the position.
-                            ProgressView(value: AppleWatchProgress.fraction(
-                                position: value.position, duration: value.duration
-                            ))
-                            .frame(maxWidth: .infinity)
-                            .tint(.white)
-                        }
+                    let item = library.catalogItem(for: group)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(item.name).font(.headline)
+                        if let year = item.releaseInfo { Text(year).font(.caption).foregroundStyle(.secondary) }
                     }
-                }.appleCatalogCardButtonStyle().accessibilityIdentifier("library.title.\(group.parsed.title)")
-                .task(id: group.id) { await library.resolve(group, sourceStore: sourceStore, settings: settings) }
+                }
+            }
+                .navigationTitle(title)
+                .scrollIndicators(.never)
+                .task(id: groups.map(\.id)) { library.refreshProgress() }
+        }
+        .environment(\.appleTMDBConfiguration, settings.tmdbConfiguration)
+        #if os(tvOS)
+        .defaultFocus($focusedItemID, groups.first?.id)
+        .task(id: focusedItemID) {
+            guard let group = groups.first(where: { $0.id == focusedItemID }) else { return }
+            try? await Task.sleep(for: AppleMetadataPrefetcher.focusDwell)
+            guard !Task.isCancelled else { return }
+            await library.resolve(group, sourceStore: sourceStore, settings: settings)
+            let item = library.catalogItem(for: group)
+            if let target = AppleMetadataPrefetcher.detailTarget(type: item.type, mediaID: item.mediaID) {
+                await AppleMetadataPrefetcher.warmDetail(target, sources: sourceStore.sources,
+                    preferredSourceID: group.items.first?.sourceID, configuration: settings.tmdbConfiguration)
             }
         }
+        #endif
     }
+
+    private func tile(_ group: AppleLibrarySeries) -> some View {
+        AppleLocalLibraryTile(group: group, sourceStore: sourceStore, mediaIndex: mediaIndex,
+            settings: settings, openSettings: openSettings, tabToolbar: tabToolbar, showsProgress: showsProgress)
+    }
+
 }
 
 struct AppleLocalTitleDestination: View {
@@ -360,6 +574,7 @@ struct AppleLocalTitleDestination: View {
     let mediaIndex: AppleMediaIndexStore
     let settings: AppleSettingsStore
     let openSettings: () -> Void
+    let tabToolbar: AppleTabToolbarContext?
     var autoPlay = false
     @State private var library = AppleLocalLibraryStore.shared
     var body: some View {
@@ -368,8 +583,9 @@ struct AppleLocalTitleDestination: View {
                 playbackSources: sourceStore.sources, metadataConfiguration: settings.metadataEnabled ? try? AppleTMDBConfiguration(credential: settings.tmdbAPIKey) : nil,
                 gatewayConfig: settings.gatewayEnabled ? try? AppleTranscodeGatewayConfig(baseURL: settings.gatewayURL,
                     sessionToken: settings.gatewayToken, isEnabled: true) : nil,
-                streamingServerConfiguration: nil, playbackResolver: AppleStremioPlaybackResolver(), settings: settings,
-                openSettings: openSettings, initialAutoPlay: autoPlay, localGroup: group, localSourceStore: sourceStore)
+                playbackResolver: AppleStremioPlaybackResolver(), settings: settings,
+                openSettings: openSettings, initialAutoPlay: autoPlay, localGroup: group, localSourceStore: sourceStore,
+                tabToolbar: tabToolbar)
         }
     }
 }

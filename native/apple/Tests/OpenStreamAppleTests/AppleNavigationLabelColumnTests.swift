@@ -7,10 +7,11 @@ import Testing
 /// line starting at the row's leading edge, underneath the glyph. Measured on
 /// an iPhone 16 Pro at `accessibility-extra-extra-extra-large`.
 @Suite("Settings row icon column")
+@MainActor
 struct AppleNavigationLabelColumnTests {
     @Test func ordinarySizesKeepTheStockLabel() {
         for size in [DynamicTypeSize.xSmall, .small, .medium, .large, .xLarge, .xxLarge, .xxxLarge] {
-            #expect(!AppleTVNavigationLabel.usesFixedIconColumn(for: size),
+            #expect(AppleTVNavigationLabel.usesFixedIconColumn(for: size, isMac: false) == false,
                     "\(size) should use the stock label, which is correct there")
         }
     }
@@ -18,7 +19,7 @@ struct AppleNavigationLabelColumnTests {
     @Test func everyAccessibilitySizeTakesTheColumnOver() {
         for size in [DynamicTypeSize.accessibility1, .accessibility2,
                      .accessibility3, .accessibility4, .accessibility5] {
-            #expect(AppleTVNavigationLabel.usesFixedIconColumn(for: size))
+            #expect(AppleTVNavigationLabel.usesFixedIconColumn(for: size, isMac: false))
         }
     }
 
@@ -28,10 +29,22 @@ struct AppleNavigationLabelColumnTests {
         let sizes = DynamicTypeSize.allCases.sorted()
         var seenFixed = false
         for size in sizes {
-            let fixed = AppleTVNavigationLabel.usesFixedIconColumn(for: size)
+            let fixed = AppleTVNavigationLabel.usesFixedIconColumn(for: size, isMac: false)
             if seenFixed { #expect(fixed, "\(size) reverted to the stock label") }
             seenFixed = seenFixed || fixed
         }
+    }
+
+    /// A macOS `Label` sizes its icon column per glyph, so titles in one
+    /// list started at different x (N54). The Mac takes the column at every
+    /// size, and keeps the stock 27 pt from glyph column to title.
+    @Test(arguments: DynamicTypeSize.allCases)
+    func theMacAlwaysUsesTheColumn(size: DynamicTypeSize) {
+        #expect(AppleTVNavigationLabel.usesFixedIconColumn(for: size, isMac: true))
+    }
+
+    @Test func theMacColumnKeepsTheStockTitleOffset() {
+        #expect(AppleTVNavigationLabel.macIconSlotWidth + AppleTVNavigationLabel.macIconSpacing == 27)
     }
 
     @Test func thePhoneSlotIsNarrowerThanTheTelevisionOne() {

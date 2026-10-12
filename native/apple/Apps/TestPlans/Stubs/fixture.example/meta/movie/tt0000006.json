@@ -1,0 +1,17 @@
+{
+  "meta": {
+    "id": "tt0000006",
+    "type": "movie",
+    "name": "Stub Movie Six",
+    "poster": "https://fixture.example/poster/6.jpg",
+    "description": "Stub Movie Six: a title served from the stub catalog.",
+    "releaseInfo": "2024",
+    "imdbRating": "7.0",
+    "genres": [
+      "Drama"
+    ],
+    "runtime": "90 min",
+    "year": "2024",
+    "background": "https://fixture.example/background/tt0000006.jpg"
+  }
+}

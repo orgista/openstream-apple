@@ -1,0 +1,38 @@
+{
+  "name": "OpenStream",
+  "identifier": "com.orgista.openstream.source",
+  "subtitle": "Native media player for Apple devices",
+  "website": "https://github.com/orgista/openstream-apple",
+  "tintColor": "#FF3366",
+  "iconURL": "https://raw.githubusercontent.com/orgista/openstream-apple/main/native/apple/Apps/Shared/Assets.xcassets/AppIcon.appiconset/ios-1024.png",
+  "apps": [
+    {
+      "name": "OpenStream",
+      "bundleIdentifier": "com.orgista.openstream",
+      "developerName": "Orgista",
+      "subtitle": "Native media player",
+      "localizedDescription": "A native media player for iPhone, iPad, Apple TV, Apple Watch and Vision Pro. It plays your own sources: media servers, network shares, live TV playlists and add-ons. It does not provide any content.",
+      "iconURL": "https://raw.githubusercontent.com/orgista/openstream-apple/main/native/apple/Apps/Shared/Assets.xcassets/AppIcon.appiconset/ios-1024.png",
+      "tintColor": "#FF3366",
+      "category": "entertainment",
+      "versions": [
+        {
+          "version": "1.0",
+          "buildVersion": "18",
+          "date": "2026-10-12T15:14:26+00:00",
+          "localizedDescription": "### iPhone and iPad\n- New: Live redesign. Video sits edge to edge at the top, with an On Now list and a Watching pill under it,\n  a fixed category row with Events, and one search button.\n- New: Picture in Picture for Live.\n- New: Live errors show one symbol, a short title naming the source, and one button.\n- New: the iPhone hero uses textless key art; the title page has a 16:9 trailer header with a sound control.\n- Fixed: iOS 18 navigation and VoiceOver, Settings wording, multiview keeps its channels.\n\n### Apple TV\n- Fixed: Top Shelf shows your titles instead of a blurry logo (open the app once, then check the shelf).\n- Fixed: Set Up from iPhone imports on Apple TV.\n- Fixed: Apple TV focus and the Guide sheet.\n- New: Live errors show one symbol, a short title naming the source, and one button.\n\n### Apple Vision Pro\n- New: Live redesign with an On Now list and a category row with Events.\n- New: Live errors show one symbol, a short title naming the source, and one button.\n\n### Mac\n- New: Live errors show one symbol, a short title naming the source, and one button.\n- Fixed: iCloud sync cleanup and Settings wording.\n\n### All platforms\n- Playback engine updated.\n",
+          "downloadURL": "https://github.com/orgista/openstream-apple/releases/download/v1.0-18/OpenStream-iOS-1.0-18.ipa",
+          "size": 32795516,
+          "minOSVersion": "18.0"
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {
+          "NSLocalNetworkUsageDescription": "oStream finds media servers and connects to network shares on your local network."
+        }
+      }
+    }
+  ],
+  "news": []
+}

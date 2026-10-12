@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 enum AppleBoundedHTTPError: Swift.Error, Equatable, Sendable {
     case responseTooLarge
@@ -20,13 +21,15 @@ enum AppleBoundedHTTPDataLoader {
     static func load(
         _ request: URLRequest,
         maximumBytes: Int,
-        redirectPolicy: AppleHTTPRedirectPolicy = .follow
+        redirectPolicy: AppleHTTPRedirectPolicy = .follow,
+        progress: @escaping @Sendable (Int, Int64) -> Void = { _, _ in }
     ) async throws -> (Data, URLResponse) {
         try await client.load(
             request,
             maximumBytes: maximumBytes,
             redirectPolicy: redirectPolicy,
-            behavior: .rejectOverflow
+            behavior: .rejectOverflow,
+            progress: progress
         )
     }
 
@@ -56,6 +59,7 @@ final class AppleBoundedHTTPClient: NSObject, URLSessionDataDelegate, @unchecked
         let maximumBytes: Int
         let redirectPolicy: AppleHTTPRedirectPolicy
         let behavior: Behavior
+        let progress: @Sendable (Int, Int64) -> Void
         let continuation: CheckedContinuation<(Data, URLResponse), any Swift.Error>
         var data = Data()
         var response: URLResponse?
@@ -64,11 +68,13 @@ final class AppleBoundedHTTPClient: NSObject, URLSessionDataDelegate, @unchecked
             maximumBytes: Int,
             redirectPolicy: AppleHTTPRedirectPolicy,
             behavior: Behavior,
+            progress: @escaping @Sendable (Int, Int64) -> Void,
             continuation: CheckedContinuation<(Data, URLResponse), any Swift.Error>
         ) {
             self.maximumBytes = maximumBytes
             self.redirectPolicy = redirectPolicy
             self.behavior = behavior
+            self.progress = progress
             self.continuation = continuation
         }
     }
@@ -104,9 +110,20 @@ final class AppleBoundedHTTPClient: NSObject, URLSessionDataDelegate, @unchecked
         _ request: URLRequest,
         maximumBytes: Int,
         redirectPolicy: AppleHTTPRedirectPolicy,
-        behavior: Behavior
+        behavior: Behavior,
+        progress: @escaping @Sendable (Int, Int64) -> Void = { _, _ in }
     ) async throws -> (Data, URLResponse) {
         guard maximumBytes > 0 else { throw AppleBoundedHTTPError.responseTooLarge }
+        // `-OpenStreamStubNetwork <dir>`: fixtures answer, the network never
+        // sees the request (UI tests, offline captures).
+        if let root = AppleNetworkStub.root {
+            let (data, response) = try AppleNetworkStub.response(for: request, root: root)
+            guard behavior == .returnPrefix || data.count <= maximumBytes else {
+                throw AppleBoundedHTTPError.responseTooLarge
+            }
+            progress(min(data.count, maximumBytes), response.expectedContentLength)
+            return (data.prefix(maximumBytes), response)
+        }
         let taskBox = AppleBoundedHTTPTaskBox()
         let result = try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
@@ -115,6 +132,7 @@ final class AppleBoundedHTTPClient: NSObject, URLSessionDataDelegate, @unchecked
                     maximumBytes: maximumBytes,
                     redirectPolicy: redirectPolicy,
                     behavior: behavior,
+                    progress: progress,
                     continuation: continuation
                 )
                 lock.lock()
@@ -161,6 +179,7 @@ final class AppleBoundedHTTPClient: NSObject, URLSessionDataDelegate, @unchecked
 
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         var completed: (RequestState, Result<(Data, URLResponse), any Swift.Error>)?
+        var update: ((@Sendable (Int, Int64) -> Void), Int, Int64)?
         lock.lock()
         if let state = states[dataTask.taskIdentifier] {
             switch state.behavior {
@@ -170,6 +189,7 @@ final class AppleBoundedHTTPClient: NSObject, URLSessionDataDelegate, @unchecked
                     completed = (state, .failure(AppleBoundedHTTPError.responseTooLarge))
                 } else {
                     state.data.append(data)
+                    update = (state.progress, state.data.count, state.response?.expectedContentLength ?? -1)
                 }
             case .returnPrefix:
                 let remaining = state.maximumBytes - state.data.count
@@ -182,6 +202,7 @@ final class AppleBoundedHTTPClient: NSObject, URLSessionDataDelegate, @unchecked
         }
         lock.unlock()
 
+        if let update { update.0(update.1, update.2) }
         guard let completed else { return }
         dataTask.cancel()
         completed.0.continuation.resume(with: completed.1)
@@ -240,24 +261,27 @@ final class AppleBoundedHTTPClient: NSObject, URLSessionDataDelegate, @unchecked
     }
 }
 
-private final class AppleBoundedHTTPTaskBox: @unchecked Sendable {
-    private let lock = NSLock()
-    private var task: URLSessionTask?
-    private var isCancelled = false
+private final class AppleBoundedHTTPTaskBox: Sendable {
+    private struct State {
+        var task: URLSessionTask?
+        var isCancelled = false
+    }
+
+    private let state = Mutex(State())
 
     func assign(_ task: URLSessionTask) {
-        lock.lock()
-        self.task = task
-        let shouldCancel = isCancelled
-        lock.unlock()
+        let shouldCancel = state.withLock { state in
+            state.task = task
+            return state.isCancelled
+        }
         if shouldCancel { task.cancel() }
     }
 
     func cancel() {
-        lock.lock()
-        isCancelled = true
-        let task = task
-        lock.unlock()
+        let task = state.withLock { state in
+            state.isCancelled = true
+            return state.task
+        }
         task?.cancel()
     }
 }

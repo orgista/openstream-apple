@@ -1,0 +1,17 @@
+{
+  "meta": {
+    "id": "tt0000001",
+    "type": "movie",
+    "name": "Stub Movie One",
+    "poster": "https://fixture.example/poster/1.jpg",
+    "description": "Stub Movie One: a title served from the stub catalog.",
+    "releaseInfo": "2024",
+    "imdbRating": "7.0",
+    "genres": [
+      "Drama"
+    ],
+    "runtime": "90 min",
+    "year": "2024",
+    "background": "https://fixture.example/background/tt0000001.jpg"
+  }
+}

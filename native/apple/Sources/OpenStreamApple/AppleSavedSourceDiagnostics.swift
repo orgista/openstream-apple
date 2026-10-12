@@ -1,4 +1,3 @@
-#if DEBUG
 import Foundation
 
 public enum AppleSavedSourceDiagnosticProbeKind: String, Codable, CaseIterable, Sendable {
@@ -36,6 +35,7 @@ public enum AppleSavedSourceDiagnosticStage: String, Codable, CaseIterable, Send
     case playButton
 }
 
+#if DEBUG
 public enum AppleSavedSourceDiagnosticStatus: String, Codable, Sendable {
     case pass = "PASS"
     case fail = "FAIL"
@@ -85,7 +85,6 @@ public enum AppleSavedSourceDiagnosticsError: Error, Equatable, Sendable {
     case noResult
     case emptyStreamResponse
     case externalStream
-    case torrentStream
     case youtubeStream
     case malformedStream
     case unsupportedStage
@@ -173,14 +172,6 @@ public struct AppleSavedSourceDiagnosticsRunner: Sendable {
                 startedAt: startedAt,
                 status: .blocked,
                 errorCategory: "external-link"
-            )
-        } catch AppleSavedSourceDiagnosticsError.torrentStream {
-            return result(
-                kind: kind,
-                stage: stage,
-                startedAt: startedAt,
-                status: .blocked,
-                errorCategory: "torrent-service-required"
             )
         } catch AppleSavedSourceDiagnosticsError.youtubeStream {
             return result(
@@ -389,7 +380,9 @@ public struct AppleSavedSourceDiagnosticsProductionOperations: AppleSavedSourceD
     }
 
     private func runStreamingAddon(stage: AppleSavedSourceDiagnosticStage) async throws {
-        guard let source = sources.first(where: { $0.kind == .stremio && $0.isEnabled }) else {
+        #if OPENSTREAM_ADDONS
+
+        guard let source = sources.first(where: { $0.isAddon && $0.isEnabled }) else {
             throw AppleSavedSourceDiagnosticsError.noConfiguredSource
         }
         switch stage {
@@ -421,11 +414,15 @@ public struct AppleSavedSourceDiagnosticsProductionOperations: AppleSavedSourceD
         default:
             throw AppleSavedSourceDiagnosticsError.unsupportedStage
         }
+
+        #else
+        throw AppleSavedSourceDiagnosticsError.unsupportedStage
+        #endif
     }
 
     static func firstStreamSource(in sources: [AppleSource]) -> AppleSource? {
         sources.first {
-            $0.kind == .stremio
+            $0.isAddon
                 && $0.isEnabled
                 && $0.resources.contains { $0.caseInsensitiveCompare("stream") == .orderedSame }
         }
@@ -437,8 +434,6 @@ public struct AppleSavedSourceDiagnosticsProductionOperations: AppleSavedSourceD
             throw AppleSavedSourceDiagnosticsError.emptyStreamResponse
         }
         switch unsupported.reason {
-        case .torrent:
-            throw AppleSavedSourceDiagnosticsError.torrentStream
         case .externalLink:
             throw AppleSavedSourceDiagnosticsError.externalStream
         case .youtube:

@@ -1,6 +1,6 @@
 import Foundation
 
-/// A subtitle file offered by an installed add-on for the title being played.
+/// A subtitle file offered by a library folder or installed add-on.
 /// `displayName` is what the player's Subtitles section shows, so it already
 /// carries the language and the add-on it came from.
 public struct AppleExternalSubtitleTrack: Identifiable, Equatable, Sendable {
@@ -26,6 +26,14 @@ public struct AppleExternalSubtitleTrack: Identifiable, Equatable, Sendable {
             ),
             url: url
         )
+    }
+
+    /// Use the same language vocabulary as embedded tracks in the app menu.
+    func playbackTrack(id: Int) -> ApplePlaybackTrack {
+        let language = AppleSubtitleTrackFilter.normalized(languageCode)
+        return ApplePlaybackTrack(
+            id: id, title: displayName,
+            language: language.isEmpty || language == "und" ? nil : language)
     }
 
     static func normalizedLanguageCode(_ value: String) -> String {
@@ -89,6 +97,7 @@ public actor AppleExternalSubtitleService {
     public static let maximumTracks = 60
     public static let maximumSubtitleBytes = 4_000_000
 
+#if OPENSTREAM_ADDONS
     private let client: AppleStremioPlaybackClient
     private let timeout: Duration
     private var cache: [String: [AppleExternalSubtitleTrack]] = [:]
@@ -110,7 +119,7 @@ public actor AppleExternalSubtitleService {
             return Self.filtered(cached, preferredLanguages: preferredLanguages)
         }
         let candidates = sources.filter { source in
-            source.kind == .stremio && source.isEnabled
+            source.isAddon && source.isEnabled
                 && source.resources.contains { $0.caseInsensitiveCompare("subtitles") == .orderedSame }
         }
         guard !candidates.isEmpty else { return [] }
@@ -155,16 +164,24 @@ public actor AppleExternalSubtitleService {
         return Self.filtered(merged, preferredLanguages: preferredLanguages)
     }
 
+#else
+    public init() {}
+    public func tracks(for query: AppleExternalSubtitleQuery, sources: [AppleSource], preferredLanguages: [String] = []) async -> [AppleExternalSubtitleTrack] { [] }
+
+#endif
     /// Keeps only the tracks whose language is in `preferredLanguages`, in
     /// preference order first and add-on order within a language. An empty
-    /// preference list keeps everything, so a viewer who has cleared the list
-    /// still sees whatever the add-ons offer.
+    /// preference list means the device's primary language, the same rule
+    /// as the captions menu (`AppleSubtitleTrackFilter.effectiveLanguages`).
     static func filtered(
         _ tracks: [AppleExternalSubtitleTrack],
-        preferredLanguages: [String]
+        preferredLanguages: [String],
+        deviceLanguages: [String] = Locale.preferredLanguages
     ) -> [AppleExternalSubtitleTrack] {
-        let preferred = AppleSubtitleLanguages.sanitized(preferredLanguages)
-        guard !preferred.isEmpty else { return tracks }
+        var preferred = AppleSubtitleLanguages.sanitized(preferredLanguages)
+        if preferred.isEmpty {
+            preferred = AppleSubtitleLanguages.deviceDefaults(preferredLanguages: deviceLanguages)
+        }
         var result: [AppleExternalSubtitleTrack] = []
         for code in preferred {
             for track in tracks where AppleSubtitleLanguages.normalized(track.languageCode) == code {
@@ -174,6 +191,7 @@ public actor AppleExternalSubtitleService {
         return result
     }
 
+#if OPENSTREAM_ADDONS
     private static func fetch(
         client: AppleStremioPlaybackClient,
         source: AppleSource,
@@ -193,10 +211,28 @@ public actor AppleExternalSubtitleService {
             return first ?? []
         }
     }
+#endif
 
     /// Downloads one subtitle file with the shared bounded HTTP client. Used by
     /// the engine when the viewer picks an add-on subtitle track.
     public static let liveDataLoader: @Sendable (URL) async throws -> Data = { url in
+        if url.isFileURL {
+            return try await AppleLibrarySubtitleService.localData(url)
+        }
+        if url.scheme?.lowercased() == "smb" {
+            let credentials = try await AppleLibrarySubtitleService.credentials(for: url)
+            let client = AppleSMBClient()
+            do {
+                let data = try await client.read(url: url, credentials: credentials,
+                    range: 0..<UInt64(maximumSubtitleBytes + 1))
+                await client.closeAll()
+                guard data.count <= maximumSubtitleBytes else { throw AppleLibrarySourceError.unavailable }
+                return data
+            } catch {
+                await client.closeAll()
+                throw error
+            }
+        }
         var request = URLRequest(url: url)
         request.timeoutInterval = 15
         let (data, _) = try await AppleBoundedHTTPDataLoader.load(

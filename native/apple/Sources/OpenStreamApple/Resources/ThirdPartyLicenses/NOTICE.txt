@@ -1,21 +1,69 @@
 OpenStream third-party notices
 
+Every component below reaches a shipped OpenStream binary and is listed, with
+its full license text, on the in-app screen Settings > About > Third-Party
+Notices (Resources/ThirdPartyNotices/<name>.txt). All LGPL components are
+linked as dynamic frameworks, so they can be replaced by the user; the
+corresponding source and build inputs are reachable through the pinned
+package references in OpenStream's Package.resolved.
+
+AetherEngine 6.66.0
+Copyright (C) 2026 Vincent Herbst
+License: GNU Lesser General Public License v3.0 with the App Store / DRM
+Exception (an additional permission under GPL v3 section 7 allowing
+distribution through the Apple App Store and TestFlight). Full text:
+ThirdPartyNotices/AetherEngine.txt.
+Source: https://github.com/superuser404notfound/AetherEngine
+OpenStream's fork, where its own changes to the engine are published:
+https://github.com/cyberbanksy/AetherEngine
+
+FFmpeg (via FFmpegBuild 3.0.0)
+Copyright the FFmpeg developers (https://ffmpeg.org)
+libavcodec, libavformat, libavutil, libswresample, libswscale, libavfilter,
+built by FFmpegBuild WITHOUT --enable-gpl and WITHOUT --enable-version3, so
+the FFmpeg portions are plain LGPL-2.1-or-later. Full text:
+ThirdPartyNotices/FFmpeg.txt. The exact configure flags are in FFmpegBuild's
+build.sh.
+Source: https://github.com/superuser404notfound/FFmpegBuild
+FFmpegBuild's xcframeworks also contain these components, each with its own
+license text (FFmpegBuild/LICENSES):
+  dav1d        BSD-2-Clause                ThirdPartyNotices/dav1d.txt
+               https://code.videolan.org/videolan/dav1d
+  libzvbi      LGPL-2.0-or-later (conveyed under LGPL-2.1), ure.c under MIT
+               ThirdPartyNotices/FFmpeg.txt + ThirdPartyNotices/libzvbi.txt
+               The three GPL-2 files of libzvbi are removed and stubbed by
+               FFmpegBuild's build.sh (patch_zvbi), a published LGPL s.2
+               modification; no GPL code is compiled into the binaries.
+  zimg         WTFPL                       ThirdPartyNotices/zimg.txt
+               https://github.com/sekrit-twc/zimg
+
+libdovi (via LibDovi 2.1.0)
+Packaging and build scripts Copyright (c) 2026 Vincent Herbst, MIT.
+Dovi.xcframework contains the compiled dolby_vision Rust crate (libdovi) of
+the dovi_tool project, Copyright (c) quietvoid and contributors,
+dual-licensed MIT OR Apache-2.0 and used here under the MIT option. Full
+text: ThirdPartyNotices/libdovi.txt.
+Source: https://github.com/superuser404notfound/LibDovi
+        https://github.com/quietvoid/dovi_tool
+
 AMSMB2 4.0.3
 Copyright (c) Amin Sobhani
 Source: https://github.com/amosavian/AMSMB2/tree/4.0.3
-
 AMSMB2 wraps and statically links libsmb2. The resulting AMSMB2 framework is
-embedded dynamically by the OpenStream iOS, tvOS, and macOS app targets. The
-upstream project states that the combined library is distributed under the
-GNU Lesser General Public License, version 2.1. A verbatim copy of that license
-is bundled alongside this notice as AMSMB2-LGPL-2.1.txt.
+embedded dynamically by the OpenStream iOS, tvOS and macOS app targets (not
+visionOS). The upstream project states that the combined library is
+distributed under the GNU Lesser General Public License, version 2.1. A
+verbatim copy is bundled as AMSMB2-LGPL-2.1.txt and as
+ThirdPartyNotices/AMSMB2.txt.
 
 libsmb2
 Copyright belongs to the libsmb2 contributors identified in its source files.
 Source: https://github.com/sahlberg/libsmb2
-
 The libsmb2 client library is licensed under the GNU Lesser General Public
 License, version 2.1 or, at your option, any later version.
 
-The corresponding dependency source and build inputs are available through
-the pinned Swift package reference in OpenStream's Package.resolved file.
+Resolved but not shipped
+SMBClient 0.3.1 (Kishikawa Katsumi, MIT, https://github.com/kishikawakatsumi/SMBClient)
+is pinned in Package.resolved as a dependency of AetherEngine's separate
+AetherEngineSMB product, which OpenStream does not link; no SMBClient code is
+in an OpenStream binary.

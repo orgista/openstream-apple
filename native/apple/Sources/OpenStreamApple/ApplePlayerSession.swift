@@ -52,6 +52,7 @@ public final class ApplePlayerSession {
         playerItem = item
 
         let player = AVPlayer(playerItem: item)
+        if AppleTestAudioMute.isActive { player.isMuted = true }
         #if !os(visionOS)
         player.allowsExternalPlayback = requestHeaders.isEmpty && !Self.isLoopback(url)
         #endif

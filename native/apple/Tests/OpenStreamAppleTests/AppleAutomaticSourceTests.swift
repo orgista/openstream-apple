@@ -23,7 +23,8 @@ import Testing
     #expect(!history.contains(bad, now: now.addingTimeInterval(600)))
 }
 
-@MainActor @Test func localSourceStartsBeforeAddonResolutionAndFallsThroughOnFailure() async {
+@MainActor @Test(.timeLimit(.minutes(1)))
+func localSourceStartsBeforeAddonResolutionAndFallsThroughOnFailure() async throws {
     let engine = FakePlaybackEngine()
     engine.script([.playing])
     var addonLookups = 0
@@ -35,8 +36,10 @@ import Testing
     #expect(engine.loadedRequests == [local])
     #expect(addonLookups == 0)
     engine.emit(.failure(.init(kind: .network, message: "Local source disconnected")))
-    let deadline = ContinuousClock.now.advanced(by: .seconds(2))
-    while engine.loadedRequests.count < 2, ContinuousClock.now < deadline { await Task.yield() }
+    // The fallback load runs in the coordinator's own task. Wait for it
+    // without a wall-clock deadline (the time limit is the hang guard); a
+    // yield loop here also kept the main actor spinning for everyone else.
+    while engine.loadedRequests.count < 2 { try await Task.sleep(for: .milliseconds(10)) }
     #expect(engine.loadedRequests == [local, addon])
     #expect(addonLookups == 1)
     #expect(coordinator.fallbackNoticeGeneration == 1)

@@ -60,25 +60,16 @@ struct AppleTVDetailIconLabel: View {
     }
 }
 
-/// Lifts a card when focused. The ring is drawn by the card around its
-/// artwork only, so the name below never looks boxed.
-struct AppleTVDetailCardStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        StyledBody(configuration: configuration)
-    }
+/// Slides a card's name down while the card is focused, so the lifted art
+/// (`appleTVCardArtworkFocus`) never covers it, as the Apple TV app does.
+struct AppleTVCardCaptionFocus: ViewModifier {
+    @Environment(\.isFocused) private var isFocused
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private struct StyledBody: View {
-        @Environment(\.isFocused) private var isFocused
-        @Environment(\.accessibilityReduceMotion) private var reduceMotion
-        let configuration: ButtonStyleConfiguration
-
-        var body: some View {
-            configuration.label
-                .scaleEffect(reduceMotion ? 1 : (isFocused ? AppleTVDetailMetrics.focusScale : 1))
-                .shadow(color: .black.opacity(isFocused ? 0.5 : 0), radius: 24, y: 12)
-                .opacity(configuration.isPressed ? 0.8 : 1)
-                .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: isFocused)
-        }
+    func body(content: Content) -> some View {
+        content
+            .offset(y: isFocused ? AppleTVDetailMetrics.cardCaptionFocusDrop : 0)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: isFocused)
     }
 }
 
@@ -93,52 +84,62 @@ struct AppleTVBareButtonStyle: ButtonStyle {
     }
 }
 
-/// Rounded artwork with the focus ring the title page uses on every card.
-private struct AppleTVDetailFocusRing: ViewModifier {
-    @Environment(\.isFocused) private var isFocused
-
-    func body(content: Content) -> some View {
-        content
-            .clipShape(RoundedRectangle(cornerRadius: AppleTVDetailMetrics.cardCornerRadius, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: AppleTVDetailMetrics.cardCornerRadius, style: .continuous)
-                    .stroke(.white.opacity(isFocused ? 0.95 : 0), lineWidth: AppleTVDetailMetrics.focusRingWidth)
-            }
-    }
-}
-
 /// A 16:9 episode card, 400x225, with the title (Body 29) and the episode's
-/// number, date and runtime (Caption 1 25) under it.
+/// number, date and runtime (Caption 1 25) under it, and a tick on the still
+/// once watched. An episode with no still, or one that fails, shows the
+/// show's backdrop rather than a grey box (`AppleEpisodeStillPolicy`, as on
+/// the other platforms).
 struct AppleTVEpisodeCard: View {
     let episode: AppleStremioEpisode
     let subtitle: String
     let isSelected: Bool
+    let isWatched: Bool
+    let seriesBackdropURL: URL?
     let action: () -> Void
+
+    @State private var stillFailed = false
 
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 12) {
-                AppleRemoteImage(url: episode.thumbnailURL, placeholderSystemImage: "play.fill")
+                AppleRemoteImage(url: AppleEpisodeStillPolicy.url(still: episode.thumbnailURL, stillFailed: stillFailed,
+                                                                  seriesBackdrop: seriesBackdropURL),
+                                 placeholderSystemImage: "play.fill",
+                                 onFailure: { stillFailed = true })
+                    .onChange(of: episode.thumbnailURL) { stillFailed = false }
                     .frame(
                         width: AppleTVDetailMetrics.episodeCardSize.width,
                         height: AppleTVDetailMetrics.episodeCardSize.height
                     )
                     .background(Color.white.opacity(0.09))
-                    .modifier(AppleTVDetailFocusRing())
-                Text(episode.title.isEmpty ? episode.displayTitle : episode.title)
-                    .font(.system(size: AppleTVDetailMetrics.episodeTitleFontSize, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                Text(subtitle)
-                    .font(.system(size: AppleTVDetailMetrics.episodeSubtitleFontSize))
-                    .foregroundStyle(AppleDesignTokens.textSecondary)
-                    .lineLimit(1)
+                    .overlay(alignment: .bottomTrailing) {
+                        if isWatched {
+                            Image(systemName: "checkmark.circle.fill")
+                                .symbolRenderingMode(.palette)
+                                .foregroundStyle(.black, .white)
+                                .font(.system(size: 36))
+                                .padding(14)
+                        }
+                    }
+                    .appleTVCardArtworkFocus(cornerRadius: AppleTVDetailMetrics.cardCornerRadius)
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(episode.title.isEmpty ? episode.displayTitle : episode.title)
+                        .font(.system(size: AppleTVDetailMetrics.episodeTitleFontSize, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                    Text(subtitle)
+                        .font(.system(size: AppleTVDetailMetrics.episodeSubtitleFontSize))
+                        .foregroundStyle(AppleDesignTokens.textSecondary)
+                        .lineLimit(1)
+                }
+                .modifier(AppleTVCardCaptionFocus())
             }
             .frame(width: AppleTVDetailMetrics.episodeCardSize.width, alignment: .leading)
             .contentShape(Rectangle())
         }
-        .buttonStyle(AppleTVDetailCardStyle())
+        .buttonStyle(.borderless)
         .accessibilityLabel("Play \(episode.displayTitle)")
+        .accessibilityValue(isWatched ? "Watched" : "")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
@@ -158,7 +159,10 @@ struct AppleTVPosterCard: View {
         VStack(alignment: .leading, spacing: 12) {
             AppleCatalogArtwork(url: posterURL)
                 .frame(width: AppleTVDetailMetrics.posterSize.width, height: AppleTVDetailMetrics.posterSize.height)
-                .modifier(AppleTVDetailFocusRing())
+                .overlay(alignment: .topLeading) {
+                    if AppleDiscCatalog.shared.contains(item) { AppleDiscBadge() }
+                }
+                .appleTVCardArtworkFocus(cornerRadius: AppleTVDetailMetrics.cardCornerRadius)
                 .task(id: item.id) {
                     guard item.posterURL == nil else { return }
                     fallbackArtwork = await AppleArtworkResolver.shared.resolve(
@@ -174,6 +178,7 @@ struct AppleTVPosterCard: View {
                 .foregroundStyle(.white)
                 .lineLimit(1)
                 .frame(width: AppleTVDetailMetrics.posterSize.width, alignment: .leading)
+                .modifier(AppleTVCardCaptionFocus())
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)

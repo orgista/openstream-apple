@@ -1,5 +1,6 @@
 import CryptoKit
 import Foundation
+import Synchronization
 
 /// Produces opaque, deterministic persistence keys without writing a media
 /// URL, local path, or provider identifier into UserDefaults or cache names.
@@ -8,11 +9,24 @@ public enum ApplePlaybackIdentity {
     private static let hexadecimal = Array("0123456789abcdef".utf8)
 
     public static func storageKey(for mediaID: String) -> String? {
+        if let known = mediaIDKeys.withLock({ $0[mediaID] }) { return known }
         let normalized = mediaID.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalized.isEmpty else { return nil }
-        if isStorageKey(normalized) { return normalized }
-        return prefix + digest(for: normalized)
+        let key = isStorageKey(normalized) ? normalized : prefix + digest(for: normalized)
+        mediaIDKeys.withLock { keys in
+            if keys.count >= mediaIDKeyLimit { keys.removeAll(keepingCapacity: true) }
+            keys[mediaID] = key
+        }
+        return key
     }
+
+    /// Keys already worked out, by the media ID as given. A title page's
+    /// hero asks whether each episode is watched every time it draws, and
+    /// hashing all of a long series' episode IDs each time was most of that
+    /// (N34 trace); the answer never changes, so it is kept. Bounded: it
+    /// starts over rather than grow past `mediaIDKeyLimit`.
+    private static let mediaIDKeys = Mutex<[String: String]>([:])
+    static let mediaIDKeyLimit = 4_096
 
     public static func storageKey(for url: URL) -> String {
         let value = url.isFileURL

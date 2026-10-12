@@ -58,7 +58,8 @@ public actor AppleNetflixTop10Client {
         }
         var request = URLRequest(url: url)
         request.timeoutInterval = 45
-        request.setValue("Mozilla/5.0 (compatible; OpenStreamTop10/0.1; +https://github.com/cyberbanksy/OpenStream)", forHTTPHeaderField: "User-Agent")
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+        request.setValue("OpenStream/\(version) (+https://orgista.com/support)", forHTTPHeaderField: "User-Agent")
         request.setValue("https://www.netflix.com/tudum/top10/", forHTTPHeaderField: "Referer")
         
         do {

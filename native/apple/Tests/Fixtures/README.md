@@ -84,6 +84,12 @@ swift test --scratch-path "$HOME/Library/Caches/openstream-lane/.build" --filter
 
 ## Private samples
 
-Owner-provided samples live in `Tests/Fixtures/private/` (gitignored).  The
-generator prints which of `dv5-sample.mkv` and `atmos-joc-sample.mp4` are
-present; missing samples are skipped by the tests that use them.
+Owner-provided samples live in `Tests/Fixtures/private/`. The folder is
+gitignored since 2026-10-01 and untracked (the samples are commercial
+recordings and must never be committed; they were tracked before that date,
+so the old history still carries them until the public repository is created
+from a fresh history). Nothing in `swift test` or CI reads the folder: the
+generator (`make-fixtures.sh`) only prints which of `dv5-sample.mkv` and
+`atmos-joc-sample.mp4` are present, and `apple-review-verify.sh` excludes the
+folder from its copy. Any future test that uses a private sample must skip
+when the file is absent.

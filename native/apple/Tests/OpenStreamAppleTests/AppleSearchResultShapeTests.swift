@@ -96,4 +96,29 @@ struct AppleSearchResultShapeTests {
         #expect(subject.results.count == 1)
         #expect(subject.results.first?.kind == .channel)
     }
+
+    /// Apple TV regression 2026-10-01: the exact title sat under near
+    /// matches left over from the half-typed query until the add-ons answered.
+    @Test func rowsReRankForTheTypedQueryBeforeTheSearchAnswers() async {
+        let subject = store()
+        let typed = [record(.movie, "Saturday Night Life", year: 2006),
+                     record(.series, "Saturday Night Lights", year: 2026),
+                     record(.series, "Saturday Night Live", year: 1975)]
+        await subject.search(query: "saturday night li", sources: [], baseSections: []) { _ in typed }
+        #expect(subject.results.first?.title == "Saturday Night Life")
+
+        let (gate, release) = AsyncStream<Void>.makeStream()
+        let pending = Task { @MainActor in
+            await subject.search(query: "saturday night live", sources: [], baseSections: []) { _ in
+                for await _ in gate { break }
+                return typed
+            }
+        }
+        while !subject.isSearching { await Task.yield() }
+        #expect(subject.results.map(\.title) == ["Saturday Night Live"])
+        release.yield()
+        release.finish()
+        await pending.value
+        #expect(subject.results.first?.title == "Saturday Night Live")
+    }
 }

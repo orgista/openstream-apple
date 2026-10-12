@@ -7,7 +7,7 @@ import Foundation
 /// before a wordmark appears (the art itself draws in ~67 ms once the URL is
 /// known). A cache lets the home screen fetch, while the viewer is still
 /// deciding, what the content page would otherwise wait for.
-public actor AppleStremioPreviewAssetsCache {
+public actor AppleMediaPreviewAssetsCache {
     public static let shared = AppleStremioPreviewAssetsCache()
 
     public struct Entry: Sendable, Equatable {
@@ -128,4 +128,64 @@ public enum AppleMetadataPrefetcher: Sendable {
             index += maximumConcurrent
         }
     }
+
+    /// How long a poster must keep focus before its title page is fetched
+    /// ahead of a press. Shorter, and every poster a swipe passes over would
+    /// cost add-on requests.
+    public static let focusDwell: Duration = .milliseconds(500)
+
+    /// Only a canonical `tt…` id can be warmed: the page asks every request
+    /// with that id, and a catalog-specific id would first need a lookup the
+    /// page does not cache.
+    public static func detailTarget(type: String, mediaID: String) -> Title? {
+        guard ["movie", "series"].contains(type.lowercased()),
+              let canonical = ApplePlayGatingPolicy.canonicalMediaID(mediaID) else { return nil }
+        return Title(type: type.lowercased(), mediaID: canonical)
+    }
+
+    /// Fetches what a title page asks for on opening — preview art, details
+    /// and, for a series, the episode list — so the page reads them from the
+    /// caches. Best-effort; a failure just leaves the page to fetch.
+    public static func warmDetail(
+        _ title: Title,
+        sources: [AppleSource],
+        preferredSourceID: AppleSource.ID? = nil,
+        configuration: AppleTMDBConfiguration? = nil,
+        client: AppleStremioMetadataClient = AppleStremioMetadataClient(),
+        resolver: AppleMetadataResolver = AppleMetadataResolver()
+    ) async {
+        #if DEBUG
+        AppleLaunchClock.mark("meta.focus.\(title.mediaID)")
+        #endif
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask {
+                _ = await client.previewAssets(
+                    sources: sources,
+                    preferredSourceID: preferredSourceID,
+                    type: title.type,
+                    mediaID: title.mediaID
+                )
+            }
+            group.addTask {
+                _ = try? await resolver.resolve(
+                    sources: sources,
+                    preferredSourceID: preferredSourceID,
+                    type: title.type,
+                    mediaID: title.mediaID,
+                    configuration: configuration
+                )
+            }
+            if title.type == "series" {
+                group.addTask {
+                    _ = try? await client.episodes(
+                        sources: sources,
+                        preferredSourceID: preferredSourceID,
+                        mediaID: title.mediaID
+                    )
+                }
+            }
+        }
+    }
 }
+
+public typealias AppleStremioPreviewAssetsCache = AppleMediaPreviewAssetsCache

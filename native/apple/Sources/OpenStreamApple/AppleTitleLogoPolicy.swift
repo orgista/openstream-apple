@@ -18,7 +18,19 @@ enum AppleTitleLogoPolicy {
     /// Owner 2026-09-14: "load the wordmark only if failed for more than 3
     /// secs then load plain text" — a second was not long enough for a slow
     /// wordmark, so the title snapped to text and then back to the logo.
-    static let loadingGrace: TimeInterval = 3.0
+    ///
+    /// N62 (owner): five seconds, as on Discover's hero
+    /// (`AppleHeroTitlePolicy.loadingGrace`), and once the text has stood in
+    /// a wordmark that lands later does not replace it (`keepsLoadResult`).
+    static let loadingGrace: TimeInterval = 5.0
+
+    /// Whether a wordmark's load result is recorded while `shown` is on
+    /// screen. A failure always is; a success is not once the text title
+    /// has taken the wordmark's place, so the title never swaps under the
+    /// viewer.
+    static func keepsLoadResult(_ loaded: Bool, shown: AppleTitleLogoPresentation) -> Bool {
+        !loaded || shown != .text
+    }
 
     /// - Parameters:
     ///   - validated: `nil` while validation is in flight, `false` when there is

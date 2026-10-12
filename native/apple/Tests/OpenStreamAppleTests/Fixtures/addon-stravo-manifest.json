@@ -1,0 +1,588 @@
+{
+ "id": "org.fayallc.stravo1",
+ "version": "2.1.2",
+ "name": "Stravo",
+ "description": "For movies and your favorite TV shows - with subtitles",
+ "logo": "https://fixture.example/stravo/1/img/logo.png",
+ "resources": [
+  {
+   "name": "meta",
+   "types": [
+    "movie",
+    "series"
+   ],
+   "idPrefixes": [
+    "mx"
+   ]
+  },
+  {
+   "name": "subtitles",
+   "types": [
+    "movie",
+    "series"
+   ],
+   "idPrefixes": [
+    "tt",
+    "mx"
+   ]
+  },
+  {
+   "name": "stream",
+   "types": [
+    "movie",
+    "series"
+   ],
+   "idPrefixes": [
+    "tt",
+    "mx"
+   ]
+  },
+  "catalog"
+ ],
+ "types": [
+  "movie",
+  "series"
+ ],
+ "idPrefixes": [
+  "tt",
+  "mx"
+ ],
+ "catalogs": [
+  {
+   "id": "homepage_1232643093049001320",
+   "name": "Popular Series",
+   "type": "series",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_997144265920760504",
+   "name": "Popular Movie",
+   "type": "movie",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_8216283712045280",
+   "name": "Nollywood Movie",
+   "type": "movie",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_3130672938110833528",
+   "name": "Adult Animation",
+   "type": "series",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_7219449993227633120",
+   "name": "Epic Fantasy",
+   "type": "series",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_8785384881686725944",
+   "name": "Sitcom",
+   "type": "series",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_1746633591129342248",
+   "name": "Teen Romance",
+   "type": "series",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_7317586330186645624",
+   "name": "Superhero Series",
+   "type": "series",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_8892055635953697752",
+   "name": "BL Story",
+   "type": "series",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_3741804521853438336",
+   "name": "Bet+",
+   "type": "series",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_6978603205429526968",
+   "name": "Action&Thriller",
+   "type": "series",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_5475136475249497544",
+   "name": "Gangster",
+   "type": "series",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_6934224112055632896",
+   "name": "Teen Fantasy",
+   "type": "series",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_4380734070238626200",
+   "name": "K-Drama",
+   "type": "series",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_173752404280836544",
+   "name": "C-Drama",
+   "type": "series",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_62133389738001440",
+   "name": "Anime[English Dubbed]",
+   "type": "series",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_7269188813871016696",
+   "name": "Action Movies",
+   "type": "movie",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_8614980535946986176",
+   "name": "Horror Movies",
+   "type": "movie",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_7844144696607102784",
+   "name": "🔥Hot Short TV",
+   "type": "series",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_8505361996374835640",
+   "name": "Must-watch Black Shows",
+   "type": "series",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "homepage_9139789616411735224",
+   "name": "💓Romance 💓",
+   "type": "movie",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "trending",
+   "name": "Most Trending",
+   "type": "movie",
+   "extraSupported": [
+    "skip"
+   ]
+  },
+  {
+   "id": "movies_filter",
+   "name": "Movies Filter",
+   "type": "movie",
+   "extraSupported": [
+    "genre",
+    "country",
+    "year",
+    "language",
+    "sort",
+    "skip"
+   ],
+   "extraRequired": [],
+   "extra": [
+    {
+     "name": "genre",
+     "options": [
+      "All",
+      "Action",
+      "Adventure",
+      "Animation",
+      "Biography",
+      "Comedy",
+      "Crime",
+      "Documentary",
+      "Drama",
+      "Family",
+      "Fantasy",
+      "Film-Noir",
+      "Game-Show",
+      "History",
+      "Horror",
+      "Music",
+      "Musical",
+      "Mystery",
+      "News",
+      "Reality-TV",
+      "Romance",
+      "Sci-Fi",
+      "Short",
+      "Sport",
+      "Talk-Show",
+      "Thriller",
+      "War",
+      "Western",
+      "Other"
+     ],
+     "isRequired": false
+    },
+    {
+     "name": "country",
+     "options": [
+      "All",
+      "United States",
+      "United Kingdom",
+      "Korea",
+      "Japan",
+      "Bangladesh",
+      "China",
+      "Egypt",
+      "France",
+      "Germany",
+      "India",
+      "Indonesia",
+      "Iraq",
+      "Italy",
+      "Ivory Coast",
+      "Kenya",
+      "Lebanon",
+      "Mexico",
+      "Morocco",
+      "Nigeria",
+      "Pakistan",
+      "Philippines",
+      "Russia",
+      "Saudi Arabia",
+      "South Africa",
+      "Spain",
+      "Syria",
+      "Thailand",
+      "Malaysia",
+      "Turkey",
+      "Other"
+     ],
+     "isRequired": false
+    },
+    {
+     "name": "year",
+     "options": [
+      "All",
+      "2026",
+      "2025",
+      "2024",
+      "2023",
+      "2022",
+      "2021",
+      "2020",
+      "2010s",
+      "2000s",
+      "1990s",
+      "1980s",
+      "Other"
+     ],
+     "isRequired": false
+    },
+    {
+     "name": "language",
+     "options": [
+      "All",
+      "English dub",
+      "French dub",
+      "Hindi dub",
+      "Bengali dub",
+      "Urdu dub",
+      "Punjabi dub",
+      "Tamil dub",
+      "Telugu dub",
+      "Malayalam dub",
+      "Kannada dub",
+      "Arabic dub",
+      "Arabic sub",
+      "Tagalog dub",
+      "Indonesian dub",
+      "Russian dub",
+      "Kurdish sub",
+      "Spanish dub",
+      "Spanish sub",
+      "SpanishLatam dub"
+     ],
+     "isRequired": false
+    },
+    {
+     "name": "sort",
+     "options": [
+      "ForYou",
+      "Hottest",
+      "Latest",
+      "Rating"
+     ],
+     "isRequired": false
+    },
+    {
+     "name": "skip",
+     "isRequired": false
+    }
+   ]
+  },
+  {
+   "id": "animes_filter",
+   "name": "Anime Filter",
+   "type": "series",
+   "extraSupported": [
+    "country",
+    "year",
+    "sort",
+    "skip"
+   ],
+   "extraRequired": [],
+   "extra": [
+    {
+     "name": "country",
+     "options": [
+      "All",
+      "United States",
+      "United Kingdom",
+      "France",
+      "Japan",
+      "China",
+      "Korea",
+      "Other"
+     ],
+     "isRequired": false
+    },
+    {
+     "name": "year",
+     "options": [
+      "All",
+      "2026",
+      "2025",
+      "2024",
+      "2023",
+      "2022",
+      "2021",
+      "2020",
+      "2010s",
+      "2000s",
+      "1990s",
+      "1980s",
+      "Other"
+     ],
+     "isRequired": false
+    },
+    {
+     "name": "sort",
+     "options": [
+      "ForYou",
+      "Hottest",
+      "Latest",
+      "Rating"
+     ],
+     "isRequired": false
+    },
+    {
+     "name": "skip",
+     "isRequired": false
+    }
+   ]
+  },
+  {
+   "id": "series_filter",
+   "name": "Series Filter",
+   "type": "series",
+   "extraSupported": [
+    "genre",
+    "country",
+    "year",
+    "language",
+    "sort",
+    "skip"
+   ],
+   "extraRequired": [],
+   "extra": [
+    {
+     "name": "genre",
+     "options": [
+      "All",
+      "Action",
+      "Adventure",
+      "Animation",
+      "Biography",
+      "Comedy",
+      "Crime",
+      "Documentary",
+      "Drama",
+      "Family",
+      "Fantasy",
+      "Film-Noir",
+      "Game-Show",
+      "History",
+      "Horror",
+      "Music",
+      "Musical",
+      "Mystery",
+      "News",
+      "Reality-TV",
+      "Romance",
+      "Sci-Fi",
+      "Short",
+      "Sport",
+      "Talk-Show",
+      "Thriller",
+      "War",
+      "Western",
+      "Other"
+     ],
+     "isRequired": false
+    },
+    {
+     "name": "country",
+     "options": [
+      "All",
+      "United States",
+      "United Kingdom",
+      "Korea",
+      "Japan",
+      "Bangladesh",
+      "China",
+      "Egypt",
+      "France",
+      "Germany",
+      "India",
+      "Indonesia",
+      "Iraq",
+      "Italy",
+      "Ivory Coast",
+      "Kenya",
+      "Lebanon",
+      "Mexico",
+      "Morocco",
+      "Nigeria",
+      "Pakistan",
+      "Philippines",
+      "Russia",
+      "Saudi Arabia",
+      "South Africa",
+      "Spain",
+      "Syria",
+      "Thailand",
+      "Malaysia",
+      "Turkey",
+      "Other"
+     ],
+     "isRequired": false
+    },
+    {
+     "name": "year",
+     "options": [
+      "All",
+      "2026",
+      "2025",
+      "2024",
+      "2023",
+      "2022",
+      "2021",
+      "2020",
+      "2010s",
+      "2000s",
+      "1990s",
+      "1980s",
+      "Other"
+     ],
+     "isRequired": false
+    },
+    {
+     "name": "language",
+     "options": [
+      "All",
+      "English dub",
+      "French dub",
+      "Hindi dub",
+      "Bengali dub",
+      "Urdu dub",
+      "Punjabi dub",
+      "Tamil dub",
+      "Telugu dub",
+      "Malayalam dub",
+      "Kannada dub",
+      "Arabic dub",
+      "Arabic sub",
+      "Tagalog dub",
+      "Indonesian dub",
+      "Russian dub",
+      "Kurdish sub",
+      "Spanish dub",
+      "Spanish sub",
+      "SpanishLatam dub"
+     ],
+     "isRequired": false
+    },
+    {
+     "name": "sort",
+     "options": [
+      "ForYou",
+      "Hottest",
+      "Latest",
+      "Rating"
+     ],
+     "isRequired": false
+    },
+    {
+     "name": "skip",
+     "isRequired": false
+    }
+   ]
+  }
+ ],
+ "behaviorHints": {
+  "configurable": true,
+  "p2p": false,
+  "configurationRequired": false
+ }
+}

@@ -1,0 +1,278 @@
+{
+ "meta": {
+  "imdb_id": "tt33344252",
+  "name": "Blood Legacy",
+  "type": "series",
+  "country": "South Africa",
+  "description": "After years of estrangement, Khanyi Adesina returns home to fight for her family's business empire as it threatens to collapse under corruption.",
+  "imdbRating": 6.2,
+  "released": null,
+  "dvdRelease": null,
+  "slug": "series/blood-legacy-33344252",
+  "year": null,
+  "runtime": null,
+  "status": "Continuing",
+  "tvdb_id": null,
+  "moviedb_id": 270364,
+  "poster": "https://fixture.example/stravo/poster/small/tt33344252/img",
+  "background": "https://fixture.example/stravo/background/medium/tt33344252/img",
+  "logo": "https://fixture.example/stravo/logo/medium/tt33344252/img",
+  "awards": null,
+  "popularity": null,
+  "releaseInfo": "2024–",
+  "cast": [],
+  "genre": [],
+  "genres": [
+   "Drama"
+  ],
+  "writer": [],
+  "director": [],
+  "popularities": null,
+  "trailers": [
+   {
+    "type": "Trailer",
+    "source": "0-TBHiOReng"
+   }
+  ],
+  "videos": [
+   {
+    "id": "tt33344252:1:1",
+    "title": "The Call",
+    "number": 1,
+    "season": 1,
+    "episode": 1,
+    "overview": "When her estranged father asks her to come home, journalist Khanyi learns he is planning to make her CEO of the family business.",
+    "released": "2024-09-20T00:00:00.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/1/w780.jpg",
+    "moviedb_id": 5576371
+   },
+   {
+    "id": "tt33344252:1:2",
+    "title": "The Pruning",
+    "number": 2,
+    "season": 1,
+    "episode": 2,
+    "overview": "Khanyi weighs her father's offer after a confrontation with her brother Mandla, but a death in the family changes everything.",
+    "released": "2024-09-20T00:00:01.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/2/w780.jpg",
+    "moviedb_id": 5609167
+   },
+   {
+    "id": "tt33344252:1:3",
+    "title": "The Wake",
+    "number": 3,
+    "season": 1,
+    "episode": 3,
+    "overview": "The Ndlovu siblings mourn their loss while trying to hide the details of what happened from family members, friends and the authorities.",
+    "released": "2024-09-20T00:00:02.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/3/w780.jpg",
+    "moviedb_id": 5609168
+   },
+   {
+    "id": "tt33344252:1:4",
+    "title": "The Will",
+    "number": 4,
+    "season": 1,
+    "episode": 4,
+    "overview": "As the family gathers for the funeral, Khanyi learns who she's up against. Her mother Madlamini is left with a difficult choice.",
+    "released": "2024-09-20T00:00:03.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/4/w780.jpg",
+    "moviedb_id": 5609169
+   },
+   {
+    "id": "tt33344252:1:5",
+    "title": "Descent",
+    "number": 5,
+    "season": 1,
+    "episode": 5,
+    "overview": "A violent attack on the company forces Khanyi to hold her own against a powerful gang. Gabisile grooms Siya to take over as CEO.",
+    "released": "2024-09-20T00:00:04.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/5/w780.jpg",
+    "moviedb_id": 5609170
+   },
+   {
+    "id": "tt33344252:1:6",
+    "title": "The Choice",
+    "number": 6,
+    "season": 1,
+    "episode": 6,
+    "overview": "Thuli is on a mission to buy a house. Khanyi makes a bet with Mandla to resolve the drivers' strike and get sugarcane deliveries back on track.",
+    "released": "2024-09-20T00:00:05.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/6/w780.jpg",
+    "moviedb_id": 5609171
+   },
+   {
+    "id": "tt33344252:1:7",
+    "title": "The Coronation",
+    "number": 7,
+    "season": 1,
+    "episode": 7,
+    "overview": "Khanyi's first day as CEO of Spear is immediately undermined by Mandla. At her boarding school, Amahle sees Nido's true colors.",
+    "released": "2024-09-20T00:00:06.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/7/w780.jpg",
+    "moviedb_id": 5609172
+   },
+   {
+    "id": "tt33344252:1:8",
+    "title": "Filthy Rich",
+    "number": 8,
+    "season": 1,
+    "episode": 8,
+    "overview": "Feeling left behind, Akin considers an offer to dig into the Ndlovu family. Mandla hatches a plan to bring down Khanyi — and Spear along with her.",
+    "released": "2024-09-20T00:00:07.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/8/w780.jpg",
+    "moviedb_id": 5609173
+   },
+   {
+    "id": "tt33344252:1:9",
+    "title": "The Anniversary",
+    "number": 9,
+    "season": 1,
+    "episode": 9,
+    "overview": "Following an act of sabotage, Khanyi reaches out to Zakhele for help with Spear's 25th anniversary celebrations. Siya is torn between love and duty.",
+    "released": "2024-09-20T00:00:08.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/9/w780.jpg",
+    "moviedb_id": 5609174
+   },
+   {
+    "id": "tt33344252:1:10",
+    "title": "All that Glitters",
+    "number": 10,
+    "season": 1,
+    "episode": 10,
+    "overview": "Tensions rise at the anniversary party as the Ndlovu siblings continue to snipe at each other. Amahle catches Nido in a compromising position.",
+    "released": "2024-09-20T00:00:09.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/10/w780.jpg",
+    "moviedb_id": 5609175
+   },
+   {
+    "id": "tt33344252:1:11",
+    "title": "The Lion's Den",
+    "number": 11,
+    "season": 1,
+    "episode": 11,
+    "overview": "Khanyi is swept up in the public backlash against Nido. Mandla attempts to strike a deal with the A6, but soon finds himself out of his depth.",
+    "released": "2024-09-20T00:00:10.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/11/w780.jpg",
+    "moviedb_id": 5609176
+   },
+   {
+    "id": "tt33344252:1:12",
+    "title": "A Deal with the Devil",
+    "number": 12,
+    "season": 1,
+    "episode": 12,
+    "overview": "Tired of being sidelined, Lungelo breaks things off with Siya. Amahle publicly tells the truth of what she witnessed. Akin's editor pressures him.",
+    "released": "2024-09-20T00:00:11.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/12/w780.jpg",
+    "moviedb_id": 5609177
+   },
+   {
+    "id": "tt33344252:1:13",
+    "title": "Fight or Flight",
+    "number": 13,
+    "season": 1,
+    "episode": 13,
+    "overview": "With Spear mired in scandal and debt, Khanyi organizes an asset sale that leaves Siya in a tough spot. Amahle's return to school is met with derision.",
+    "released": "2024-09-20T00:00:12.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/13/w780.jpg",
+    "moviedb_id": 5609178
+   },
+   {
+    "id": "tt33344252:1:14",
+    "title": "Crossroads",
+    "number": 14,
+    "season": 1,
+    "episode": 14,
+    "overview": "As the sugarcane fields burn, Khanyi is left in the hot seat. Siya sends Nido abroad. The A6 ropes Mandla into a political assassination.",
+    "released": "2024-09-20T00:00:13.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/14/w780.jpg",
+    "moviedb_id": 5609179
+   },
+   {
+    "id": "tt33344252:1:15",
+    "title": "Coup d'état",
+    "number": 15,
+    "season": 1,
+    "episode": 15,
+    "overview": "Thuli learns the truth of her mother's suicide. Akin confronts Khanyi about her suspected infidelity. Gabisile issues Siya an ultimatum.",
+    "released": "2024-09-20T00:00:14.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/15/w780.jpg",
+    "moviedb_id": 5609180
+   },
+   {
+    "id": "tt33344252:1:16",
+    "title": "Revelations",
+    "number": 16,
+    "season": 1,
+    "episode": 16,
+    "overview": "With Dumi's help, Khanyi gets one step closer to finding her father's killer. Mandla is forced to take the blame for the assassination attempt.",
+    "released": "2024-09-20T00:00:15.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/16/w780.jpg",
+    "moviedb_id": 5609181
+   },
+   {
+    "id": "tt33344252:1:17",
+    "title": "The Time for Truth",
+    "number": 17,
+    "season": 1,
+    "episode": 17,
+    "overview": "In the hope that Nido will come forward with the truth, Siya reveals his own. Zakhele scolds Mandla over his reckless behavior.",
+    "released": "2024-09-20T00:00:16.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/17/w780.jpg",
+    "moviedb_id": 5609182
+   },
+   {
+    "id": "tt33344252:1:18",
+    "title": "Judas",
+    "number": 18,
+    "season": 1,
+    "episode": 18,
+    "overview": "Retracing her father's last steps, Khanyi finally discovers who was responsible for his death. Gabisile drives a wedge between Siya and Nido.",
+    "released": "2024-09-20T00:00:17.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/18/w780.jpg",
+    "moviedb_id": 5609183
+   },
+   {
+    "id": "tt33344252:1:19",
+    "title": "House of Cards",
+    "number": 19,
+    "season": 1,
+    "episode": 19,
+    "overview": "With the police and the A6 closing in, Mandla tries to make amends. Khanyi leaks incriminating documents to the press, which has deadly consequences.",
+    "released": "2024-09-20T00:00:18.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/19/w780.jpg",
+    "moviedb_id": 5609184
+   },
+   {
+    "id": "tt33344252:1:20",
+    "title": "The Harvest",
+    "number": 20,
+    "season": 1,
+    "episode": 20,
+    "overview": "With the future of Spear and the Ndlovu family hanging in the balance, Khanyi corners her father's killer — who has one card left to play.",
+    "released": "2024-09-20T00:00:19.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/1/20/w780.jpg",
+    "moviedb_id": 5609186
+   },
+   {
+    "id": "tt33344252:2:1",
+    "title": "Episode 1",
+    "number": 1,
+    "season": 2,
+    "episode": 1,
+    "overview": "",
+    "released": "2026-09-25T00:00:00.000Z",
+    "thumbnail": "https://fixture.example/stravo/tt33344252/2/1/w780.jpg",
+    "moviedb_id": 7757057
+   }
+  ],
+  "trailerStreams": [],
+  "links": [],
+  "behaviorHints": {
+   "defaultVideoId": null,
+   "hasScheduledVideos": true
+  },
+  "id": "tt33344252"
+ }
+}

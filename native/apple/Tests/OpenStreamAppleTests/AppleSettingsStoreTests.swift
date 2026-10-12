@@ -1,5 +1,11 @@
 import Foundation
+import MediaAccessibility
+import Observation
+import SwiftUI
 import Testing
+#if os(iOS) || os(tvOS)
+import UIKit
+#endif
 @testable import OpenStreamApple
 
 /// A no-op credential store so settings-store tests never touch the keychain.
@@ -18,21 +24,34 @@ private func makeIsolatedDefaults() -> UserDefaults {
     return defaults
 }
 
-/// The persisted key `AppleSettingsStore.playbackEngine` reads and writes, so
-/// tests can write an invalid raw value directly and assert the store maps it
-/// back to the default.
+/// The old Player picker's key (and the DEBUG launch argument's name).
 private let playbackEngineKey = "openstream.playback.engine"
 
+/// Owner decision 2026-10-01: no Player choice; a "native" the old picker
+/// saved is ignored and cleared, and never backed up.
 @MainActor
 @Test
-func playbackEngineRoundTripsThroughUserDefaults() {
+func aSavedNativeChoiceIsIgnoredAndCleared() {
     let defaults = makeIsolatedDefaults()
+    defaults.set("native", forKey: playbackEngineKey)
     let store = AppleSettingsStore(defaults: defaults, keychain: StubCredentialStore())
+    #expect(store.playbackEngine == .openStream)
+    #expect(defaults.string(forKey: playbackEngineKey) == nil)
     store.playbackEngine = .native
+    #expect(defaults.string(forKey: playbackEngineKey) == nil)
+    #expect(!AppleSettingsStore.configurationKeys.contains(playbackEngineKey))
+}
 
-    let reread = AppleSettingsStore(defaults: defaults, keychain: StubCredentialStore())
-    #expect(reread.playbackEngine == .native)
-    #expect(defaults.string(forKey: playbackEngineKey) == "native")
+@Test
+func releaseIgnoresTheNativeLaunchOverride() {
+    let args = ["OpenStream", "-openstream.playback.engine", "native"]
+    #expect(ApplePlaybackEngineKind.resolved(launchArguments: args, isDebugBuild: false) == .openStream)
+    #expect(ApplePlaybackEngineKind.resolved(launchArguments: args, isDebugBuild: true) == .native)
+    #expect(ApplePlaybackEngineKind.resolved(launchArguments: ["OpenStream"], isDebugBuild: true) == .openStream)
+    #expect(ApplePlaybackEngineKind.resolved(launchArguments: ["-openstream.playback.engine"], isDebugBuild: true)
+        == .openStream)
+    #expect(ApplePlaybackEngineKind.resolved(launchArguments: ["-openstream.playback.engine", "bogus"],
+        isDebugBuild: true) == .openStream)
 }
 
 @MainActor
@@ -122,12 +141,118 @@ func captionsPreferenceDefaultsToOnWhenUnset() {
 @Test
 func captionsPreferenceOffSurvivesAReread() {
     let defaults = makeIsolatedDefaults()
-    let store = AppleSettingsStore(defaults: defaults, keychain: StubCredentialStore())
+    let store = AppleSettingsStore(defaults: defaults, keychain: StubCredentialStore(), systemCaptionsEnabled: { false })
     store.captionsPreference = .off
 
-    let reread = AppleSettingsStore(defaults: defaults, keychain: StubCredentialStore())
+    let reread = AppleSettingsStore(defaults: defaults, keychain: StubCredentialStore(), systemCaptionsEnabled: { false })
     #expect(reread.captionsPreference == .off)
     #expect(reread.captionsAutoOn == false)
+}
+
+@MainActor
+@Test
+func systemCaptionsEnableWithoutOverwritingTheSavedAppChoice() throws {
+    let name = "openstream.tests.caption-system.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: name))
+    defer { defaults.removePersistentDomain(forName: name) }
+    defaults.set("off", forKey: captionsPreferenceKey)
+    var systemOn = true
+    let store = AppleSettingsStore(defaults: defaults, keychain: StubCredentialStore(),
+                                   systemCaptionsEnabled: { systemOn })
+    #expect(store.captionsPreference == .always)
+    #expect(defaults.string(forKey: captionsPreferenceKey) == "off")
+    systemOn = false
+    #expect(store.captionsPreference == .off)
+    store.captionsPreference = .english
+    #expect(store.captionsPreference == .english)
+    #expect(defaults.string(forKey: captionsPreferenceKey) == "english")
+}
+
+/// Exercise the same projected binding used by the Settings picker, including
+/// choosing Off while the system continues to enable captions for playback.
+@MainActor
+@Test(arguments: AppleCaptionsPreference.allCases)
+func captionsPickerKeepsTheStoredChoiceWithSystemCaptionsOn(choice: AppleCaptionsPreference) throws {
+    let name = "openstream.tests.caption-picker.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: name))
+    defer { defaults.removePersistentDomain(forName: name) }
+    @Bindable var store = AppleSettingsStore(
+        defaults: defaults, keychain: StubCredentialStore(),
+        systemCaptionsEnabled: { true }, captionNotificationCenter: NotificationCenter()
+    )
+    let selection = $store.storedCaptionsPreference
+    selection.wrappedValue = choice
+
+    #expect(selection.wrappedValue == choice)
+    #expect(store.captionsPreference == (choice == .off ? .always : choice))
+    #expect(defaults.string(forKey: captionsPreferenceKey) == choice.rawValue)
+    let reread = AppleSettingsStore(
+        defaults: defaults, keychain: StubCredentialStore(),
+        systemCaptionsEnabled: { true }, captionNotificationCenter: NotificationCenter()
+    )
+    #expect(reread.storedCaptionsPreference == choice)
+}
+
+private var systemCaptionNotificationNames: [Notification.Name] {
+    var names = [Notification.Name(kMACaptionAppearanceSettingsChangedNotification as String)]
+    #if os(iOS) || os(tvOS)
+    names.append(UIAccessibility.closedCaptioningStatusDidChangeNotification)
+    #endif
+    return names
+}
+
+@MainActor
+@Test(arguments: systemCaptionNotificationNames)
+func systemCaptionNotificationInvalidatesEffectivePreference(notification: Notification.Name) async throws {
+    let name = "openstream.tests.caption-observation.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: name))
+    defer { defaults.removePersistentDomain(forName: name) }
+    defaults.set("off", forKey: captionsPreferenceKey)
+    let center = NotificationCenter()
+    var systemOn = false
+    let store = AppleSettingsStore(
+        defaults: defaults, keychain: StubCredentialStore(),
+        systemCaptionsEnabled: { systemOn }, captionNotificationCenter: center
+    )
+
+    await confirmation("system changes leave the stored choice alone", expectedCount: 0) { storedChanged in
+        withObservationTracking {
+            _ = store.storedCaptionsPreference
+        } onChange: {
+            storedChanged()
+        }
+        for enabled in [true, false] {
+            await confirmation("effective preference reader is invalidated") { changed in
+                let before = withObservationTracking {
+                    store.captionsPreference
+                } onChange: {
+                    changed()
+                }
+                #expect(before == (enabled ? .off : .always))
+                systemOn = enabled
+                center.post(name: notification, object: nil)
+                #expect(store.captionsPreference == (enabled ? .always : .off))
+                #expect(store.storedCaptionsPreference == .off)
+                #expect(defaults.string(forKey: captionsPreferenceKey) == "off")
+            }
+        }
+    }
+}
+
+@MainActor
+@Test
+func captionNotificationsDoNotRetainSettingsStore() {
+    let center = NotificationCenter()
+    var store: AppleSettingsStore? = AppleSettingsStore(
+        defaults: makeIsolatedDefaults(), keychain: StubCredentialStore(),
+        systemCaptionsEnabled: { false }, captionNotificationCenter: center
+    )
+    weak let releasedStore = store
+    store = nil
+    #expect(releasedStore == nil)
+    for name in systemCaptionNotificationNames {
+        center.post(name: name, object: nil)
+    }
 }
 
 @MainActor
@@ -258,4 +383,71 @@ func captionsAutoOnMigratesToAlways() {
     #expect(reread.autoMuteTrailer)
     reread.autoPlayTrailer = true
     #expect(reread.autoMuteTrailer)
+}
+
+#if DEBUG
+/// Full test 2026-09-30: the dev seed applied the TMDB key and left Use
+/// Metadata APIs off.
+@MainActor
+@Test
+func devSeedTMDBKeyTurnsMetadataOn() {
+    let store = AppleSettingsStore(defaults: makeIsolatedDefaults(), keychain: StubCredentialStore())
+    #expect(!store.metadataEnabled)
+    AppleDevSourcesImport.apply(AppleDevSettings(tmdbAPIKey: "fixture-key"), to: store)
+    #expect(store.metadataEnabled)
+    #expect(store.tmdbAPIKey == "fixture-key")
+}
+#endif
+
+@MainActor
+@Test func packageDefaultTracksPlaylistWithoutSavingAnExplicitChoice() throws {
+    let defaults = makeIsolatedDefaults()
+    let store = AppleSettingsStore(defaults: defaults, keychain: StubCredentialStore())
+    let entries = Array(try AppleChannelLineupPresets.completeUS().prefix(20))
+    let channels = entries.map {
+        AppleIPTVChannel(id: String($0.number), sourceID: UUID(), name: $0.name, group: "All",
+                         streamURL: URL(string: "https://fixture.example/channel.ts")!)
+    }
+    #expect(store.liveChannelPackage == .everything)
+    store.updateAutomaticLiveChannelPackage(channels: channels)
+    #expect(store.liveChannelPackage == .completeGuide)
+    #expect(defaults.string(forKey: "openstream.settings.live.package.v1") == nil)
+    store.updateAutomaticLiveChannelPackage(channels: [])
+    #expect(store.liveChannelPackage == .everything)
+    for choice in AppleLiveChannelPackage.allCases {
+        store.liveChannelPackage = choice
+        store.updateAutomaticLiveChannelPackage(channels: channels)
+        store.updateAutomaticLiveChannelPackage(channels: [])
+        #expect(store.liveChannelPackage == choice)
+        let reread = AppleSettingsStore(defaults: defaults, keychain: StubCredentialStore())
+        #expect(reread.liveChannelPackage == choice)
+    }
+}
+
+@MainActor
+@Test func savedLegacyPackageMigratesAndRemainsExplicit() throws {
+    let defaults = makeIsolatedDefaults()
+    defaults.set("premierGuide", forKey: "openstream.settings.live.package.v1")
+    let store = AppleSettingsStore(defaults: defaults, keychain: StubCredentialStore())
+    #expect(store.liveChannelPackage == .completeGuide)
+    #expect(defaults.string(forKey: "openstream.settings.live.package.v1") == "completeGuide")
+    store.updateAutomaticLiveChannelPackage(channels: [])
+    #expect(store.liveChannelPackage == .completeGuide)
+    let backup = try store.configurationValues()
+    try store.restoreConfiguration(backup)
+    #expect(store.liveChannelPackage == .completeGuide)
+}
+
+/// Owner 2026-10-10: the Apple TV shelf showed only the static image because
+/// publishing was off by default and a setup import copied that off value.
+@MainActor @Test func topShelfIsOnByDefaultAndIgnoresTheOldOffValue() {
+    let defaults = makeIsolatedDefaults()
+    defaults.set(false, forKey: "openstream.settings.privacy.topShelf.v1")
+    let store = AppleSettingsStore(defaults: defaults, keychain: StubCredentialStore())
+    #expect(store.topShelfEnabled)
+    #expect(AppleSettingsStore.topShelfEnabled(in: defaults))
+
+    store.showInAppleServices = false
+    #expect(!AppleSettingsStore(defaults: defaults, keychain: StubCredentialStore()).topShelfEnabled)
+    #expect(!AppleSettingsStore.topShelfEnabled(in: defaults))
 }

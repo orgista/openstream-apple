@@ -14,6 +14,10 @@ public final class ApplePlaybackFailureHistory {
         failures[url] = now
     }
 
+    public func removeAll() {
+        failures.removeAll()
+    }
+
     public func contains(_ url: URL, now: Date = Date()) -> Bool {
         guard let failed = failures[url] else { return false }
         return now.timeIntervalSince(failed) < 600

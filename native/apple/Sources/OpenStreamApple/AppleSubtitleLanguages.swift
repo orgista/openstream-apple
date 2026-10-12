@@ -142,19 +142,29 @@ public enum AppleSubtitleLanguages {
             .caseInsensitiveCompare(subtitlesResource) == .orderedSame }
     }
 
-    /// English plus the device's preferred languages as canonical codes,
-    /// English first, capped at `maximumSelection` and de-duplicated. Most
-    /// add-on subtitles are English, so it is always worth listing.
+    /// The device's primary language as a canonical code: the first of the
+    /// device's preferred languages the picker knows, else English. This is
+    /// the whole preference until the viewer picks languages in Settings.
     public static func deviceDefaults(
         preferredLanguages: [String] = Locale.preferredLanguages
     ) -> [String] {
-        var codes: [String] = ["eng"]
         for language in preferredLanguages {
-            guard let code = normalized(language), !codes.contains(code) else { continue }
-            codes.append(code)
-            if codes.count >= maximumSelection { break }
+            if let code = normalized(language) { return [code] }
         }
-        return codes
+        return ["eng"]
+    }
+
+    /// Rows the Subtitle Languages page shows from the top on any iPhone.
+    static let firstScreenRows = 12
+
+    /// The row the page scrolls to on opening: the first chosen language,
+    /// only when it is below the first screen. Scrolling to one already on it
+    /// centred the list and pushed "Arabic" under the navigation bar
+    /// (iPhone 27 v2 re-run).
+    public static func initialScrollTarget(selected: [String]) -> String? {
+        guard let index = all.firstIndex(where: { selected.contains($0.code) }),
+              index >= firstScreenRows else { return nil }
+        return all[index].code
     }
 
     /// Toggles one code in the preference list, refusing to grow it beyond

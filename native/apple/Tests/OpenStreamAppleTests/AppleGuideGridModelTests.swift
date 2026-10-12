@@ -117,3 +117,12 @@ struct AppleGuideGridIndexTests {
         #expect(AppleGuideGridIndex.empty.nowOffset == nil)
     }
 }
+
+@Suite("Guide pinned programme titles")
+struct AppleGuidePinnedTitleTests {
+    @Test func titleFollowsTheVisiblePartOfASpanningProgramme() {
+        #expect(AppleGuideGridModel.visibleTitleInset(start: 160, width: 480, scrollOffset: 240) == 80)
+        #expect(AppleGuideGridModel.visibleTitleInset(start: 160, width: 480, scrollOffset: 0) == 0)
+        #expect(AppleGuideGridModel.visibleTitleInset(start: 160, width: 480, scrollOffset: 800) == 480)
+    }
+}

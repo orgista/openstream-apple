@@ -1,0 +1,58 @@
+{
+  "metas": [
+    {
+      "id": "tt0000001",
+      "type": "movie",
+      "name": "Stub Movie One",
+      "poster": "https://fixture.example/poster/1.jpg",
+      "description": "Stub Movie One: a title served from the stub catalog.",
+      "releaseInfo": "2024",
+      "imdbRating": "7.0"
+    },
+    {
+      "id": "tt0000002",
+      "type": "movie",
+      "name": "Stub Movie Two",
+      "poster": "https://fixture.example/poster/2.jpg",
+      "description": "Stub Movie Two: a title served from the stub catalog.",
+      "releaseInfo": "2024",
+      "imdbRating": "7.0"
+    },
+    {
+      "id": "tt0000003",
+      "type": "movie",
+      "name": "Stub Movie Three",
+      "poster": "https://fixture.example/poster/3.jpg",
+      "description": "Stub Movie Three: a title served from the stub catalog.",
+      "releaseInfo": "2024",
+      "imdbRating": "7.0"
+    },
+    {
+      "id": "tt0000004",
+      "type": "movie",
+      "name": "Stub Movie Four",
+      "poster": "https://fixture.example/poster/4.jpg",
+      "description": "Stub Movie Four: a title served from the stub catalog.",
+      "releaseInfo": "2024",
+      "imdbRating": "7.0"
+    },
+    {
+      "id": "tt0000005",
+      "type": "movie",
+      "name": "Stub Movie Five",
+      "poster": "https://fixture.example/poster/5.jpg",
+      "description": "Stub Movie Five: a title served from the stub catalog.",
+      "releaseInfo": "2024",
+      "imdbRating": "7.0"
+    },
+    {
+      "id": "tt0000006",
+      "type": "movie",
+      "name": "Stub Movie Six",
+      "poster": "https://fixture.example/poster/6.jpg",
+      "description": "Stub Movie Six: a title served from the stub catalog.",
+      "releaseInfo": "2024",
+      "imdbRating": "7.0"
+    }
+  ]
+}

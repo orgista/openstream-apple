@@ -23,6 +23,39 @@ struct AppleNativeSubtitleSelectionTests {
         #expect(visible.map(\.id) == [1])
     }
 
+    @Test func englishMenuEntryRetainsItsLegibleOptionIndex() throws {
+        // The best English option is not menu index zero or the first English
+        // rendition. Selection must retain its original legible-group index.
+        let options = [
+            (title: "French", language: "fr", codec: "sub"),
+            (title: "English 1", language: "en", codec: "cc"),
+            (title: "English 2", language: "eng", codec: "sub"),
+        ]
+        let tracks = options.enumerated().compactMap { index, option in
+            NativePlaybackEngine.subtitleTrack(
+                optionIndex: index, title: option.title, language: option.language,
+                codec: option.codec, isForced: false)
+        }
+        let visible = AppleSubtitleTrackFilter.visible(
+            tracks, preferredLanguages: ["en"], isExplicitChoice: true)
+        #expect(visible.count == 1)
+        let selected = try #require(visible.first)
+        let englishLabel = Locale.current.localizedString(forLanguageCode: "en")?.capitalized ?? "English"
+        #expect(AppleSubtitleTrackFilter.menuLabel(for: selected) == englishLabel)
+        #expect(selected.id == 2)
+        #expect(options[selected.id].title == "English 2")
+    }
+
+    @Test func forcedLegibleOptionsAreExcludedWithoutRenumbering() {
+        #expect(NativePlaybackEngine.subtitleTrack(
+            optionIndex: 0, title: "English Forced", language: "en",
+            codec: "sub", isForced: true) == nil)
+        let track = NativePlaybackEngine.subtitleTrack(
+            optionIndex: 1, title: "English", language: "en",
+            codec: "sub", isForced: false)
+        #expect(track?.id == 1)
+    }
+
     /// `spa` and `es` are the same language; so are `fr-FR` and `fr`.
     @Test func languageCodeFormsAreTreatedAsOne() {
         #expect(AppleSubtitleTrackFilter.normalized("spa") == "es")
@@ -30,11 +63,10 @@ struct AppleNativeSubtitleSelectionTests {
         #expect(AppleSubtitleTrackFilter.visible(tracks, preferredLanguages: ["fr"]).map(\.id) == [2])
     }
 
-    /// An empty menu is worse than a long one: a stream carrying only
-    /// languages the viewer did not ask for still lists them.
-    @Test func aStreamWithNoMatchingLanguageStillListsItsTracks() {
-        let visible = AppleSubtitleTrackFilter.visible(tracks, preferredLanguages: ["ja"])
-        #expect(visible.map(\.id) == [0, 1, 2])
+    /// A stream carrying only languages the viewer did not ask for offers
+    /// none of them (owner 2026-09-28: English by default and the only entry).
+    @Test func aStreamWithNoMatchingLanguageOffersNothing() {
+        #expect(AppleSubtitleTrackFilter.visible(tracks, preferredLanguages: ["ja"]).isEmpty)
     }
 
     /// ...but "list them anyway" must not become "turn one on". Only `.always`

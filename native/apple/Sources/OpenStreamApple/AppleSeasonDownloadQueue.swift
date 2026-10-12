@@ -11,11 +11,13 @@ final class AppleSeasonDownloadQueue {
     private(set) var failure: String?
     @ObservationIgnored private var work: Task<Void, Never>?
     @ObservationIgnored private var generation = UUID()
+    @ObservationIgnored private var cancellation: (@MainActor () -> Void)?
 
-    func start(episodeIDs: [String], download: @escaping @MainActor (String) async throws -> Void) {
+    func start(episodeIDs: [String], onCancel: (@MainActor () -> Void)? = nil, download: @escaping @MainActor (String) async throws -> Void) {
         guard !isRunning else { return }
         var seen = Set<String>()
         let ids = episodeIDs.filter { !$0.isEmpty && seen.insert($0).inserted }
+        cancellation = onCancel
         completed = 0
         total = ids.count
         failure = nil
@@ -36,6 +38,8 @@ final class AppleSeasonDownloadQueue {
                     return
                 } catch {
                     guard self.generation == token else { return }
+                    self.cancellation?()
+                    self.cancellation = nil
                     self.failure = error.localizedDescription
                     return
                 }
@@ -46,6 +50,8 @@ final class AppleSeasonDownloadQueue {
     func cancel() {
         failure = nil
         work?.cancel()
+        cancellation?()
+        cancellation = nil
     }
     func waitUntilFinished() async { await work?.value }
 }

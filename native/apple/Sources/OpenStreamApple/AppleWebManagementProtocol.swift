@@ -24,8 +24,14 @@ public struct AppleWebManagementSession: Equatable, Sendable {
 
     public var isExpired: Bool { expiresAt <= .now }
 
-    /// The private bootstrap URL is kept for backwards-compatible callers;
-    /// the app UI and QR code must use `url`, which never contains a token.
+    /// QR payload; the displayed and copied address remains `friendlyURL`.
+    public var pairingURL: URL {
+        var components = URLComponents(url: friendlyURL, resolvingAgainstBaseURL: false)
+        components?.queryItems = [URLQueryItem(name: "pair", value: pairingCode)]
+        return components?.url ?? friendlyURL
+    }
+
+    /// Legacy URL retained for callers; it no longer authenticates a browser.
     public var privateURL: URL {
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         components?.queryItems = [URLQueryItem(name: "token", value: token)]

@@ -10,7 +10,7 @@ public enum AppleLibrarySourceError: Error, Equatable, LocalizedError, Sendable 
         switch self {
         case .invalidFolder: "Choose a folder from Files."
         case .unavailable: "This folder is no longer available."
-        case .permissionDenied: "OpenStream no longer has permission to read this folder."
+        case .permissionDenied: "oStream no longer has permission to read this folder."
         case .noMedia: "No video files were found."
         }
     }
@@ -93,6 +93,8 @@ public final class AppleSecurityScopedAccess {
 public actor AppleLibraryScanner {
     public static let supportedExtensions: Set<String> = [
         "mp4", "m4v", "mov", "mkv", "webm", "ts", "m2ts", "avi", "wmv",
+        // Disc images: the engine plays them through its disc adapter.
+        "iso",
     ]
 
     private let fileManager: FileManager
