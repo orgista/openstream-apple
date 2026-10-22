@@ -4,49 +4,30 @@
 
 <h1 align="center">OpenStream for Apple</h1>
 
-<h3 align="center">A native media player for iPhone, iPad, Apple TV, Apple Watch and Vision Pro</h3>
+<h3 align="center">A media player for the movies, shows and live TV you already have</h3>
 
 <p align="center">
+  <a href="https://orgista.com/openstream">orgista.com/openstream</a> ·
   <a href="#build-from-source">Build</a> ·
-  <a href="https://github.com/orgista/openstream">Android, Google TV, XR and web</a> ·
-  <a href="https://orgista.com">orgista.com</a>
+  <a href="SECURITY.md">Security</a>
 </p>
 
-<p align="center">
-  <a href="#compatibility"><img alt="Platforms" src="https://img.shields.io/badge/platform-iOS%20%7C%20tvOS%20%7C%20visionOS%20%7C%20watchOS%20%7C%20macOS-1c1e20?style=flat-square"></a>
-  <a href="native/apple/Package.swift"><img alt="Swift 6.2" src="https://img.shields.io/badge/swift-6.2-F05138?style=flat-square"></a>
-</p>
-
-OpenStream plays media from your own sources: SMB network shares, local files, Stremio add-ons and IPTV playlists. This repository holds the Apple apps, written in Swift and SwiftUI. The Android, Google TV, XR and web apps live in the sibling project, [orgista/openstream](https://github.com/orgista/openstream).
+OpenStream plays media you own: your Jellyfin, Emby or Plex server, network shares (SMB), files on your device, and the
+live TV playlist and guide your TV provider gives you. It runs on iPhone, iPad, Apple TV, Mac and Apple Vision Pro.
+OpenStream does not provide, host or recommend any content; it starts empty and plays only what you connect.
 
 ## Features
 
-- Library of movies and shows built from SMB shares and local files, with metadata, artwork and next-episode handling
-- Stremio add-on sources, with stream ranking and subtitle selection
-- Live TV from M3U playlists, Xtream sources and XMLTV guides, shown in a channel guide grid
-- Playback through AVPlayer, with a bundled FFmpeg-based engine ([AetherEngine](https://github.com/superuser404notfound/AetherEngine)) for formats AVPlayer cannot decode, including Dolby Vision handling
-- Offline downloads with quality settings and Live Activities for progress
-- SharePlay, Spotlight indexing and App Intents for search
-- Apple TV Top Shelf, home screen widgets, and an Apple Watch companion app
-- Web Management: add sources from a browser on the same local network
-
-## Download
-
-There are no public releases yet. Build the app from source using the steps below.
-
-## Compatibility
-
-| Platform | Minimum | Notes |
-| --- | --- | --- |
-| iOS, iPadOS | 18.0 | One app for iPhone and iPad. Includes the widgets extension and embeds the Watch app. |
-| tvOS | 18.0 | Includes a Top Shelf extension. |
-| visionOS | 2.0 | Builds from the shared source. |
-| watchOS | 11.0 | Companion to the iOS app. |
-| macOS | 15.0 | Unfinished baseline, not a release target. |
+- Movies and shows from your own media servers, network shares and files, with artwork, details and next-episode handling
+- Live TV from your provider's M3U playlist and XMLTV guide, with a channel guide
+- Playback through Apple's AVPlayer, with an FFmpeg-based engine ([AetherEngine](https://github.com/superuser404notfound/AetherEngine)) for formats AVPlayer cannot decode
+- Disc images from your own collection, with DVD menus
+- Downloads for offline viewing, SharePlay, widgets and Apple TV Top Shelf
+- Metadata from [TMDB](https://www.themoviedb.org) with your own API key (credited in the app)
 
 ## Build from source
 
-You need a Mac with an Xcode version that ships the Swift 6.2 toolchain. Swift packages resolve on first build.
+You need a Mac with Xcode 27 or later. Swift packages resolve on first build.
 
 ```bash
 git clone https://github.com/orgista/openstream-apple.git
@@ -60,16 +41,21 @@ xcodebuild -project Apps/OpenStreamApps.xcodeproj -scheme "OpenStream iOS" \
   -destination "generic/platform=iOS Simulator" CODE_SIGNING_ALLOWED=NO build
 ```
 
-Shared schemes: `OpenStream iOS`, `OpenStream tvOS`, `OpenStream visionOS`, `OpenStream macOS`. To run on a device, open `native/apple/Apps/OpenStreamApps.xcodeproj` in Xcode and choose your own signing team.
+Shared schemes: `OpenStream iOS`, `OpenStream tvOS`, `OpenStream visionOS`, `OpenStream macOS`. To run on a device,
+open `native/apple/Apps/OpenStreamApps.xcodeproj` in Xcode and choose your own signing team.
 
 | Path | Contents |
 | --- | --- |
 | `native/apple/Sources/OpenStreamApple` | Shared Swift package used by every app target |
 | `native/apple/Tests` | Unit tests and small media fixtures |
-| `native/apple/Apps` | Xcode project, app shells, widgets, Watch app, Top Shelf extension |
-| `native/apple/scripts` | Verification and license-check scripts |
+| `native/apple/Apps` | Xcode project, app shells, widgets, Top Shelf extension |
+| `native/apple/scripts` | Verification and licence-check scripts |
 
-No catalog is preconfigured. Add your own sources in the app's settings. See [DELIVERIES.md](DELIVERIES.md) for the build notes of the current source baseline.
+## Security
+
+Please report vulnerabilities privately through GitHub's
+[private vulnerability reporting](https://github.com/orgista/openstream-apple/security/advisories/new). See
+[SECURITY.md](SECURITY.md).
 
 ## Contributing
 
