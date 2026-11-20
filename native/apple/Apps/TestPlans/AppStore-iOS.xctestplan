@@ -1,0 +1,29 @@
+{
+  "configurations": [
+    {
+      "id": "314F79F7-800E-4902-869F-4689FE346AC8",
+      "name": "Demo",
+      "options": {}
+    }
+  ],
+  "defaultOptions": {
+    "language": "en",
+    "region": "US",
+    "testTimeoutsEnabled": true,
+    "defaultTestExecutionTimeAllowance": 600,
+    "maximumTestExecutionTimeAllowance": 900
+  },
+  "testTargets": [
+    {
+      "target": {
+        "containerPath": "container:OpenStreamApps.xcodeproj",
+        "identifier": "AB1000000000000000000008",
+        "name": "OpenStreamiOSUITests"
+      },
+      "selectedTests": [
+        "AppStoreScreenshotUITests"
+      ]
+    }
+  ],
+  "version": 1
+}

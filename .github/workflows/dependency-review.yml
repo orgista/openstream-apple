@@ -1,0 +1,22 @@
+name: Dependency review
+
+# Blocks a pull request that adds a dependency with a known high-severity vulnerability
+# or a license outside the allow-list (the cargo-deny equivalent for this stack).
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1
+        with:
+          fail-on-severity: high
+          allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, MPL-2.0, Unicode-3.0, CC0-1.0, CC-BY-4.0, Python-2.0, Zlib, BlueOak-1.0.0, LGPL-2.1-only, LGPL-2.1-or-later, LGPL-3.0-only, LGPL-3.0-or-later
+          comment-summary-in-pr: on-failure

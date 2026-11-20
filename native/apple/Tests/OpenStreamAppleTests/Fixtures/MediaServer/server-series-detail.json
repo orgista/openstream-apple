@@ -1,0 +1,101 @@
+{
+  "_fixture": "RECORDED from a Jellyfin-compatible server, ids, names, hosts and links replaced",
+  "AirDays": [],
+  "BackdropImageTags": [
+    "a0000000000000000000000000000009"
+  ],
+  "CanDelete": false,
+  "CanDownload": false,
+  "ChildCount": 1,
+  "CommunityRating": 7.7,
+  "Etag": "a0000000000000000000000000000007",
+  "GenreItems": [
+    {
+      "Id": "a000000000000000000000000000000b",
+      "Name": "Name 7"
+    },
+    {
+      "Id": "a000000000000000000000000000000c",
+      "Name": "Name 8"
+    }
+  ],
+  "Genres": [
+    "Drama",
+    "Horror",
+    "Thriller"
+  ],
+  "Id": "a0000000000000000000000000000002",
+  "ImageBlurHashes": {},
+  "ImageTags": {
+    "Logo": "a000000000000000000000000000000a",
+    "Primary": "a0000000000000000000000000000008",
+    "Thumb": "a0000000000000000000000000000009"
+  },
+  "IsFolder": true,
+  "LocationType": "Remote",
+  "LockData": false,
+  "LockedFields": [],
+  "MediaType": "Unknown",
+  "Name": "Show One",
+  "OfficialRating": null,
+  "OriginalTitle": "OriginalTitle 1",
+  "Overview": "Overview 1.",
+  "ParentId": null,
+  "Path": "/p1/a0000000000000000000000000000007",
+  "People": [
+    {
+      "Id": "a0000000000000000000000000000003",
+      "Name": "Name 1",
+      "Role": "",
+      "Type": "Actor"
+    },
+    {
+      "Id": "a0000000000000000000000000000004",
+      "Name": "Name 2",
+      "Role": "",
+      "Type": "Actor"
+    },
+    {
+      "Id": "a0000000000000000000000000000005",
+      "Name": "Name 3",
+      "Role": "",
+      "Type": "Actor"
+    }
+  ],
+  "PlayAccess": "Full",
+  "PremiereDate": "2026-10-15T00:00:00.000Z",
+  "PrimaryImageAspectRatio": 0.6666666666666666,
+  "ProductionLocations": [
+    "ProductionLocations 1"
+  ],
+  "ProductionYear": 2026,
+  "ProviderIds": {
+    "Imdb": "1000"
+  },
+  "RecursiveItemCount": 8,
+  "RemoteTrailers": [
+    {
+      "Name": "Trailer",
+      "Url": "https://www.youtube.com/watch?v=abcdefghijk"
+    }
+  ],
+  "RunTimeTicks": 30000000000,
+  "ServerId": "a0000000000000000000000000000001",
+  "SortName": "SortName 1",
+  "Status": "Continuing",
+  "Studios": [],
+  "Taglines": [],
+  "Tags": [],
+  "Type": "Series",
+  "UserData": {
+    "IsFavorite": false,
+    "ItemId": "a0000000000000000000000000000002",
+    "Key": "a0000000000000000000000000000002",
+    "Likes": null,
+    "PlayCount": 0,
+    "PlaybackPositionTicks": 0,
+    "Played": false,
+    "PlayedPercentage": 0,
+    "UnplayedItemCount": 8
+  }
+}

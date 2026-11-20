@@ -1,0 +1,44 @@
+{
+  "_fixture": "RECORDED from a Jellyfin-compatible server, ids, names, hosts and links replaced",
+  "Items": [
+    {
+      "BackdropImageTags": [],
+      "CanDelete": false,
+      "CanDownload": false,
+      "ChildCount": 8,
+      "Etag": "a000000000000000000000000000000e",
+      "Id": "a000000000000000000000000000000f",
+      "ImageBlurHashes": {},
+      "ImageTags": {
+        "Primary": "a0000000000000000000000000000008"
+      },
+      "IndexNumber": 1,
+      "IsFolder": true,
+      "LocationType": "Remote",
+      "LockData": false,
+      "LockedFields": [],
+      "MediaType": "Unknown",
+      "Name": "Season 1",
+      "ParentId": "a0000000000000000000000000000002",
+      "PrimaryImageAspectRatio": 0.6666666666666666,
+      "RecursiveItemCount": 8,
+      "SeriesId": "a0000000000000000000000000000002",
+      "SeriesName": "Show One",
+      "ServerId": "a0000000000000000000000000000001",
+      "Type": "Season",
+      "UserData": {
+        "IsFavorite": false,
+        "ItemId": "a000000000000000000000000000000f",
+        "Key": "a000000000000000000000000000000f",
+        "Likes": null,
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false,
+        "PlayedPercentage": 0,
+        "UnplayedItemCount": 8
+      }
+    }
+  ],
+  "StartIndex": 0,
+  "TotalRecordCount": 1
+}

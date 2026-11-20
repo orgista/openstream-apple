@@ -1,0 +1,197 @@
+[
+  {
+    "AirDays": [],
+    "BackdropImageTags": [
+      "a0000000000000000000000000000496"
+    ],
+    "CanDelete": false,
+    "CanDownload": false,
+    "ChildCount": null,
+    "CommunityRating": 7.8,
+    "Etag": "a0000000000000000000000000000493",
+    "GenreItems": [
+      {
+        "Id": "a0000000000000000000000000000065",
+        "Name": "Name 3607"
+      },
+      {
+        "Id": "a0000000000000000000000000000070",
+        "Name": "Name 3608"
+      }
+    ],
+    "Genres": [
+      "Drama",
+      "Horror"
+    ],
+    "Id": "a0000000000000000000000000000492",
+    "ImageBlurHashes": {},
+    "ImageTags": {
+      "Logo": "a0000000000000000000000000000495",
+      "Primary": "a0000000000000000000000000000494",
+      "Thumb": "a0000000000000000000000000000496"
+    },
+    "IsFolder": true,
+    "LocationType": "Remote",
+    "LockData": false,
+    "LockedFields": [],
+    "MediaType": "Unknown",
+    "Name": "Show One",
+    "OfficialRating": null,
+    "OriginalTitle": "OriginalTitle 337",
+    "Overview": "Overview 334.",
+    "ParentId": "a0000000000000000000000000000005",
+    "Path": "/p1183/a0000000000000000000000000000493",
+    "People": [
+      {
+        "Id": "a0000000000000000000000000000497",
+        "Name": "Name 3609",
+        "Role": "",
+        "Type": "Actor"
+      },
+      {
+        "Id": "a0000000000000000000000000000498",
+        "Name": "Name 3610",
+        "Role": "",
+        "Type": "Actor"
+      },
+      {
+        "Id": "a0000000000000000000000000000499",
+        "Name": "Name 3611",
+        "Role": "",
+        "Type": "Actor"
+      }
+    ],
+    "PlayAccess": "Full",
+    "PremiereDate": "2026-10-07T00:00:00.000Z",
+    "PrimaryImageAspectRatio": 0.6666666666666666,
+    "ProductionLocations": [
+      "ProductionLocations 334"
+    ],
+    "ProductionYear": 2026,
+    "ProviderIds": {
+      "Imdb": "1000"
+    },
+    "RemoteTrailers": [
+      {
+        "Name": "Trailer",
+        "Url": "https://www.youtube.com/watch?v=abcdefghijk"
+      }
+    ],
+    "RunTimeTicks": 31200000000,
+    "ServerId": "a0000000000000000000000000000001",
+    "SortName": "SortName 380",
+    "Status": "Continuing",
+    "Studios": [],
+    "Taglines": [],
+    "Tags": [],
+    "Type": "Series",
+    "UserData": {
+      "IsFavorite": false,
+      "ItemId": "a0000000000000000000000000000492",
+      "Key": "a0000000000000000000000000000492",
+      "Likes": null,
+      "PlayCount": 0,
+      "PlaybackPositionTicks": 0,
+      "Played": false,
+      "PlayedPercentage": 0
+    }
+  },
+  {
+    "AirDays": [],
+    "BackdropImageTags": [
+      "a00000000000000000000000000004a7"
+    ],
+    "CanDelete": false,
+    "CanDownload": false,
+    "ChildCount": null,
+    "CommunityRating": 7.7,
+    "Etag": "a00000000000000000000000000004a4",
+    "GenreItems": [
+      {
+        "Id": "a0000000000000000000000000000065",
+        "Name": "Name 3617"
+      },
+      {
+        "Id": "a0000000000000000000000000000070",
+        "Name": "Name 3618"
+      }
+    ],
+    "Genres": [
+      "Drama",
+      "Horror",
+      "Thriller"
+    ],
+    "Id": "a00000000000000000000000000004a3",
+    "ImageBlurHashes": {},
+    "ImageTags": {
+      "Logo": "a00000000000000000000000000004a6",
+      "Primary": "a00000000000000000000000000004a5",
+      "Thumb": "a00000000000000000000000000004a7"
+    },
+    "IsFolder": true,
+    "LocationType": "Remote",
+    "LockData": false,
+    "LockedFields": [],
+    "MediaType": "Unknown",
+    "Name": "Show Two",
+    "OfficialRating": null,
+    "OriginalTitle": "OriginalTitle 338",
+    "Overview": "Overview 335.",
+    "ParentId": "a0000000000000000000000000000005",
+    "Path": "/p1185/a00000000000000000000000000004a4",
+    "People": [
+      {
+        "Id": "a00000000000000000000000000004a8",
+        "Name": "Name 3620",
+        "Role": "",
+        "Type": "Actor"
+      },
+      {
+        "Id": "a00000000000000000000000000004a9",
+        "Name": "Name 3621",
+        "Role": "",
+        "Type": "Actor"
+      },
+      {
+        "Id": "a00000000000000000000000000004aa",
+        "Name": "Name 3622",
+        "Role": "",
+        "Type": "Actor"
+      }
+    ],
+    "PlayAccess": "Full",
+    "PremiereDate": "2026-10-15T00:00:00.000Z",
+    "PrimaryImageAspectRatio": 0.6666666666666666,
+    "ProductionLocations": [
+      "ProductionLocations 335"
+    ],
+    "ProductionYear": 2026,
+    "ProviderIds": {
+      "Imdb": "1000"
+    },
+    "RemoteTrailers": [
+      {
+        "Name": "Trailer",
+        "Url": "https://www.youtube.com/watch?v=abcdefghijk"
+      }
+    ],
+    "RunTimeTicks": 30000000000,
+    "ServerId": "a0000000000000000000000000000001",
+    "SortName": "SortName 381",
+    "Status": "Continuing",
+    "Studios": [],
+    "Taglines": [],
+    "Tags": [],
+    "Type": "Series",
+    "UserData": {
+      "IsFavorite": false,
+      "ItemId": "a00000000000000000000000000004a3",
+      "Key": "a00000000000000000000000000004a3",
+      "Likes": null,
+      "PlayCount": 0,
+      "PlaybackPositionTicks": 0,
+      "Played": false,
+      "PlayedPercentage": 0
+    }
+  }
+]

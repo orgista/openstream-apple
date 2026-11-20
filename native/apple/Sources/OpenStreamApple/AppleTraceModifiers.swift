@@ -1,0 +1,104 @@
+import SwiftUI
+
+/// App-wide trace hooks, so navigating the app writes its own timeline.
+///
+/// The one-off `AppleInteractionTrace.record` calls only covered the live
+/// guide, which meant a walk through Discover, Library, Search or Settings
+/// left no record at all — the owner asked to "turn on traces for every
+/// function … so I can nav through and note any issues". These modifiers make
+/// that cheap: a screen declares its name once and every appearance,
+/// disappearance and selection lands in the log with a timestamp.
+///
+/// These ship in release builds too, so a TestFlight build records the same
+/// timeline a local one does.
+public extension View {
+    /// Records when this screen appears and goes away.
+    ///
+    /// Put it on the top level of anything the viewer can navigate to. The
+    /// `detail` closure runs only while tracing is on, so counting rows or
+    /// formatting state costs nothing in a normal build.
+    func appleTraceScreen(
+        _ name: String,
+        detail: @escaping @autoclosure () -> String = ""
+    ) -> some View {
+        return onAppear {
+            AppleHangMonitor.shared.screenAppeared(name)
+            let extra = AppleInteractionTrace.isEnabled ? detail() : ""
+            AppleInteractionTrace.record(.screen, extra.isEmpty ? "\(name) appeared" : "\(name) appeared — \(extra)")
+        }
+        .onDisappear {
+            AppleInteractionTrace.record(.screen, "\(name) gone")
+        }
+    }
+
+    /// Records a value the viewer changed — a tab, a picker, a toggle.
+    func appleTraceSelection<Value: Equatable>(
+        _ name: String,
+        value: Value
+    ) -> some View {
+        return onChange(of: value) { _, updated in
+            AppleInteractionTrace.record(.press, "\(name) → \(updated)")
+        }
+    }
+}
+
+/// Records something the viewer did that has no view to hang off — a button
+/// action, a store mutation, a request that failed. One boolean check when
+/// tracing is off.
+@inlinable
+public func appleTrace(_ detail: @autoclosure () -> String) {
+    AppleInteractionTrace.record(.press, detail())
+}
+
+/// Runs one main-actor step and records it as `step <name> <ms>ms` when it
+/// took longer than `AppleInteractionTrace.stepThreshold`: a "hang … on live"
+/// line then has the steps that held the main thread next to it. With tracing
+/// off it is one boolean check.
+@discardableResult
+func appleTraceStep<T>(_ name: @autoclosure () -> String, _ body: () throws -> T) rethrows -> T {
+    guard AppleInteractionTrace.isEnabled else { return try body() }
+    let started = ContinuousClock.now
+    defer {
+        let elapsed = started.duration(to: .now)
+        if elapsed > AppleInteractionTrace.stepThreshold {
+            appleTrace("step \(name()) \(AppleLaunchMarks.milliseconds(elapsed))ms")
+        }
+    }
+    return try body()
+}
+
+/// Records how long the main thread stays busy after `name` before it gets
+/// to the next queued block: the work after a publish, including the SwiftUI
+/// update it starts, that no single step covers.
+@MainActor
+func appleTraceMainQueueSettle(_ name: String) {
+    guard AppleInteractionTrace.isEnabled else { return }
+    let started = ContinuousClock.now
+    DispatchQueue.main.async {
+        let elapsed = started.duration(to: .now)
+        if elapsed > AppleInteractionTrace.stepThreshold { appleTrace("step \(name) settled \(AppleLaunchMarks.milliseconds(elapsed))ms") }
+    }
+}
+
+/// Records a failure the viewer can see.
+@inlinable
+public func appleTraceFailure(_ detail: @autoclosure () -> String) {
+    AppleInteractionTrace.record(.failure, detail())
+}
+
+/// An error's type and case for the trace, without its values: a case's
+/// payload and an `NSError`'s description can carry a path, a host or a name.
+/// `AppleKeychainStoreError.unexpectedStatus (… #0)`, `CocoaError (NSCocoaErrorDomain #513)`.
+public func appleErrorLabel(_ error: any Error) -> String {
+    let type = String(describing: Swift.type(of: error))
+    let bridged = error as NSError
+    let code = "\(bridged.domain) #\(bridged.code)"
+    let mirror = Mirror(reflecting: error)
+    guard mirror.displayStyle == .enum else { return "\(type) (\(code))" }
+    // A case with a payload reflects as one child labelled with the case
+    // name; a case without one prints as its name, unless the type prints
+    // itself (and so might print a value).
+    if let name = mirror.children.first?.label { return "\(type).\(name) (\(code))" }
+    if error is any CustomStringConvertible { return "\(type) (\(code))" }
+    return "\(type).\(String(describing: error)) (\(code))"
+}

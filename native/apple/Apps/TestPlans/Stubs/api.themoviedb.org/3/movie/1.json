@@ -1,0 +1,19 @@
+{
+  "id": 1,
+  "title": "Stub Movie One",
+  "imdb_id": "tt0000001",
+  "release_date": "2024-01-01",
+  "overview": "A local fixture movie.",
+  "poster_path": "/fixture-poster.png",
+  "backdrop_path": "/fixture-backdrop.png",
+  "genres": [{"name": "Drama"}],
+  "credits": {
+    "cast": [
+      {"name": "Fixture Actor One", "character": "Lead", "profile_path": null},
+      {"name": "Fixture Actor Two", "character": "Friend", "profile_path": null}
+    ],
+    "crew": [
+      {"name": "Fixture Director", "job": "Director", "profile_path": null}
+    ]
+  }
+}

@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+# Publish a finished build to GitHub Releases.
+#
+# Builds are made and signed on the build Mac; this script only publishes them.
+# It takes the release notes from CHANGELOG.md, tags the release, uploads the
+# files you name plus a SHA256SUMS file, and is safe to re-run (re-running
+# replaces assets with the same name instead of failing).
+#
+# Usage:
+#   scripts/release-github [options] <version> <file>...
+#
+#   <version>   SemVer without the "v": 1.2.3, 1.3.0-beta.1. A version with a
+#               "-suffix" is published as a pre-release.
+#   <file>...   The built artifacts to attach (.apk, .dmg, .zip, ...).
+#
+# Options:
+#   --repo owner/name   Publish to another repo (e.g. orgista/openpanel-releases).
+#                       Default: the repo this checkout points at.
+#   --name "Product"    Title prefix. Default: the README's first "# " heading.
+#   --notes-file FILE   Use these notes instead of the CHANGELOG section.
+#   --target REF        Commit/branch to tag when the tag does not exist yet.
+#                       Default: the target repo's default branch.
+#   --draft             Create the release as a draft.
+#   --dry-run           Print what would happen; change nothing.
+#
+# Requires: gh (logged in with repo scope), git, shasum.
+set -euo pipefail
+
+die() { echo "release-github: $*" >&2; exit 1; }
+
+repo="" name="" notes_file="" target="" draft=0 dry=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --repo) repo="$2"; shift 2 ;;
+    --name) name="$2"; shift 2 ;;
+    --notes-file) notes_file="$2"; shift 2 ;;
+    --target) target="$2"; shift 2 ;;
+    --draft) draft=1; shift ;;
+    --dry-run) dry=1; shift ;;
+    -h|--help) sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --) shift; break ;;
+    -*) die "unknown option $1" ;;
+    *) break ;;
+  esac
+done
+
+[ $# -ge 2 ] || die "usage: scripts/release-github [options] <version> <file>..."
+version="${1#v}"; shift
+[[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] || die "version '$version' is not SemVer (X.Y.Z or X.Y.Z-pre)"
+tag="v$version"
+
+root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+[ -n "$repo" ] || repo="$(gh repo view --json nameWithOwner -q .nameWithOwner)" || die "cannot work out the repo; pass --repo"
+
+# Refuse anything that looks like a secret or signing material.
+for f in "$@"; do
+  [ -f "$f" ] || die "not a file: $f"
+  case "$(basename "$f" | tr '[:upper:]' '[:lower:]')" in
+    *.keystore|*.jks|*.p12|*.p8|*.pem|*.key|*.mobileprovision|*.provisionprofile|.env|*.env|*.env.*|*secret*|*credential*|*password*)
+      die "refusing to upload $f: it looks like a secret or signing file" ;;
+  esac
+done
+
+# Release notes: the CHANGELOG section for this version.
+notes="$(mktemp)"; sums_dir="$(mktemp -d)"
+trap 'rm -rf "$notes" "$sums_dir"' EXIT
+if [ -n "$notes_file" ]; then
+  cp "$notes_file" "$notes"
+else
+  [ -f "$root/CHANGELOG.md" ] || die "no CHANGELOG.md; add a '## $version' section or pass --notes-file"
+  # Matches "## 1.2.3", "## [1.2.3]" and "## 1.2.3 - 2026-01-01".
+  awk -v v="$version" '
+    /^## / { if (found) exit; h=$0; sub(/^## \[?/, "", h); sub(/[] ].*$/, "", h); if (h == v) { found=1; next } }
+    found { print }
+  ' "$root/CHANGELOG.md" > "$notes"
+  [ -s "$notes" ] || die "CHANGELOG.md has no '## $version' section; write the notes first"
+fi
+
+if [ -z "$name" ]; then
+  name="$(grep -m1 -E '^# ' "$root/README.md" 2>/dev/null | sed 's/^# //; s/[[:space:]]*$//')"
+  [ -n "$name" ] || name="${repo#*/}"
+fi
+title="$name $version"
+
+# SHA256SUMS over the basenames, so `shasum -a 256 -c SHA256SUMS` works in a download folder.
+for f in "$@"; do cp "$f" "$sums_dir/"; done
+( cd "$sums_dir" && shasum -a 256 -- * > SHA256SUMS )
+assets=("$@" "$sums_dir/SHA256SUMS")
+
+pre=(); [[ "$version" == *-* ]] && pre=(--prerelease)
+dr=(); [ "$draft" = 1 ] && dr=(--draft)
+tg=(); [ -n "$target" ] && tg=(--target "$target")
+
+echo "repo:   $repo"
+echo "tag:    $tag ${pre[*]:-} ${dr[*]:-}"
+echo "title:  $title"
+echo "assets: $(for a in "${assets[@]}"; do basename "$a"; done | tr '\n' ' ')"
+echo "notes:  $(wc -l < "$notes" | tr -d ' ') lines from ${notes_file:-CHANGELOG.md}"
+[ "$dry" = 1 ] && { echo "(dry run: nothing published)"; cat "$sums_dir/SHA256SUMS"; exit 0; }
+
+if gh release view "$tag" -R "$repo" >/dev/null 2>&1; then
+  echo "release $tag exists; replacing assets with the same names"
+  gh release upload "$tag" -R "$repo" --clobber "${assets[@]}"
+  gh release edit "$tag" -R "$repo" --notes-file "$notes" --title "$title" >/dev/null
+else
+  gh release create "$tag" -R "$repo" --title "$title" --notes-file "$notes" \
+    ${pre[@]+"${pre[@]}"} ${dr[@]+"${dr[@]}"} ${tg[@]+"${tg[@]}"} "${assets[@]}"
+fi
+gh release view "$tag" -R "$repo" --json url -q .url

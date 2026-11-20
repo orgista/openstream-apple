@@ -1,0 +1,2889 @@
+{
+  "channels": [
+    {
+      "number": 2,
+      "name": "CBS Local",
+      "aliases": [
+        "CBS",
+        "CBS HD"
+      ],
+      "category": "Local",
+      "market": {
+        "network": "CBS"
+      }
+    },
+    {
+      "number": 4,
+      "name": "KDFW FOX 4 (local)",
+      "aliases": [
+        "KFL"
+      ],
+      "category": "Local",
+      "market": {
+        "network": "FOX"
+      }
+    },
+    {
+      "number": 5,
+      "name": "FOX Local",
+      "aliases": [
+        "FOX",
+        "FOX HD"
+      ],
+      "category": "Local",
+      "market": {
+        "network": "FOX"
+      }
+    },
+    {
+      "number": 7,
+      "name": "ABC Local",
+      "aliases": [
+        "ABC",
+        "ABC HD"
+      ],
+      "category": "Local",
+      "market": {
+        "network": "ABC"
+      }
+    },
+    {
+      "number": 8,
+      "name": "Local 8",
+      "aliases": [
+        "LOC 8"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 9,
+      "name": "Local 9",
+      "aliases": [
+        "LOC 9"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 10,
+      "name": "Local 10",
+      "aliases": [
+        "LOC 10"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 11,
+      "name": "Local 11",
+      "aliases": [
+        "LOC 11"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 12,
+      "name": "Local 12",
+      "aliases": [
+        "LOC 12"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 13,
+      "name": "Local 13",
+      "aliases": [
+        "LOC 13"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 14,
+      "name": "Local 14",
+      "aliases": [
+        "LOC 14"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 15,
+      "name": "Local 15",
+      "aliases": [
+        "LOC 15"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 16,
+      "name": "Local 16",
+      "aliases": [
+        "LOC 16"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 17,
+      "name": "Local 17",
+      "aliases": [
+        "LOC 17"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 18,
+      "name": "Local 18",
+      "aliases": [
+        "LOC 18"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 19,
+      "name": "Local 19",
+      "aliases": [
+        "LOC 19"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 20,
+      "name": "Local 20",
+      "aliases": [
+        "LOC 20"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 21,
+      "name": "Local 21",
+      "aliases": [
+        "LOC 21"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 22,
+      "name": "Local 22",
+      "aliases": [
+        "LOC 22"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 23,
+      "name": "Local 23",
+      "aliases": [
+        "LOC 23"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 24,
+      "name": "Local 24",
+      "aliases": [
+        "LOC 24"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 25,
+      "name": "Local 25",
+      "aliases": [
+        "LOC 25"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 26,
+      "name": "Local 26",
+      "aliases": [
+        "LOC 26"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 27,
+      "name": "Local 27",
+      "aliases": [
+        "LOC 27"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 28,
+      "name": "Local 28",
+      "aliases": [
+        "LOC 28"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 29,
+      "name": "Local 29",
+      "aliases": [
+        "LOC 29"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 30,
+      "name": "Local 30",
+      "aliases": [
+        "LOC 30"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 31,
+      "name": "Local 31",
+      "aliases": [
+        "LOC 31"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 32,
+      "name": "Local 32",
+      "aliases": [
+        "LOC 32"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 33,
+      "name": "Local 33",
+      "aliases": [
+        "LOC 33"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 34,
+      "name": "Local 34",
+      "aliases": [
+        "LOC 34"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 35,
+      "name": "Local 35",
+      "aliases": [
+        "LOC 35"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 36,
+      "name": "Local 36",
+      "aliases": [
+        "LOC 36"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 37,
+      "name": "Local 37",
+      "aliases": [
+        "LOC 37"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 38,
+      "name": "Local 38",
+      "aliases": [
+        "LOC 38"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 39,
+      "name": "KXTX Telemundo 39 (local)",
+      "aliases": [
+        "LOC 39",
+        "KTL"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 40,
+      "name": "Local 40",
+      "aliases": [
+        "LOC 40"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 41,
+      "name": "Local 41",
+      "aliases": [
+        "LOC 41"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 42,
+      "name": "Local 42",
+      "aliases": [
+        "LOC 42"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 43,
+      "name": "Local 43",
+      "aliases": [
+        "LOC 43"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 44,
+      "name": "Local 44",
+      "aliases": [
+        "LOC 44"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 45,
+      "name": "Local 45",
+      "aliases": [
+        "LOC 45"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 46,
+      "name": "Local 46",
+      "aliases": [
+        "LOC 46"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 47,
+      "name": "Local 47",
+      "aliases": [
+        "LOC 47"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 48,
+      "name": "Local 48",
+      "aliases": [
+        "LOC 48"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 49,
+      "name": "Local 49",
+      "aliases": [
+        "LOC 49"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 50,
+      "name": "Local 50",
+      "aliases": [
+        "LOC 50"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 51,
+      "name": "Local 51",
+      "aliases": [
+        "LOC 51"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 52,
+      "name": "Local 52",
+      "aliases": [
+        "LOC 52"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 53,
+      "name": "Local 53",
+      "aliases": [
+        "LOC 53"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 54,
+      "name": "Local 54",
+      "aliases": [
+        "LOC 54"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 55,
+      "name": "Local 55",
+      "aliases": [
+        "LOC 55"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 56,
+      "name": "Local 56",
+      "aliases": [
+        "LOC 56"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 57,
+      "name": "Local 57",
+      "aliases": [
+        "LOC 57"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 58,
+      "name": "Local 58",
+      "aliases": [
+        "LOC 58"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 59,
+      "name": "Local 59",
+      "aliases": [
+        "LOC 59"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 60,
+      "name": "Local 60",
+      "aliases": [
+        "LOC 60"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 61,
+      "name": "Local 61",
+      "aliases": [
+        "LOC 61"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 62,
+      "name": "Local 62",
+      "aliases": [
+        "LOC 62"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 63,
+      "name": "Local 63",
+      "aliases": [
+        "LOC 63"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 64,
+      "name": "Local 64",
+      "aliases": [
+        "LOC 64"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 65,
+      "name": "Local 65",
+      "aliases": [
+        "LOC 65"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 66,
+      "name": "Local 66",
+      "aliases": [
+        "LOC 66"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 67,
+      "name": "Local 67",
+      "aliases": [
+        "LOC 67"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 68,
+      "name": "Local 68",
+      "aliases": [
+        "LOC 68"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 69,
+      "name": "Local 69",
+      "aliases": [
+        "LOC 69"
+      ],
+      "category": "Local",
+      "market": null
+    },
+    {
+      "number": 70,
+      "name": "Home Shopping Network",
+      "aliases": [
+        "Home Shopping",
+        "HSN"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 72,
+      "name": "Jewelry Television",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 77,
+      "name": "MeTV",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 80,
+      "name": "COZI TV",
+      "aliases": [
+        "COZI"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 81,
+      "name": "GRIT",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 82,
+      "name": "Bounce TV",
+      "aliases": [
+        "Bounce"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 83,
+      "name": "GREAT",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 84,
+      "name": "Start TV",
+      "aliases": [
+        "Start"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 85,
+      "name": "True Crime Network",
+      "aliases": [
+        "True Crime",
+        "TCN"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 86,
+      "name": "MovieSphere Gold",
+      "aliases": [],
+      "category": "Movies",
+      "market": null
+    },
+    {
+      "number": 88,
+      "name": "ION Mystery",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 100,
+      "name": "Info Channel",
+      "aliases": [
+        "Info"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 101,
+      "name": "Audience",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 105,
+      "name": "4K Live",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 106,
+      "name": "4K Live 2",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 117,
+      "name": "PPV 1",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 118,
+      "name": "PPV 2",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 119,
+      "name": "PPV 3",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 125,
+      "name": "Cinema 1",
+      "aliases": [],
+      "category": "Movies",
+      "market": null
+    },
+    {
+      "number": 126,
+      "name": "Cinema 2",
+      "aliases": [],
+      "category": "Movies",
+      "market": null
+    },
+    {
+      "number": 200,
+      "name": "News Mix",
+      "aliases": [],
+      "category": "News",
+      "market": null
+    },
+    {
+      "number": 202,
+      "name": "CNN",
+      "aliases": [
+        "CNN HD",
+        "CNN USA"
+      ],
+      "category": "News",
+      "market": null
+    },
+    {
+      "number": 204,
+      "name": "HLN",
+      "aliases": [
+        "HLN HD"
+      ],
+      "category": "News",
+      "market": null
+    },
+    {
+      "number": 205,
+      "name": "Sports Mix",
+      "aliases": [],
+      "category": "Sports",
+      "market": null
+    },
+    {
+      "number": 206,
+      "name": "ESPN",
+      "aliases": [
+        "ESPN HD"
+      ],
+      "category": "Sports",
+      "market": null
+    },
+    {
+      "number": 207,
+      "name": "ESPNews",
+      "aliases": [],
+      "category": "Sports",
+      "market": null
+    },
+    {
+      "number": 208,
+      "name": "ESPNU",
+      "aliases": [],
+      "category": "Sports",
+      "market": null
+    },
+    {
+      "number": 209,
+      "name": "ESPN2",
+      "aliases": [
+        "ESPN2 HD"
+      ],
+      "category": "Sports",
+      "market": null
+    },
+    {
+      "number": 210,
+      "name": "ESPN+",
+      "aliases": [],
+      "category": "Sports",
+      "market": null
+    },
+    {
+      "number": 212,
+      "name": "NFL Network",
+      "aliases": [
+        "NFL"
+      ],
+      "category": "Sports",
+      "market": null
+    },
+    {
+      "number": 213,
+      "name": "MLB Network",
+      "aliases": [
+        "MLB"
+      ],
+      "category": "Sports",
+      "market": null
+    },
+    {
+      "number": 214,
+      "name": "RACER Network",
+      "aliases": [
+        "RACER"
+      ],
+      "category": "Sports",
+      "market": null
+    },
+    {
+      "number": 215,
+      "name": "NHL Network",
+      "aliases": [
+        "NHL"
+      ],
+      "category": "Sports",
+      "market": null
+    },
+    {
+      "number": 216,
+      "name": "NBA TV",
+      "aliases": [
+        "NBA"
+      ],
+      "category": "Sports",
+      "market": null
+    },
+    {
+      "number": 217,
+      "name": "Tennis Channel",
+      "aliases": [
+        "Tennis"
+      ],
+      "category": "Sports",
+      "market": null
+    },
+    {
+      "number": 218,
+      "name": "Golf Channel",
+      "aliases": [
+        "Golf"
+      ],
+      "category": "Sports",
+      "market": null
+    },
+    {
+      "number": 219,
+      "name": "FOX Sports 1",
+      "aliases": [],
+      "category": "Sports",
+      "market": null
+    },
+    {
+      "number": 221,
+      "name": "CBS Sports Network",
+      "aliases": [
+        "CBS Sports",
+        "CSN"
+      ],
+      "category": "Sports",
+      "market": null
+    },
+    {
+      "number": 226,
+      "name": "Shop LC",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 228,
+      "name": "GEM Shopping Network",
+      "aliases": [
+        "GEM Shopping",
+        "GSN"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 229,
+      "name": "HGTV",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 230,
+      "name": "Magnolia Network",
+      "aliases": [
+        "Magnolia"
+      ],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 231,
+      "name": "Food Network",
+      "aliases": [
+        "Food"
+      ],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 232,
+      "name": "Cooking Channel",
+      "aliases": [
+        "Cooking"
+      ],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 233,
+      "name": "Game Show Network",
+      "aliases": [
+        "Game Show",
+        "GSN"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 235,
+      "name": "Tastemade",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 236,
+      "name": "E!",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 237,
+      "name": "Bravo",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 238,
+      "name": "ReelzChannel",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 239,
+      "name": "SundanceTV",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 240,
+      "name": "HSN",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 241,
+      "name": "Paramount Network",
+      "aliases": [
+        "Paramount"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 242,
+      "name": "USA Network",
+      "aliases": [
+        "USA"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 244,
+      "name": "SYFY",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 245,
+      "name": "TNT",
+      "aliases": [
+        "TNT HD"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 246,
+      "name": "truTV",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 247,
+      "name": "TBS",
+      "aliases": [
+        "TBS HD"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 248,
+      "name": "FX",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 249,
+      "name": "Comedy Central",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 251,
+      "name": "Oxygen True Crime",
+      "aliases": [
+        "OTC"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 252,
+      "name": "Lifetime",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 253,
+      "name": "LMN",
+      "aliases": [],
+      "category": "Movies",
+      "market": null
+    },
+    {
+      "number": 254,
+      "name": "AMC",
+      "aliases": [],
+      "category": "Movies",
+      "market": null
+    },
+    {
+      "number": 256,
+      "name": "TCM",
+      "aliases": [],
+      "category": "Movies",
+      "market": null
+    },
+    {
+      "number": 258,
+      "name": "FX Movie Channel",
+      "aliases": [
+        "FX Movie",
+        "FMC"
+      ],
+      "category": "Movies",
+      "market": null
+    },
+    {
+      "number": 259,
+      "name": "FXX",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 260,
+      "name": "WE tv",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 261,
+      "name": "Discovery Life",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 264,
+      "name": "BBC America",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 265,
+      "name": "A&E",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 266,
+      "name": "FYI",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 267,
+      "name": "EarthX",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 269,
+      "name": "History",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 271,
+      "name": "VICE",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 272,
+      "name": "Logo",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 273,
+      "name": "POP",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 274,
+      "name": "Ovation",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 275,
+      "name": "QVC",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 276,
+      "name": "National Geographic",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 277,
+      "name": "Travel Channel",
+      "aliases": [
+        "Travel"
+      ],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 278,
+      "name": "Discovery",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 279,
+      "name": "OWN",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 280,
+      "name": "TLC",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 281,
+      "name": "Discovery Turbo",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 282,
+      "name": "Animal Planet",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 283,
+      "name": "Nat Geo Wild",
+      "aliases": [
+        "NGW"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 284,
+      "name": "Science",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 285,
+      "name": "Investigation Discovery",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 286,
+      "name": "Destination America",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 287,
+      "name": "American Heroes Channel",
+      "aliases": [
+        "American Heroes",
+        "AHC"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 288,
+      "name": "PBS Kids",
+      "aliases": [],
+      "category": "Kids",
+      "market": null
+    },
+    {
+      "number": 289,
+      "name": "Disney Junior",
+      "aliases": [],
+      "category": "Kids",
+      "market": null
+    },
+    {
+      "number": 290,
+      "name": "Disney Channel",
+      "aliases": [
+        "Disney"
+      ],
+      "category": "Kids",
+      "market": null
+    },
+    {
+      "number": 291,
+      "name": "Disney Channel West",
+      "aliases": [
+        "DCW"
+      ],
+      "category": "Kids",
+      "market": null
+    },
+    {
+      "number": 292,
+      "name": "Disney XD",
+      "aliases": [],
+      "category": "Kids",
+      "market": null
+    },
+    {
+      "number": 293,
+      "name": "BabyFirst",
+      "aliases": [],
+      "category": "Kids",
+      "market": null
+    },
+    {
+      "number": 297,
+      "name": "Cartoon Network",
+      "aliases": [
+        "Cartoon"
+      ],
+      "category": "Kids",
+      "market": null
+    },
+    {
+      "number": 298,
+      "name": "Boomerang",
+      "aliases": [],
+      "category": "Kids",
+      "market": null
+    },
+    {
+      "number": 299,
+      "name": "Nickelodeon",
+      "aliases": [
+        "Nick",
+        "Nickelodeon East"
+      ],
+      "category": "Kids",
+      "market": null
+    },
+    {
+      "number": 300,
+      "name": "Nickelodeon West",
+      "aliases": [
+        "Nick West"
+      ],
+      "category": "Kids",
+      "market": null
+    },
+    {
+      "number": 301,
+      "name": "Kids & Lifestyle 301",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 302,
+      "name": "Kids & Lifestyle 302",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 303,
+      "name": "TeenNick",
+      "aliases": [],
+      "category": "Kids",
+      "market": null
+    },
+    {
+      "number": 304,
+      "name": "TV Land",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 305,
+      "name": "ION",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 306,
+      "name": "Kids & Lifestyle 306",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 307,
+      "name": "NewsNation",
+      "aliases": [],
+      "category": "News",
+      "market": null
+    },
+    {
+      "number": 308,
+      "name": "LooLoo Kids",
+      "aliases": [],
+      "category": "Kids",
+      "market": null
+    },
+    {
+      "number": 309,
+      "name": "Kids & Lifestyle 309",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 310,
+      "name": "Kids & Lifestyle 310",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 311,
+      "name": "Kids & Lifestyle 311",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 312,
+      "name": "Hallmark Channel",
+      "aliases": [
+        "Hallmark"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 313,
+      "name": "Kids & Lifestyle 313",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 314,
+      "name": "Family Movie Classics",
+      "aliases": [
+        "FMC"
+      ],
+      "category": "Movies",
+      "market": null
+    },
+    {
+      "number": 315,
+      "name": "Kids & Lifestyle 315",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 316,
+      "name": "Kids & Lifestyle 316",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 317,
+      "name": "Kids & Lifestyle 317",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 318,
+      "name": "Kids & Lifestyle 318",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 319,
+      "name": "Kids & Lifestyle 319",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 320,
+      "name": "Scientology Network",
+      "aliases": [
+        "Scientology"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 321,
+      "name": "Kids & Lifestyle 321",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 322,
+      "name": "NHK World",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 323,
+      "name": "Family Entertainment Television",
+      "aliases": [
+        "FET"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 324,
+      "name": "Kids & Lifestyle 324",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 325,
+      "name": "Kids & Lifestyle 325",
+      "aliases": [],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 326,
+      "name": "Great American Family",
+      "aliases": [
+        "GAF"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 327,
+      "name": "CMT",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 328,
+      "name": "TV One",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 329,
+      "name": "BET",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 330,
+      "name": "BET Her",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 331,
+      "name": "MTV",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 334,
+      "name": "Revolt",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 335,
+      "name": "VH1",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 338,
+      "name": "UPTV",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 340,
+      "name": "AXS TV",
+      "aliases": [
+        "AXS"
+      ],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 341,
+      "name": "Cleo TV",
+      "aliases": [
+        "Cleo"
+      ],
+      "category": "Lifestyle",
+      "market": null
+    },
+    {
+      "number": 342,
+      "name": "theGrio",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 345,
+      "name": "RFD-TV",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 346,
+      "name": "BBC News",
+      "aliases": [],
+      "category": "News",
+      "market": null
+    },
+    {
+      "number": 347,
+      "name": "The First",
+      "aliases": [],
+      "category": "News",
+      "market": null
+    },
+    {
+      "number": 348,
+      "name": "Free Speech TV",
+      "aliases": [
+        "Free Speech",
+        "FST"
+      ],
+      "category": "News",
+      "market": null
+    },
+    {
+      "number": 349,
+      "name": "Newsmax",
+      "aliases": [],
+      "category": "News",
+      "market": null
+    },
+    {
+      "number": 354,
+      "name": "Cheddar News",
+      "aliases": [],
+      "category": "News",
+      "market": null
+    },
+    {
+      "number": 355,
+      "name": "CNBC",
+      "aliases": [],
+      "category": "News",
+      "market": null
+    },
+    {
+      "number": 356,
+      "name": "MS NOW",
+      "aliases": [],
+      "category": "News",
+      "market": null
+    },
+    {
+      "number": 357,
+      "name": "CNBC World",
+      "aliases": [],
+      "category": "News",
+      "market": null
+    },
+    {
+      "number": 358,
+      "name": "CNN International",
+      "aliases": [],
+      "category": "News",
+      "market": null
+    },
+    {
+      "number": 359,
+      "name": "Fox Business",
+      "aliases": [],
+      "category": "News",
+      "market": null
+    },
+    {
+      "number": 360,
+      "name": "FOX News Channel",
+      "aliases": [
+        "FOX News",
+        "FNC"
+      ],
+      "category": "News",
+      "market": null
+    },
+    {
+      "number": 361,
+      "name": "AccuWeather",
+      "aliases": [],
+      "category": "News",
+      "market": null
+    },
+    {
+      "number": 362,
+      "name": "The Weather Channel",
+      "aliases": [
+        "The Weather"
+      ],
+      "category": "News",
+      "market": null
+    },
+    {
+      "number": 363,
+      "name": "FOX Weather",
+      "aliases": [],
+      "category": "News",
+      "market": null
+    },
+    {
+      "number": 364,
+      "name": "INSP",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 365,
+      "name": "GEB America",
+      "aliases": [],
+      "category": "Entertainment",
+      "market": null
+    },
+    {
+      "number": 402,
+      "name": "Univision",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 404,
+      "name": "Galavision",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 406,
+      "name": "Telemundo",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 408,
+      "name": "UniMas",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 410,
+      "name": "Fox Deportes",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 412,
+      "name": "ESPN Deportes",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 414,
+      "name": "TUDN",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 416,
+      "name": "TyC Sports",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 418,
+      "name": "GolTV",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 420,
+      "name": "Centroamerica TV",
+      "aliases": [
+        "Centroamerica"
+      ],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 422,
+      "name": "WAPA America",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 424,
+      "name": "Pasiones",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 426,
+      "name": "Discovery en Espanol",
+      "aliases": [
+        "DEE"
+      ],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 428,
+      "name": "Discovery Familia",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 430,
+      "name": "Cine Mexicano",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 432,
+      "name": "Cinelatino",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 434,
+      "name": "Vme",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 436,
+      "name": "MegaTV",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 438,
+      "name": "Multimedios",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 440,
+      "name": "Ecuavisa Internacional",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 442,
+      "name": "Caracol TV",
+      "aliases": [
+        "Caracol"
+      ],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 444,
+      "name": "Nuestra Tele",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 446,
+      "name": "TVV",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 448,
+      "name": "Telefe",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 450,
+      "name": "Canal Sur",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 452,
+      "name": "Peru Magico",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 454,
+      "name": "Venevision",
+      "aliases": [],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 464,
+      "name": "Zee TV",
+      "aliases": [
+        "Zee"
+      ],
+      "category": "International",
+      "market": null
+    },
+    {
+      "number": 501,
+      "name": "HBO East",
+      "aliases": [
+        "HBO East"
+      ],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 502,
+      "name": "HBO2 East",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 503,
+      "name": "HBO Signature",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 504,
+      "name": "HBO West",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 505,
+      "name": "HBO2 West",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 506,
+      "name": "HBO Comedy",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 507,
+      "name": "HBO Zone",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 508,
+      "name": "HBO Latino",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 509,
+      "name": "HBO Family",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 511,
+      "name": "Cinemax East",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 512,
+      "name": "ActionMax",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 513,
+      "name": "MoreMax",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 514,
+      "name": "ThrillerMax",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 515,
+      "name": "Cinemax West",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 516,
+      "name": "5StarMax",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 517,
+      "name": "MovieMax",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 518,
+      "name": "OuterMax",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 519,
+      "name": "Cinemax Latino",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 520,
+      "name": "Starz East",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 521,
+      "name": "Starz West",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 522,
+      "name": "Starz Edge",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 523,
+      "name": "Starz in Black",
+      "aliases": [
+        "SIB"
+      ],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 524,
+      "name": "Starz Kids & Family",
+      "aliases": [
+        "SKF"
+      ],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 525,
+      "name": "Starz Comedy",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 526,
+      "name": "Starz Cinema",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 527,
+      "name": "Starz Encore East",
+      "aliases": [
+        "SEE"
+      ],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 528,
+      "name": "Starz Encore West",
+      "aliases": [
+        "SEW"
+      ],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 529,
+      "name": "Starz Encore Classic",
+      "aliases": [
+        "SEC"
+      ],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 530,
+      "name": "Starz Encore Westerns",
+      "aliases": [
+        "SEW"
+      ],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 531,
+      "name": "Starz Encore Suspense",
+      "aliases": [
+        "SES"
+      ],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 532,
+      "name": "Starz Encore Black",
+      "aliases": [
+        "SEB"
+      ],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 533,
+      "name": "Starz Encore Action",
+      "aliases": [
+        "SEA"
+      ],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 534,
+      "name": "Starz Encore Family",
+      "aliases": [
+        "SEF"
+      ],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 535,
+      "name": "Starz Encore Espanol",
+      "aliases": [
+        "SEE"
+      ],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 537,
+      "name": "MGM+",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 538,
+      "name": "MGM+ Hits",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 539,
+      "name": "MGM+ Marquee",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 540,
+      "name": "MGM+ Drive-In",
+      "aliases": [
+        "MDI"
+      ],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 541,
+      "name": "Sony Movie Channel",
+      "aliases": [
+        "Sony Movie",
+        "SMC"
+      ],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 542,
+      "name": "HDNet Movies",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 544,
+      "name": "TMC East",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 545,
+      "name": "Showtime East",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 546,
+      "name": "Showtime West",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 547,
+      "name": "Showtime 2 East",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 548,
+      "name": "Showtime 2 West",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 549,
+      "name": "Showtime Showcase",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 550,
+      "name": "Showtime Extreme",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 551,
+      "name": "Showtime Beyond",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 552,
+      "name": "Showtime Next",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 553,
+      "name": "Showtime Women",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 554,
+      "name": "Showtime Family Zone",
+      "aliases": [
+        "SFZ"
+      ],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 555,
+      "name": "The Movie Channel East",
+      "aliases": [
+        "MCE"
+      ],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 556,
+      "name": "The Movie Channel West",
+      "aliases": [
+        "MCW"
+      ],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 557,
+      "name": "TMC Xtra East",
+      "aliases": [
+        "TXE"
+      ],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 558,
+      "name": "TMC Xtra West",
+      "aliases": [
+        "TXW"
+      ],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 559,
+      "name": "Flix",
+      "aliases": [],
+      "category": "Premium",
+      "market": null
+    },
+    {
+      "number": 600,
+      "name": "Fox Sports 1",
+      "aliases": [],
+      "category": "Sports",
+      "market": null
+    },
+    {
+      "number": 601,
+      "name": "Fox Sports 2",
+      "aliases": [],
+      "category": "Sports",
+      "market": null
+    },
+    {
+      "number": 602,
+      "name": "TVG",
+      "aliases": [],
+      "category": "Sports",
+      "market": "Dallas"
+    },
+    {
+      "number": 603,
+      "name": "TVG2",
+      "aliases": [],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 604,
+      "name": "Pursuit Channel",
+      "aliases": [
+        "Pursuit"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 605,
+      "name": "Sportsman Channel",
+      "aliases": [
+        "Sportsman"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 606,
+      "name": "Outdoor Channel",
+      "aliases": [
+        "Outdoor"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 610,
+      "name": "Big Ten Network",
+      "aliases": [
+        "Big Ten",
+        "BTN"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 611,
+      "name": "SEC Network",
+      "aliases": [
+        "SEC"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 612,
+      "name": "ACC Network",
+      "aliases": [
+        "ACC"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 618,
+      "name": "Fox Sports 2",
+      "aliases": [],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 628,
+      "name": "NESN",
+      "aliases": [],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 630,
+      "name": "NBC Sports Boston",
+      "aliases": [
+        "NSB"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 631,
+      "name": "YES Network",
+      "aliases": [
+        "YES"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 634,
+      "name": "MSG",
+      "aliases": [],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 635,
+      "name": "MSG+",
+      "aliases": [],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 640,
+      "name": "MASN",
+      "aliases": [],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 642,
+      "name": "SNY",
+      "aliases": [],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 659,
+      "name": "Root Sports",
+      "aliases": [],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 663,
+      "name": "Bally Sports South",
+      "aliases": [
+        "BSS"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 665,
+      "name": "NBC Sports Chicago",
+      "aliases": [
+        "NBC Sports Chicago HD",
+        "NSC"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 668,
+      "name": "Bally Sports Ohio",
+      "aliases": [
+        "BSO"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 669,
+      "name": "Bally Sports Great Lakes",
+      "aliases": [
+        "BSGL"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 671,
+      "name": "Bally Sports Midwest",
+      "aliases": [
+        "BSM"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 674,
+      "name": "Bally Sports Southwest",
+      "aliases": [
+        "BSS"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 676,
+      "name": "Bally Sports Southwest Plus",
+      "aliases": [
+        "BSSP"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 681,
+      "name": "Altitude",
+      "aliases": [],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 683,
+      "name": "AT&T SportsNet Rocky Mountain",
+      "aliases": [
+        "ATSRM"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 686,
+      "name": "Bally Sports Arizona",
+      "aliases": [
+        "BSA"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 687,
+      "name": "Bally Sports West",
+      "aliases": [
+        "BSW"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 692,
+      "name": "Bally Sports San Diego",
+      "aliases": [
+        "BSSD"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 693,
+      "name": "Bally Sports SoCal",
+      "aliases": [
+        "BSS"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 694,
+      "name": "NBC Sports Bay Area",
+      "aliases": [
+        "NSBA"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 696,
+      "name": "NBC Sports California",
+      "aliases": [
+        "NSC"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 698,
+      "name": "NBC Sports Northwest",
+      "aliases": [
+        "NSN"
+      ],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 801,
+      "name": "Hit List",
+      "aliases": [],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 802,
+      "name": "Pop Rhythmic",
+      "aliases": [],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 803,
+      "name": "Dance/EDM",
+      "aliases": [],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 804,
+      "name": "Indie",
+      "aliases": [],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 805,
+      "name": "Hip-Hop and R&B",
+      "aliases": [
+        "HHRB"
+      ],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 810,
+      "name": "Classic Rock",
+      "aliases": [],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 815,
+      "name": "Alternative",
+      "aliases": [],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 820,
+      "name": "Today's Country",
+      "aliases": [
+        "TSC"
+      ],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 825,
+      "name": "Classic Country",
+      "aliases": [],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 830,
+      "name": "Smooth Jazz",
+      "aliases": [],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 840,
+      "name": "Classical",
+      "aliases": [],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 845,
+      "name": "Pop Latino",
+      "aliases": [],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 846,
+      "name": "Musica Urbana",
+      "aliases": [],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 850,
+      "name": "Gospel",
+      "aliases": [],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 855,
+      "name": "Classic R&B",
+      "aliases": [
+        "CRB"
+      ],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 860,
+      "name": "Soul",
+      "aliases": [],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 865,
+      "name": "Blues",
+      "aliases": [],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 870,
+      "name": "Reggae",
+      "aliases": [],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 875,
+      "name": "Rock",
+      "aliases": [],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 880,
+      "name": "Metal",
+      "aliases": [],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 885,
+      "name": "Alternative Rock",
+      "aliases": [],
+      "category": "Music",
+      "market": null
+    },
+    {
+      "number": 886,
+      "name": "Adult Alternative",
+      "aliases": [],
+      "category": "Music",
+      "market": null
+    }
+  ],
+  "markets": {
+    "606": "Chicago",
+    "100": "New York",
+    "900": "Los Angeles",
+    "331": "Miami",
+    "752": "Dallas",
+    "981": "Seattle"
+  }
+}

@@ -1,0 +1,85 @@
+#EXTM3U url-tvg="https://www.open-epg.com/files/france.xml"
+
+#EXTINF:-1 tvg-id="TF1.fr" tvg-name="TF1 HD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bc/Logo_TF1_2013.svg/1280px-Logo_TF1_2013.svg.png",TF1
+https://fixture.example/fr/1
+
+#EXTINF:-1 tvg-id="France2.fr" tvg-name="FRANCE 2 FHD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/5/53/France_2_2018.svg/1280px-France_2_2018.svg.png",FRANCE 2
+https://fixture.example/fr/2
+
+#EXTINF:-1 tvg-id="France3.fr" tvg-name="FRANCE 3 FHD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dd/France_3_2018.svg/1280px-France_3_2018.svg.png",FRANCE 3
+https://fixture.example/fr/3
+
+#EXTINF:-1 tvg-id="France4.fr" tvg-name="FRANCE 4 FHD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3b/France_4_2018.svg/1280px-France_4_2018.svg.png",FRANCE 4
+https://fixture.example/fr/4
+
+#EXTINF:-1 tvg-id="France5.fr" tvg-name="FRANCE 5 FHD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/5/50/France_5_2018.svg/1280px-France_5_2018.svg.png",FRANCE 5
+https://fixture.example/fr/5
+
+#EXTINF:-1 tvg-id="M6.fr" tvg-name="M6 HD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4a/Logo_M6_%282020%2C_fond_clair%29.svg/1280px-Logo_M6_%282020%2C_fond_clair%29.svg.png",M6
+https://fixture.example/fr/6
+
+#EXTINF:-1 tvg-id="Arte.fr" tvg-name="ARTE FHD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3b/Arte-Logo.svg/1280px-Arte-Logo.svg.png",ARTE
+https://fixture.example/fr/7
+
+#EXTINF:-1 tvg-id="LaChaineParlementaire.fr" tvg-name="LCP/PUBLIC SÉNAT FHD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/fr/thumb/6/6a/Logo_LCP-AN_-_Public_S%C3%A9nat_%282019%29.svg/1920px-Logo_LCP-AN_-_Public_S%C3%A9nat_%282019%29.svg.png",LCP/PUBLIC SÉNAT
+https://fixture.example/fr/8
+
+#EXTINF:-1 tvg-id="W9.fr" tvg-name="W9 HD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/fr/thumb/5/56/Logo_W9_2018.svg/1280px-Logo_W9_2018.svg.png",W9
+https://fixture.example/fr/9
+
+#EXTINF:-1 tvg-id="TMC.fr" tvg-name="TMC HD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/fr/thumb/a/a8/TMC_logo_2016.svg/1280px-TMC_logo_2016.svg.png",TMC
+https://fixture.example/fr/10
+
+#EXTINF:-1 tvg-id="TFX.fr" tvg-name="TFX HD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/fr/thumb/8/83/TFX_logo_2018.svg/1280px-TFX_logo_2018.svg.png",TFX
+https://fixture.example/fr/11
+
+#EXTINF:-1 tvg-id="Gulli.fr" tvg-name="GULLI HD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/8/87/Logo_Gulli_2023.svg/1280px-Logo_Gulli_2023.svg.png",GULLI
+https://fixture.example/fr/12
+
+#EXTINF:-1 tvg-id="BFMTV.fr" tvg-name="BFM TV FHD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/3/39/BFMTV_2025.svg/1280px-BFMTV_2025.svg.png",BFM TV
+https://fixture.example/fr/13
+
+#EXTINF:-1 tvg-id="CNews.fr" tvg-name="CNEWS FHD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e3/Canal_News_logo.svg/1280px-Canal_News_logo.svg.png",CNEWS
+https://fixture.example/fr/14
+
+#EXTINF:-1 tvg-id="LCI.fr" tvg-name="LCI HD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/fr/thumb/b/b4/LCI_logo_%282016%29.png/1280px-LCI_logo_%282016%29.png",LCI
+https://fixture.example/fr/15
+
+#EXTINF:-1 tvg-id="FranceInfo.fr" tvg-name="FRANCE INFO FHD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/0/03/Franceinfo.svg/1280px-Franceinfo.svg.png",FRANCE INFO
+https://fixture.example/fr/16
+
+#EXTINF:-1 tvg-id="CStar.fr" tvg-name="CSTAR FHD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c0/Logo_CStar_2016.svg/1280px-Logo_CStar_2016.svg.png",CSTAR
+https://fixture.example/fr/17
+
+#EXTINF:-1 tvg-id="T18.fr" tvg-name="T18 FHD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/9/99/Logo_de_la_chaine_T18.svg/1280px-Logo_de_la_chaine_T18.svg.png",T18
+https://fixture.example/fr/18
+
+#EXTINF:-1 tvg-id="NOVO19.fr" tvg-name="NOVO19 FHD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Logo_NOVO19_-_2025.svg/1280px-Logo_NOVO19_-_2025.svg.png",NOVO19
+https://fixture.example/fr/19
+
+#EXTINF:-1 tvg-id="TF1SeriesFilms.fr" tvg-name="TF1 SÉRIES FILMS HD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/fr/thumb/5/5f/TF1_Séries_Films_logo_2018.svg/1280px-TF1_Séries_Films_logo_2018.svg.png",TF1 SÉRIES FILMS
+https://fixture.example/fr/20
+
+#EXTINF:-1 tvg-id="LEquipe.fr" tvg-name="LA CHAÎNE L’ÉQUIPE FHD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/fr/thumb/4/48/Logo_la_cha%C3%AEne_L%27%C3%89quipe_2016.svg/1280px-Logo_la_cha%C3%AEne_L%27%C3%89quipe_2016.svg.png",LA CHAÎNE L’ÉQUIPE
+https://fixture.example/fr/21
+
+#EXTINF:-1 tvg-id="6ter.fr" tvg-name="6TER FHD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Logo_6ter_2016.svg/1280px-Logo_6ter_2016.svg.png",6TER
+https://fixture.example/fr/22
+
+#EXTINF:-1 tvg-id="RMCSTORY.fr" tvg-name="RMC STORY FHD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b8/RMC_Story_2025.svg/1280px-RMC_Story_2025.svg.png",RMC STORY
+https://fixture.example/fr/23
+
+#EXTINF:-1 tvg-id="RMCDecouverte.fr" tvg-name="RMC DÉCOUVERTE FHD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f2/RMC_Découverte_logo_2025.svg/1280px-RMC_Découverte_logo_2025.svg.png",RMC DÉCOUVERTE
+https://fixture.example/fr/24
+
+#EXTINF:-1 tvg-id="RMCLife.fr" tvg-name="RMC LIFE FHD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/0/00/RMC_Life_logo_2025.svg/1280px-RMC_Life_logo_2025.svg.png",RMC LIFE
+https://fixture.example/fr/25
+
+#EXTINF:-1 tvg-id="TV5Monde.fr" tvg-name="TV5 MONDE FHD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/5/54/Logo_TV5Monde_2025.svg/1280px-Logo_TV5Monde_2025.svg.png",TV5 MONDE
+https://fixture.example/fr/26
+
+#EXTINF:-1 tvg-id="ParisPremiere.fr" tvg-name="PARIS PREMIÈRE HD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e9/Logo-ParisPremiere-2023.svg/1280px-Logo-ParisPremiere-2023.svg.png",PARIS PREMIÈRE
+https://fixture.example/fr/27
+
+#EXTINF:-1 tvg-id="RTL9.fr" tvg-name="RTL9 HD" group-title="Généralistes" tvg-logo="https://thumb.wikimedia.org/wikipedia/fr/thumb/c/c0/Logo_RTL9_%282023%29.svg/1280px-Logo_RTL9_%282023%29.svg.png",RTL9
+https://fixture.example/fr/28

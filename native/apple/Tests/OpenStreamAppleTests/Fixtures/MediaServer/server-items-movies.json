@@ -1,0 +1,309 @@
+{
+  "_fixture": "RECORDED from a Jellyfin-compatible server, ids, names, hosts and links replaced; entries named or with an Id starting with synthetic were added by hand",
+  "Items": [
+    {
+      "BackdropImageTags": [
+        "a0000000000000000000000000000059"
+      ],
+      "CanDelete": false,
+      "CanDownload": false,
+      "ChildCount": null,
+      "CommunityRating": 7.4,
+      "EnableMediaSourceDisplay": true,
+      "Etag": "a0000000000000000000000000000063",
+      "GenreItems": [
+        {
+          "Id": "a0000000000000000000000000000064",
+          "Name": "Name 55"
+        },
+        {
+          "Id": "a0000000000000000000000000000065",
+          "Name": "Name 56"
+        }
+      ],
+      "Genres": [
+        "Comedy",
+        "Drama",
+        "Romance"
+      ],
+      "Id": "a0000000000000000000000000000062",
+      "ImageBlurHashes": {},
+      "ImageTags": {
+        "Logo": "a0000000000000000000000000000058",
+        "Primary": "a000000000000000000000000000005a",
+        "Thumb": "a0000000000000000000000000000059"
+      },
+      "IsFolder": false,
+      "LocationType": "Remote",
+      "LockData": false,
+      "LockedFields": [],
+      "MediaSources": [
+        {
+          "Container": "mp4",
+          "ETag": "a0000000000000000000000000000063",
+          "Formats": [],
+          "Id": "a0000000000000000000000000000062",
+          "IsRemote": true,
+          "MediaAttachments": [],
+          "MediaStreams": [
+            {
+              "Codec": "h264",
+              "DisplayTitle": "Video",
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsTextSubtitleStream": false,
+              "SupportsExternalStream": false,
+              "Type": "Video"
+            }
+          ],
+          "Name": "Version 1",
+          "Path": "/p47.mp4",
+          "Protocol": "Http",
+          "RequiredHttpHeaders": {},
+          "RequiresClosing": false,
+          "RequiresLooping": false,
+          "RequiresOpening": false,
+          "SupportsDirectPlay": true,
+          "SupportsDirectStream": true,
+          "SupportsProbing": false,
+          "SupportsTranscoding": false,
+          "Type": "Placeholder",
+          "VideoType": "VideoFile"
+        }
+      ],
+      "MediaType": "Video",
+      "Name": "Movie One",
+      "OfficialRating": null,
+      "OriginalTitle": "OriginalTitle 1",
+      "Overview": "Overview 1.",
+      "ParentId": "a0000000000000000000000000000003",
+      "Path": "/p48/a0000000000000000000000000000063",
+      "People": [
+        {
+          "Id": "a000000000000000000000000000005b",
+          "Name": "Name 47",
+          "Role": "",
+          "Type": "Actor"
+        },
+        {
+          "Id": "a000000000000000000000000000005c",
+          "Name": "Name 48",
+          "Role": "",
+          "Type": "Director"
+        },
+        {
+          "Id": "a000000000000000000000000000005d",
+          "Name": "Name 49",
+          "Role": "",
+          "Type": "Writer"
+        }
+      ],
+      "PlayAccess": "Full",
+      "PremiereDate": "1999-03-31T00:00:00.000Z",
+      "PrimaryImageAspectRatio": 0.6666666666666666,
+      "ProductionLocations": [
+        "ProductionLocations 1"
+      ],
+      "ProductionYear": 1999,
+      "ProviderIds": {
+        "Imdb": "1000"
+      },
+      "RemoteTrailers": [
+        {
+          "Name": "Trailer",
+          "Url": "https://www.youtube.com/watch?v=abcdefghijk"
+        }
+      ],
+      "RunTimeTicks": 58200000000,
+      "ServerId": "a0000000000000000000000000000001",
+      "SortName": "SortName 44",
+      "Studios": [],
+      "Taglines": [],
+      "Tags": [],
+      "Type": "Movie",
+      "UserData": {
+        "IsFavorite": false,
+        "ItemId": "a0000000000000000000000000000062",
+        "Key": "a0000000000000000000000000000062",
+        "Likes": null,
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false,
+        "PlayedPercentage": 0
+      },
+      "VideoType": "VideoFile"
+    },
+    {
+      "BackdropImageTags": [
+        "a0000000000000000000000000000067"
+      ],
+      "CanDelete": false,
+      "CanDownload": false,
+      "ChildCount": null,
+      "CommunityRating": 7.4,
+      "EnableMediaSourceDisplay": true,
+      "Etag": "a000000000000000000000000000006f",
+      "GenreItems": [
+        {
+          "Id": "a0000000000000000000000000000070",
+          "Name": "Name 67"
+        }
+      ],
+      "Genres": [
+        "Horror"
+      ],
+      "Id": "a000000000000000000000000000006e",
+      "ImageBlurHashes": {},
+      "ImageTags": {
+        "Logo": "a0000000000000000000000000000068",
+        "Primary": "a0000000000000000000000000000069",
+        "Thumb": "a0000000000000000000000000000067"
+      },
+      "IsFolder": false,
+      "LocationType": "Remote",
+      "LockData": false,
+      "LockedFields": [],
+      "MediaSources": [
+        {
+          "Container": "mp4",
+          "ETag": "a000000000000000000000000000006f",
+          "Formats": [],
+          "Id": "a000000000000000000000000000006e",
+          "IsRemote": true,
+          "MediaAttachments": [],
+          "MediaStreams": [
+            {
+              "Codec": "h264",
+              "DisplayTitle": "Video",
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsTextSubtitleStream": false,
+              "SupportsExternalStream": false,
+              "Type": "Video"
+            }
+          ],
+          "Name": "Version 2",
+          "Path": "/p52.mp4",
+          "Protocol": "Http",
+          "RequiredHttpHeaders": {},
+          "RequiresClosing": false,
+          "RequiresLooping": false,
+          "RequiresOpening": false,
+          "SupportsDirectPlay": true,
+          "SupportsDirectStream": true,
+          "SupportsProbing": false,
+          "SupportsTranscoding": false,
+          "Type": "Placeholder",
+          "VideoType": "VideoFile"
+        }
+      ],
+      "MediaType": "Video",
+      "Name": "Movie Two",
+      "OfficialRating": null,
+      "OriginalTitle": "OriginalTitle 2",
+      "Overview": "Overview 2.",
+      "ParentId": "a0000000000000000000000000000003",
+      "Path": "/p53/a000000000000000000000000000006f",
+      "People": [
+        {
+          "Id": "a000000000000000000000000000006a",
+          "Name": "Name 61",
+          "Role": "",
+          "Type": "Actor"
+        },
+        {
+          "Id": "a000000000000000000000000000006b",
+          "Name": "Name 62",
+          "Role": "",
+          "Type": "Actor"
+        },
+        {
+          "Id": "a000000000000000000000000000006c",
+          "Name": "Name 63",
+          "Role": "",
+          "Type": "Actor"
+        }
+      ],
+      "PlayAccess": "Full",
+      "PremiereDate": "1984-11-16T00:00:00.000Z",
+      "PrimaryImageAspectRatio": 0.6666666666666666,
+      "ProductionLocations": [
+        "ProductionLocations 2"
+      ],
+      "ProductionYear": 1984,
+      "ProviderIds": {
+        "Imdb": "1000"
+      },
+      "RemoteTrailers": [
+        {
+          "Name": "Trailer",
+          "Url": "https://www.youtube.com/watch?v=abcdefghijk"
+        }
+      ],
+      "RunTimeTicks": 54600000000,
+      "ServerId": "a0000000000000000000000000000001",
+      "SortName": "SortName 45",
+      "Studios": [],
+      "Taglines": [],
+      "Tags": [],
+      "Type": "Movie",
+      "UserData": {
+        "IsFavorite": false,
+        "ItemId": "a000000000000000000000000000006e",
+        "Key": "a000000000000000000000000000006e",
+        "Likes": null,
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false,
+        "PlayedPercentage": 0
+      },
+      "VideoType": "VideoFile"
+    },
+    {
+      "Name": "synthetic: an item without an id",
+      "Type": "Movie"
+    },
+    {
+      "CommunityRating": "high",
+      "Genres": 7,
+      "Id": "synthetic-odd-shapes",
+      "ImageTags": [
+        "Primary"
+      ],
+      "Name": "Odd Shapes",
+      "People": [
+        {
+          "Name": "Named Person",
+          "Type": "Actor"
+        },
+        {
+          "Id": "synthetic-person-without-name"
+        }
+      ],
+      "ProductionYear": "1999",
+      "RemoteTrailers": [
+        {
+          "Name": "No link"
+        }
+      ],
+      "RunTimeTicks": "58200000000",
+      "Type": "Movie",
+      "UserData": {
+        "PlayCount": "2",
+        "Played": "yes"
+      }
+    },
+    {
+      "Id": "synthetic-collection",
+      "IsFolder": true,
+      "Name": "A Collection",
+      "Type": "BoxSet"
+    }
+  ],
+  "StartIndex": 0,
+  "TotalRecordCount": 96
+}

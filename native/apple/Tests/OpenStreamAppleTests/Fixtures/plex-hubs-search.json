@@ -1,0 +1,94 @@
+{
+ "MediaContainer": {
+  "size": 1,
+  "Hub": [
+   {
+    "title": "Movies",
+    "type": "movie",
+    "hubIdentifier": "movie",
+    "context": "",
+    "size": 1,
+    "more": false,
+    "style": "shelf",
+    "Metadata": [
+     {
+      "score": "0.93082",
+      "ratingKey": "9000",
+      "key": "/library/metadata/9000",
+      "guid": "plex://movie/000000000000000000000001",
+      "studio": "Universal Pictures",
+      "type": "movie",
+      "title": "About Time",
+      "librarySectionID": 1,
+      "contentRating": "R",
+      "contentRatingAge": 14,
+      "summary": "At the age of 21, Tim discovers he can travel in time and change what happens and has happened in his own life. His decision to make his world a better place by getting a girlfriend turns out not to be as easy as you might think.",
+      "rating": 7.0,
+      "audienceRating": 8.2,
+      "year": 2013,
+      "tagline": "What if every moment in life came with a second chance?",
+      "thumb": "/library/metadata/9000/thumb/1700000000",
+      "art": "/library/metadata/9000/art/1700000000",
+      "duration": 6975153,
+      "originallyAvailableAt": "2013-09-04",
+      "addedAt": 1700000000,
+      "audienceRatingImage": "rottentomatoes://image.rating.upright",
+      "primaryExtraKey": "/library/metadata/9001",
+      "ratingImage": "rottentomatoes://image.rating.ripe",
+      "Media": [
+       {
+        "id": 9000,
+        "duration": 6975153,
+        "bitrate": 24464,
+        "width": 3840,
+        "height": 2160,
+        "aspectRatio": 1.78,
+        "audioChannels": 2,
+        "audioCodec": "aac",
+        "videoCodec": "hevc",
+        "videoResolution": "4k",
+        "container": "mp4",
+        "optimizedForStreaming": 0,
+        "has64bitOffsets": true,
+        "videoProfile": "main",
+        "hasVoiceActivity": false,
+        "Part": [
+         {
+          "id": 9000,
+          "key": "/library/parts/9000/1700000000/file.mkv",
+          "duration": 6975153,
+          "file": "/movies/About Time (2013)/About Time (2013).mkv",
+          "size": 21330429429,
+          "container": "mp4",
+          "has64bitOffsets": true,
+          "optimizedForStreaming": false,
+          "videoProfile": "main"
+         }
+        ]
+       }
+      ],
+      "Guid": [
+       {
+        "id": "imdb://tt2194499"
+       },
+       {
+        "id": "tmdb://122906"
+       },
+       {
+        "id": "tvdb://889"
+       }
+      ],
+      "Genre": [
+       {
+        "tag": "Comedy"
+       },
+       {
+        "tag": "Drama"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

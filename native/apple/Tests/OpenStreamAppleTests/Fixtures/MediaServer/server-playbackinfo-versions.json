@@ -1,0 +1,69 @@
+{
+  "_fixture": "SYNTHETIC: the standard multi-version PlaybackInfo shape, written by hand with fixture hosts",
+  "MediaSources": [
+    {
+      "Bitrate": 8000000,
+      "Container": "mp4",
+      "Id": "source-remote-1080",
+      "IsRemote": true,
+      "MediaStreams": [
+        { "Codec": "h264", "Height": 1080, "Index": 0, "IsDefault": true, "IsExternal": false, "Type": "Video", "Width": 1920 },
+        { "Channels": 6, "Codec": "eac3", "Index": 1, "IsDefault": true, "IsExternal": false, "Language": "eng", "Type": "Audio" },
+        {
+          "Codec": "srt", "DeliveryMethod": "External",
+          "DeliveryUrl": "/Videos/item-1/source-remote-1080/Subtitles/2/0/Stream.srt",
+          "DisplayTitle": "English - SRT - External", "Index": 2, "IsExternal": true, "IsForced": false,
+          "IsTextSubtitleStream": true, "Language": "eng", "SupportsExternalStream": true, "Type": "Subtitle"
+        },
+        {
+          "Codec": "vtt", "DeliveryMethod": "External",
+          "DeliveryUrl": "https://subs.fixture.example/item-1/fr.vtt",
+          "Index": 3, "IsExternal": true, "IsForced": true, "Language": "fre", "Title": "Signs", "Type": "Subtitle"
+        },
+        { "Codec": "subrip", "DeliveryMethod": "Embed", "Index": 4, "IsExternal": false, "Language": "spa", "Type": "Subtitle" }
+      ],
+      "Name": "1080p WEB-DL",
+      "Path": "https://media.fixture.example/library/item-1/1080p.mp4",
+      "Protocol": "Http",
+      "RequiredHttpHeaders": { "Referer": "https://media.fixture.example/", "User-Agent": "FixturePlayer/1.0" },
+      "RunTimeTicks": 58200000000,
+      "SupportsDirectPlay": true,
+      "SupportsDirectStream": true,
+      "SupportsTranscoding": false,
+      "Type": "Default"
+    },
+    {
+      "Bitrate": 40000000,
+      "Container": "mkv",
+      "Id": "source-file-2160",
+      "IsRemote": false,
+      "MediaStreams": [
+        { "Codec": "hevc", "Height": 2160, "Index": 0, "Type": "Video", "VideoRangeType": "HDR10", "Width": 3840 },
+        { "Channels": 8, "Codec": "truehd", "Index": 1, "Language": "eng", "Type": "Audio" }
+      ],
+      "Name": "2160p REMUX",
+      "Path": "/media/movies/Movie One (1999)/Movie One 2160p.mkv",
+      "Protocol": "File",
+      "RequiredHttpHeaders": {},
+      "RunTimeTicks": 58200000000,
+      "SupportsDirectPlay": true,
+      "SupportsDirectStream": true,
+      "SupportsTranscoding": true,
+      "TranscodingUrl": "/videos/item-1/master.m3u8?MediaSourceId=source-file-2160&VideoCodec=h264",
+      "Type": "Default"
+    },
+    {
+      "Container": "mp4",
+      "Id": "source-placeholder",
+      "IsRemote": true,
+      "MediaStreams": [{ "Codec": "h264", "Index": 0, "Type": "Video" }],
+      "Name": "Placeholder",
+      "Path": "/placeholder.mp4",
+      "Protocol": "Http",
+      "SupportsDirectPlay": true,
+      "Type": "Placeholder"
+    },
+    { "Name": "A source without an id" }
+  ],
+  "PlaySessionId": "play-session-1"
+}

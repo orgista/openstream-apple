@@ -1,0 +1,63 @@
+name: Release attestation
+
+# Builds are made and signed on our build Mac and published with
+# scripts/release-github. When a release is published, this workflow checks
+# every asset against the release's SHA256SUMS and records a GitHub
+# attestation for it, so a download can be checked with
+#   gh attestation verify <file> --repo ${{ github.repository }}
+# The attestation proves the file is the one published in this repository's
+# release; it does not describe the build machine.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to attest (e.g. v1.2.3)
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-attest-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  attest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # upload the attestation bundle to the release
+      id-token: write # sign the attestation
+      attestations: write
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Download release assets
+        run: |
+          mkdir assets && cd assets
+          gh release download "$TAG" --pattern '*' --skip-existing
+          rm -f -- *.intoto.jsonl
+          ls -la
+      - name: Check SHA256SUMS
+        working-directory: assets
+        run: |
+          if [ -f SHA256SUMS ]; then
+            sha256sum --check --strict SHA256SUMS
+          else
+            echo "::warning::$TAG has no SHA256SUMS; attesting the assets as published"
+          fi
+      - name: Attest
+        id: attest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: assets/*
+      - name: Attach the attestation bundle to the release
+        env:
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+        run: |
+          cp "$BUNDLE_PATH" "$TAG.intoto.jsonl"
+          gh release upload "$TAG" "$TAG.intoto.jsonl" --clobber

@@ -1,0 +1,58 @@
+[
+ {
+  "Name": "Sintel Trailer",
+  "ServerId": "00000000000000000000000000000001",
+  "Id": "a1000000000000000000000000000001",
+  "Container": "mov,mp4,m4a,3gp,3g2,mj2",
+  "DateCreated": "2026-10-17T07:07:00.0000000Z",
+  "MediaSources": [
+   {
+    "Protocol": "File",
+    "Id": "a1000000000000000000000000000001",
+    "Path": "/media/Sintel (2010)/trailers/Sintel Trailer.mp4",
+    "Type": "Default",
+    "Container": "mov,mp4,m4a,3gp,3g2,mj2",
+    "Size": 23334053,
+    "Name": "Sintel Trailer",
+    "IsRemote": false,
+    "RunTimeTicks": 400000000,
+    "SupportsTranscoding": true,
+    "SupportsDirectStream": true,
+    "SupportsDirectPlay": true,
+    "MediaStreams": [
+     { "Codec": "h264", "Type": "Video", "Index": 0, "Height": 306, "Width": 720 },
+     { "Codec": "aac", "Type": "Audio", "Index": 1, "Channels": 2 }
+    ]
+   }
+  ],
+  "RunTimeTicks": 400000000,
+  "ExtraType": "Trailer",
+  "Type": "Trailer",
+  "ParentId": "b1000000000000000000000000000001",
+  "LocationType": "FileSystem",
+  "MediaType": "Video"
+ },
+ {
+  "Name": "Sintel Teaser",
+  "ServerId": "00000000000000000000000000000001",
+  "Id": "a1000000000000000000000000000002",
+  "Container": "mkv,webm",
+  "MediaSources": [
+   {
+    "Protocol": "File",
+    "Id": "a1000000000000000000000000000002",
+    "Path": "/media/Sintel (2010)/trailers/Sintel Teaser.mkv",
+    "Type": "Default",
+    "Container": "mkv,webm",
+    "Size": 16204108,
+    "RunTimeTicks": 400000000,
+    "MediaStreams": []
+   }
+  ],
+  "RunTimeTicks": 400000000,
+  "ExtraType": "Trailer",
+  "Type": "Trailer",
+  "LocationType": "FileSystem",
+  "MediaType": "Video"
+ }
+]

@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "kind": "m3u",
+      "name": "Stub IPTV",
+      "playlistURL": "https://fixture.example/iptv/channels.m3u",
+      "epgURL": "https://fixture.example/iptv/guide.xml"
+    },
+    {
+      "kind": "folder",
+      "name": "Stub Library",
+      "path": "$STUB_ROOT/library"
+    },
+    {
+      "kind": "mediaServer",
+      "server": "jellyfin",
+      "name": "Fixture Jellyfin",
+      "url": "http://127.0.0.1:8767/jf",
+      "username": "fixture",
+      "password": "fixture"
+    }
+  ]
+}

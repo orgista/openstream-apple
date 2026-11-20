@@ -1,0 +1,22 @@
+{
+  "episodes": [
+    {
+      "season_number": 6,
+      "episode_number": 1,
+      "name": "New Class",
+      "overview": "The teachers meet their students.",
+      "air_date": "2026-10-01",
+      "runtime": 22,
+      "still_path": "/polish-first.png"
+    },
+    {
+      "season_number": 6,
+      "episode_number": 2,
+      "name": "School Project",
+      "overview": "The class works together.",
+      "air_date": "2026-10-08",
+      "runtime": 22,
+      "still_path": "/polish-second.png"
+    }
+  ]
+}

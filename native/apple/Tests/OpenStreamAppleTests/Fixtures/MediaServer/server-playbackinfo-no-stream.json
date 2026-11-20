@@ -1,0 +1,6 @@
+{
+  "_fixture": "SYNTHETIC values in the shape the server sent on 2026-10-29 (ErrorCode NoCompatibleStream, no MediaSources, seen through the app); the PlaySessionId was written by hand",
+  "ErrorCode": "NoCompatibleStream",
+  "MediaSources": [],
+  "PlaySessionId": "a00000000000000000000000000000ff"
+}

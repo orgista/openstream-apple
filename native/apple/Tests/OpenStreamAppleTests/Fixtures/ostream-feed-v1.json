@@ -1,0 +1,561 @@
+{
+ "v": 1,
+ "images": {
+  "poster": "/Items/{id}/Images/Primary?tag={tag}",
+  "backdrop": "/Items/{id}/Images/Backdrop?tag={tag}",
+  "logo": "/Items/{id}/Images/Logo?tag={tag}"
+ },
+ "services": [
+  {
+   "id": "netflix",
+   "name": "Netflix",
+   "libraryIds": [
+    "05001b8b-8326-6d6f-7669-657c6164abc3",
+    "05000622-2b89-7365-7269-65737c6190cb",
+    "0500d634-6106-6d6f-7669-657c61645352"
+   ]
+  },
+  {
+   "id": "appleTV",
+   "name": "Apple TV+",
+   "libraryIds": [
+    "0500a8b5-1b89-6d6f-7669-657c6164a3ce"
+   ]
+  },
+  {
+   "id": "curiosityStream",
+   "name": "Curiosity Stream",
+   "libraryIds": [
+    "05007725-beed-7365-7269-65737c61599a"
+   ]
+  }
+ ],
+ "rows": [
+  {
+   "id": "top10",
+   "title": "Top 10",
+   "kind": "mixed",
+   "role": "top10",
+   "items": [
+    {
+     "id": "01020000-0000-0014-e111-ffffffffae72",
+     "type": "Movie",
+     "title": "The Odyssey",
+     "year": 2026,
+     "rating": 8,
+     "posterTag": "b7d75a86e60f0e6583cc0c49a65ec7d1",
+     "backdropTag": "0b1273bdce156f59c5cb62fbfe75bbb3",
+     "logoTag": "b5b0f0cc48537327846de9508a85ca13",
+     "trailer": {
+      "youtube": "AyIZ9tiiN8I"
+     },
+     "rank": 1
+    },
+    {
+     "id": "02020000-0000-0003-ddbc-ffffffffda76",
+     "type": "Series",
+     "title": "The Institute",
+     "year": 2025,
+     "rating": 7.5,
+     "posterTag": "536680f00dde0276aba84084c5d802a1",
+     "backdropTag": "d19213498aebe9b8b43ed3a86be592f2",
+     "logoTag": "745f394c4631b8cfb434588a867c1247",
+     "trailer": {
+      "youtube": "1BcvAdfyL5Y"
+     },
+     "rank": 2
+    },
+    {
+     "id": "01020000-0000-001b-58aa-ffffffff3457",
+     "type": "Movie",
+     "title": "Model Citizen",
+     "year": 2026,
+     "rating": 6.7,
+     "posterTag": "f41724e5f94703cd8c976b26f379df2d",
+     "backdropTag": "30c89c76e08a12968d7b9822fcccbcf0",
+     "logoTag": "1744aca2c343e89ad0e571daea66f8b8",
+     "trailer": {
+      "youtube": "VczwWXoMKL0"
+     },
+     "rank": 3
+    },
+    {
+     "id": "02020000-0000-0003-417f-ffffffff681f",
+     "type": "Series",
+     "title": "VisionQuest",
+     "year": 2026,
+     "rating": 8.7,
+     "posterTag": "861f4190d94af42161437f5569521c26",
+     "backdropTag": "18269face93893eba57b8aadcfc2401f",
+     "logoTag": "845e1b343316075e8953f0de8613a104",
+     "trailer": {
+      "youtube": "sXKnmgmbkoE"
+     },
+     "rank": 4
+    },
+    {
+     "id": "01020000-0000-0013-46e9-ffffffff111d",
+     "type": "Movie",
+     "title": "Heart of the Beast",
+     "year": 2026,
+     "rating": 7.3,
+     "posterTag": "c36e302d4515e538e2f14df6db1afad6",
+     "backdropTag": "bf0e4157d3821102625fdc6858d9800b",
+     "logoTag": "cf135d50a0b5a70ad4b7cad948c2f78f",
+     "trailer": {
+      "youtube": "UkMuGKqAux4"
+     },
+     "rank": 5
+    },
+    {
+     "id": "02020000-0000-0003-7069-ffffffff9371",
+     "type": "Series",
+     "title": "Black Doves",
+     "year": 2024,
+     "rating": 7,
+     "posterTag": "7b32303ab1f3f7439ec3e8c9de7c793c",
+     "backdropTag": "e5ee71771edc9bb7ddb0f8ab5561ad46",
+     "logoTag": "391dd6d13b65e98cf59f228d595849fd",
+     "trailer": {
+      "youtube": "shzJzjVscno"
+     },
+     "rank": 6
+    }
+   ]
+  },
+  {
+   "id": "featured-movies",
+   "title": "Featured Movies",
+   "kind": "movies",
+   "role": "featured",
+   "items": [
+    {
+     "id": "01010000-0000-005f-8ff2-ffffffff867d",
+     "type": "Movie",
+     "title": "Tenzing",
+     "year": 2026,
+     "rating": 7.7,
+     "imdb": "tt6262770",
+     "posterTag": "4228007ef393b4e80ccecee08a5aaea5",
+     "backdropTag": "6ff005a7925cc805b2c288a510390e9b",
+     "logoTag": "7d18f2854853ba1a09fa3b8dbae6810f",
+     "trailer": {
+      "youtube": "KkYCY5YR12U"
+     }
+    },
+    {
+     "id": "01010000-0000-0223-1ea5-ffffffffbf9a",
+     "type": "Movie",
+     "title": "Your Mother Your Mother Your Mother",
+     "year": 2026,
+     "imdb": "tt35856037",
+     "posterTag": "566334eb10ba1dca26a438e2771a0e1e",
+     "backdropTag": "60f17bd37e6ab88c4555ea65e5664840",
+     "logoTag": "d70ba8b00655d9ad94658c44668088bf",
+     "trailer": {
+      "youtube": "uEcoV-ngH38"
+     }
+    },
+    {
+     "id": "01010000-0000-0157-b894-ffffffffb52c",
+     "type": "Movie",
+     "title": "The Love Hypothesis",
+     "year": 2026,
+     "imdb": "tt22526100",
+     "posterTag": "45dc18ef7ea8fe8e062c170daa22cd2c",
+     "backdropTag": "d6a49b9712ba9ca34c2c666473ae4aa3",
+     "logoTag": "179e3892a8960e101437ad4751d81a4b",
+     "trailer": {
+      "youtube": "xwdamnfS6IM"
+     }
+    }
+   ]
+  },
+  {
+   "id": "featured-shows",
+   "title": "Featured Shows",
+   "kind": "shows",
+   "role": "featured",
+   "items": [
+    {
+     "id": "02010000-0000-0001-7933-ffffffffc03c",
+     "type": "Series",
+     "title": "Cops",
+     "year": 1989,
+     "rating": 7,
+     "imdb": "tt0096563",
+     "posterTag": "4ccc3c96e4cc9bbb923aca1349db467b",
+     "backdropTag": "9b678a735acb23b60b8d9cbb753559a2",
+     "logoTag": "a169ad5b57279eea9467f8b9d4554e51",
+     "trailer": {
+      "youtube": "1WuhOPOhjmM"
+     }
+    },
+    {
+     "id": "02010000-0000-0117-bcb4-ffffffff610b",
+     "type": "Series",
+     "title": "Outlander: Blood of My Blood",
+     "year": 2025,
+     "rating": 8.1,
+     "imdb": "tt18332852",
+     "posterTag": "2ad64fa4ec233cc69fdc08c5263f25ed",
+     "backdropTag": "1414ac4e08a1eb4abf183309a9d71bdc",
+     "logoTag": "2c4f7081592335751864374ccec6d88b",
+     "trailer": {
+      "youtube": "9hvjJEXoIhs"
+     }
+    },
+    {
+     "id": "02010000-0000-01ec-6156-ffffffff6d1a",
+     "type": "Series",
+     "title": "Sheriff Country",
+     "year": 2025,
+     "rating": 6.8,
+     "imdb": "tt32268630",
+     "posterTag": "96bab378e4de10db510016dcc4aec10b",
+     "backdropTag": "3c1ce5f34fee4dba3b8f25ade387deee",
+     "logoTag": "510fe95c444a1729c19af34b98a72682",
+     "trailer": {
+      "youtube": "OPf6EfNIld0"
+     }
+    }
+   ]
+  },
+  {
+   "id": "0500d4ce-273a-6d6f-7669-657c616461e4",
+   "title": "Popular Movies",
+   "kind": "movies",
+   "role": "catalog",
+   "libraryId": "0500d4ce-273a-6d6f-7669-657c616461e4",
+   "items": [
+    {
+     "id": "01010000-0000-0238-f5a7-ffffffff03e8",
+     "type": "Movie",
+     "title": "Obsession",
+     "year": 2026,
+     "rating": 7.8,
+     "imdb": "tt37287335",
+     "posterTag": "bf177e3603d22434c12e94805274e68f",
+     "backdropTag": "4109e6c067278c0897dc163eef6b7f4c",
+     "logoTag": "73c3b5d3fe83b22ecf74bc2f619558d0",
+     "trailer": {
+      "youtube": "gMC8kkwbIQQ"
+     }
+    },
+    {
+     "id": "01010000-0000-0001-a270-ffffffffce53",
+     "type": "Movie",
+     "title": "Hocus Pocus",
+     "year": 1993,
+     "rating": 6.9,
+     "imdb": "tt0107120",
+     "posterTag": "8a35b1632f6d6eebd8d6a5df167f7cc3",
+     "backdropTag": "d9ec60184b20b68ef5b01d7c527cf764",
+     "logoTag": "5c9477c895f0a660fcc0cda7e8e6efca",
+     "trailer": {
+      "url": "https://fixture.example/trailers/one.m3u8"
+     }
+    },
+    {
+     "id": "01010000-0000-01ec-4746-ffffffff50b1",
+     "type": "Movie",
+     "title": "Verity",
+     "year": 2026,
+     "imdb": "tt32261958",
+     "posterTag": "e678fa0ac29d0733f436839ac0494285",
+     "backdropTag": "febab04ce6d4438844c37cf2a5db1e5b",
+     "logoTag": "d541f82e5efb3663a1ae9c35736d0833",
+     "trailer": {
+      "youtube": "xdPMKhjMSFs"
+     }
+    }
+   ],
+   "next": "/OStream/Feed/Row?v=1&id=0500d4ce-273a-6d6f-7669-657c616461e4&start=20&limit=20"
+  },
+  {
+   "id": "05001b8b-8326-6d6f-7669-657c6164abc3",
+   "title": "Netflix Movies",
+   "kind": "movies",
+   "role": "service",
+   "libraryId": "05001b8b-8326-6d6f-7669-657c6164abc3",
+   "items": [
+    {
+     "id": "01010000-0000-0163-5d48-ffffffffbb4b",
+     "type": "Movie",
+     "title": "Godzilla Minus One",
+     "year": 2023,
+     "rating": 7.6,
+     "imdb": "tt23289160",
+     "posterTag": "51559aaa04abb663e38247054d28522e",
+     "backdropTag": "b13992c62c75f656458593455d54c5f6",
+     "logoTag": "5fb712d640e3313324821cffb06c1604",
+     "trailer": {
+      "youtube": "MSp68m8OJus"
+     }
+    },
+    {
+     "id": "01010000-0000-0240-d564-fffffffffad6",
+     "type": "Movie",
+     "title": "Possible Love",
+     "year": 2026,
+     "rating": 7.7,
+     "imdb": "tt37803364",
+     "posterTag": "20eaac6959231c738975e40970571601",
+     "backdropTag": "05cf6cf76a63f9595ca2f629b51d5455",
+     "logoTag": "3f3bde558cb71aabcfbf0631d8be110b",
+     "trailer": {
+      "youtube": "zd3qXH9qN70"
+     }
+    },
+    {
+     "id": "01010000-0000-0001-a516-ffffffff3f90",
+     "type": "Movie",
+     "title": "The Pelican Brief",
+     "year": 1993,
+     "rating": 6.7,
+     "imdb": "tt0107798",
+     "posterTag": "b690fab600fe371c437bc7ca0168c1d0",
+     "backdropTag": "51a680d84cdf6b1c7aaaa5456d26e134",
+     "logoTag": "7127a5644fe087b3b9792815ee2f2f46",
+     "trailer": {
+      "youtube": "stABLuz3uds"
+     }
+    }
+   ],
+   "serviceId": "netflix",
+   "next": "/OStream/Feed/Row?v=1&id=05001b8b-8326-6d6f-7669-657c6164abc3&start=20&limit=20"
+  },
+  {
+   "id": "05000622-2b89-7365-7269-65737c6190cb",
+   "title": "Netflix Shows",
+   "kind": "shows",
+   "role": "service",
+   "libraryId": "05000622-2b89-7365-7269-65737c6190cb",
+   "items": [
+    {
+     "id": "02010000-0000-01ab-2be9-ffffffff70a3",
+     "type": "Series",
+     "title": "Black Doves",
+     "year": 2024,
+     "rating": 7.2,
+     "imdb": "tt27995113",
+     "posterTag": "2c360c7718fea166ceb75f7581e1367a",
+     "backdropTag": "8c4a7f944cc983f8720a94c722441d25",
+     "logoTag": "ad0ac7dce9b40a1f76e371331ca06dd9",
+     "trailer": {
+      "youtube": "shzJzjVscno"
+     }
+    },
+    {
+     "id": "02010000-0000-004b-4a46-ffffffff4225",
+     "type": "Series",
+     "title": "Taskmaster",
+     "year": 2015,
+     "rating": 9,
+     "imdb": "tt4934214",
+     "posterTag": "e5d41ff251109ba13507d830ffc9f935",
+     "backdropTag": "9941010eca9694228eaa52e88b223cb6",
+     "logoTag": "06437b0621bb11cb43ec81733d8e6f4f",
+     "trailer": {
+      "youtube": "Ahhr6gHoVp0"
+     }
+    },
+    {
+     "id": "02010000-0000-0007-377a-ffffffffed05",
+     "type": "Series",
+     "title": "It's Always Sunny in Philadelphia",
+     "year": 2005,
+     "rating": 8.8,
+     "imdb": "tt0472954",
+     "posterTag": "ad726b69b34201c50944d32b7a1282cd",
+     "backdropTag": "fff28801ad688e1cebd0126a3be99f32",
+     "logoTag": "0b1146fe6bf471f7222ef1b5e079757a",
+     "trailer": {
+      "youtube": "blLAdGYPhiQ"
+     }
+    }
+   ],
+   "serviceId": "netflix",
+   "next": "/OStream/Feed/Row?v=1&id=05000622-2b89-7365-7269-65737c6190cb&start=20&limit=20"
+  },
+  {
+   "id": "0500d634-6106-6d6f-7669-657c61645352",
+   "title": "Netflix Movies",
+   "kind": "movies",
+   "role": "service",
+   "libraryId": "0500d634-6106-6d6f-7669-657c61645352",
+   "items": [
+    {
+     "id": "01010000-0000-0163-5d48-ffffffffbb4b",
+     "type": "Movie",
+     "title": "Godzilla Minus One",
+     "year": 2023,
+     "rating": 7.6,
+     "imdb": "tt23289160",
+     "posterTag": "51559aaa04abb663e38247054d28522e",
+     "backdropTag": "b13992c62c75f656458593455d54c5f6",
+     "logoTag": "5fb712d640e3313324821cffb06c1604",
+     "trailer": {
+      "youtube": "MSp68m8OJus"
+     }
+    },
+    {
+     "id": "01020000-0000-0017-f6b8-ffffffff1a8d",
+     "type": "Movie",
+     "title": "A Dog's Perfect Christmas",
+     "year": 2026,
+     "rating": 7.9,
+     "posterTag": "bc2646dbcc4e6c3e142c569502501689",
+     "backdropTag": "74bbafea909ec2941b115bc27d131304",
+     "logoTag": "b4817cd527111bc25e079dcf9a856bd9",
+     "trailer": {
+      "youtube": "L18ih13Bf-U"
+     }
+    },
+    {
+     "id": "01020000-0000-001b-2925-ffffffff8b05",
+     "type": "Movie",
+     "title": "Surviving Hurricane Otis",
+     "year": 2026,
+     "rating": 7.5,
+     "posterTag": "867872e9735a8bddd4ef49297fca58c7",
+     "backdropTag": "524969c0feeb898169da5c76d0d54704",
+     "logoTag": "e0fc4d29c58027d870468ede8cc996b7",
+     "trailer": {
+      "youtube": "qC0HZLUXRXw"
+     }
+    }
+   ],
+   "serviceId": "netflix",
+   "next": "/OStream/Feed/Row?v=1&id=0500d634-6106-6d6f-7669-657c61645352&start=20&limit=20"
+  },
+  {
+   "id": "0500a8b5-1b89-6d6f-7669-657c6164a3ce",
+   "title": "Apple TV+ Movies",
+   "kind": "movies",
+   "role": "service",
+   "libraryId": "0500a8b5-1b89-6d6f-7669-657c6164a3ce",
+   "items": [
+    {
+     "id": "01010000-0000-005f-8ff2-ffffffff867d",
+     "type": "Movie",
+     "title": "Tenzing",
+     "year": 2026,
+     "rating": 7.4,
+     "imdb": "tt6262770",
+     "posterTag": "910f7da705025392e3a21e5499692524",
+     "backdropTag": "6ff005a7925cc805b2c288a510390e9b",
+     "logoTag": "7d18f2854853ba1a09fa3b8dbae6810f",
+     "trailer": {
+      "youtube": "KkYCY5YR12U"
+     }
+    },
+    {
+     "id": "01010000-0000-0014-fdb2-ffffffff73d5",
+     "type": "Movie",
+     "title": "Inception",
+     "year": 2010,
+     "rating": 8.8,
+     "imdb": "tt1375666",
+     "posterTag": "74b12b98e7f80321f8a151d67217192c",
+     "backdropTag": "df8c21e9808871639c7ec6aabf20ec0f",
+     "logoTag": "3326f5a614d5dcd8d23c442fe01153ab",
+     "trailer": {
+      "youtube": "cdx31ak4KbQ"
+     }
+    },
+    {
+     "id": "01010000-0000-000c-af9b-ffffffffafa7",
+     "type": "Movie",
+     "title": "Godzilla",
+     "year": 2014,
+     "rating": 6.4,
+     "imdb": "tt0831387",
+     "posterTag": "8670082a6dfaf8e216c59d40c0f7cf77",
+     "backdropTag": "91001c4a1ea89283fb50e059347f5027",
+     "logoTag": "d48b318fd8e1915beaa88e3bdbcabdc1",
+     "trailer": {
+      "youtube": "oHKGx1pzczg"
+     }
+    }
+   ],
+   "serviceId": "appleTV",
+   "next": "/OStream/Feed/Row?v=1&id=0500a8b5-1b89-6d6f-7669-657c6164a3ce&start=20&limit=20"
+  },
+  {
+   "id": "05008503-16e6-6d6f-7669-657c61640277",
+   "title": "Curiosity Stream Movies",
+   "kind": "movies",
+   "role": "catalog",
+   "libraryId": "05008503-16e6-6d6f-7669-657c61640277",
+   "items": [
+    {
+     "id": "01020000-0000-0004-db47-ffffffff87f9",
+     "type": "Movie",
+     "title": "Meru",
+     "year": 2015,
+     "rating": 7.4,
+     "posterTag": "601b33bdbd8d98de11d85fec63f9c3d8",
+     "backdropTag": "edec73236b269f36a1ec506b481bedac",
+     "logoTag": "8cef241175e2248714d7c29ea699b9a6",
+     "trailer": {
+      "youtube": "1pZ1GzXPEO8"
+     }
+    },
+    {
+     "id": "01020000-0000-0004-0151-ffffffffb724",
+     "type": "Movie",
+     "title": "An Honest Liar",
+     "year": 2014,
+     "rating": 7.1,
+     "posterTag": "ec183247d7eac65209d2708dd49750fa",
+     "backdropTag": "16dc9d107cdc81b7578885380864baaa",
+     "logoTag": "f1545fc5ae111380848c6d1179b01ff2",
+     "trailer": {
+      "youtube": "KYaddaNQH5s"
+     }
+    },
+    {
+     "id": "01020000-0000-0001-a32f-ffffffffb786",
+     "type": "Movie",
+     "title": "Crackerjack",
+     "year": 1994,
+     "rating": 4.1,
+     "posterTag": "7b556c9ac205d1ad2becf33f32734db4",
+     "backdropTag": "491384c5e8ad02aa9e1eb7d3dbee6251",
+     "logoTag": "9ab9cb9fb84a688ace64053abee153ed"
+    }
+   ]
+  },
+  {
+   "id": "05007725-beed-7365-7269-65737c61599a",
+   "title": "Curiosity Stream Shows",
+   "kind": "shows",
+   "role": "service",
+   "libraryId": "05007725-beed-7365-7269-65737c61599a",
+   "items": [
+    {
+     "id": "02020000-0000-0000-193c-ffffffff8573",
+     "type": "Series",
+     "title": "The Busy World of Richard Scarry",
+     "year": 1994,
+     "rating": 7.5,
+     "posterTag": "69d2ed2417752010f4c4a9d08faa5dfb",
+     "backdropTag": "4e03916e6988a867bdf0086d870285a2",
+     "logoTag": "e4d78e23a8c29f6a21fe626c46853e8d"
+    },
+    {
+     "id": "02020000-0000-0001-4a1c-ffffffff44de",
+     "type": "Series",
+     "title": "Molang",
+     "year": 2015,
+     "rating": 6.2,
+     "posterTag": "2a4f044341ddb49684d0a0163f98cb39",
+     "backdropTag": "e2eeae60050480e8bee6568c552be33d",
+     "logoTag": "0c26368d4e333f1e76db429c29c601b9"
+    }
+   ],
+   "serviceId": "curiosityStream"
+  }
+ ]
+}

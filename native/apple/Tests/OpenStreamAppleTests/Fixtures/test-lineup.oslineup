@@ -1,0 +1,206 @@
+{
+  "format": "ostream-lineup",
+  "version": 1,
+  "name": "Test Lineup",
+  "region": "US",
+  "updated": "2026-10-22",
+  "channels": [
+    {
+      "number": 206,
+      "name": "ESPN",
+      "aliases": [
+        "ESPN HD"
+      ],
+      "category": "Sports"
+    },
+    {
+      "number": 202,
+      "name": "CNN",
+      "aliases": [],
+      "category": "News"
+    },
+    {
+      "number": 501,
+      "name": "HBO",
+      "aliases": [],
+      "category": "Premium"
+    },
+    {
+      "number": 360,
+      "name": "Fox News",
+      "aliases": [],
+      "category": "News"
+    },
+    {
+      "number": 665,
+      "name": "NBC Sports Chicago",
+      "aliases": [],
+      "category": "Sports",
+      "market": "Chicago"
+    },
+    {
+      "number": 602,
+      "name": "Fixture Dallas",
+      "aliases": [],
+      "category": "Sports",
+      "market": "Dallas"
+    },
+    {
+      "number": 2,
+      "name": "Fixture Local",
+      "aliases": [],
+      "category": "Local",
+      "market": {
+        "network": "Fixture"
+      }
+    },
+    {
+      "number": 1000,
+      "name": "Fixture Channel 0",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1001,
+      "name": "Fixture Channel 1",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1002,
+      "name": "Fixture Channel 2",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1003,
+      "name": "Fixture Channel 3",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1004,
+      "name": "Fixture Channel 4",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1005,
+      "name": "Fixture Channel 5",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1006,
+      "name": "Fixture Channel 6",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1007,
+      "name": "Fixture Channel 7",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1008,
+      "name": "Fixture Channel 8",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1009,
+      "name": "Fixture Channel 9",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1010,
+      "name": "Fixture Channel 10",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1011,
+      "name": "Fixture Channel 11",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1012,
+      "name": "Fixture Channel 12",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1013,
+      "name": "Fixture Channel 13",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1014,
+      "name": "Fixture Channel 14",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1015,
+      "name": "Fixture Channel 15",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1016,
+      "name": "Fixture Channel 16",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1017,
+      "name": "Fixture Channel 17",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1018,
+      "name": "Fixture Channel 18",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1019,
+      "name": "Fixture Channel 19",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1020,
+      "name": "Fixture Channel 20",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1021,
+      "name": "Fixture Channel 21",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1022,
+      "name": "Fixture Channel 22",
+      "aliases": [],
+      "category": "Entertainment"
+    },
+    {
+      "number": 1023,
+      "name": "Fixture Channel 23",
+      "aliases": [],
+      "category": "Entertainment"
+    }
+  ],
+  "markets": {
+    "606": "Chicago",
+    "750": "Dallas"
+  }
+}

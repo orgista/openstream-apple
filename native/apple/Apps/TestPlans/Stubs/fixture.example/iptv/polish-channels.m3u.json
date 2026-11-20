@@ -1,0 +1,7 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="cbs" tvg-logo="https://fixture.example/art/channel.png" group-title="Fixture",CA: CBS
+https://fixture.example/live/cbs.ts
+#EXTINF:-1 tvg-id="fixture-news" group-title="Fixture",US| Fixture News
+https://fixture.example/live/fixture-news.ts
+#EXTINF:-1 tvg-id="fixture-film" tvg-logo="https://fixture.example/art/missing-channel.png" group-title="Fixture",UK: Fixture Film
+https://fixture.example/live/fixture-film.ts

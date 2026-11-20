@@ -1,0 +1,355 @@
+{
+  "_fixture": "RECORDED from a Jellyfin-compatible server, ids, names, hosts and links replaced",
+  "Items": [
+    {
+      "BackdropImageTags": [
+        "a0000000000000000000000000000009"
+      ],
+      "CanDelete": false,
+      "CanDownload": false,
+      "CommunityRating": 0,
+      "EnableMediaSourceDisplay": true,
+      "Etag": "a0000000000000000000000000000016",
+      "Id": "a0000000000000000000000000000017",
+      "ImageBlurHashes": {},
+      "ImageTags": {
+        "Logo": "a000000000000000000000000000000a",
+        "Primary": "a0000000000000000000000000000018",
+        "Thumb": "a0000000000000000000000000000009"
+      },
+      "IndexNumber": 3,
+      "IsFolder": false,
+      "LocationType": "Remote",
+      "LockData": false,
+      "LockedFields": [],
+      "MediaSources": [
+        {
+          "Container": "mp4",
+          "ETag": "a0000000000000000000000000000016",
+          "Formats": [],
+          "Id": "a0000000000000000000000000000017",
+          "IsRemote": true,
+          "MediaAttachments": [],
+          "MediaStreams": [
+            {
+              "Codec": "h264",
+              "DisplayTitle": "Video",
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsTextSubtitleStream": false,
+              "SupportsExternalStream": false,
+              "Type": "Video"
+            }
+          ],
+          "Name": "Version 3",
+          "Path": "/p8.mp4",
+          "Protocol": "Http",
+          "RequiredHttpHeaders": {},
+          "RequiresClosing": false,
+          "RequiresLooping": false,
+          "RequiresOpening": false,
+          "SupportsDirectPlay": true,
+          "SupportsDirectStream": true,
+          "SupportsProbing": false,
+          "SupportsTranscoding": false,
+          "Type": "Placeholder",
+          "VideoType": "VideoFile"
+        }
+      ],
+      "MediaType": "Video",
+      "Name": "Episode 3",
+      "OfficialRating": null,
+      "Overview": "Overview 4.",
+      "ParentBackdropImageTags": [
+        "a0000000000000000000000000000009"
+      ],
+      "ParentBackdropItemId": "a0000000000000000000000000000002",
+      "ParentId": "a000000000000000000000000000000f",
+      "ParentIndexNumber": 1,
+      "ParentLogoImageTag": "a000000000000000000000000000000a",
+      "ParentLogoItemId": "a0000000000000000000000000000002",
+      "ParentThumbImageTag": "a0000000000000000000000000000009",
+      "ParentThumbItemId": "a0000000000000000000000000000002",
+      "Path": "/p7/a0000000000000000000000000000016",
+      "People": [
+        {
+          "Id": "a0000000000000000000000000000003",
+          "Name": "Name 22",
+          "Role": "",
+          "Type": "Actor"
+        },
+        {
+          "Id": "a0000000000000000000000000000004",
+          "Name": "Name 23",
+          "Role": "",
+          "Type": "Actor"
+        },
+        {
+          "Id": "a0000000000000000000000000000005",
+          "Name": "Name 24",
+          "Role": "",
+          "Type": "Actor"
+        }
+      ],
+      "PremiereDate": "2026-10-15T11:00:00.000Z",
+      "PrimaryImageAspectRatio": 1.7777777777777777,
+      "ProductionYear": 2026,
+      "ProviderIds": {},
+      "RunTimeTicks": 30000000000,
+      "SeasonId": "a000000000000000000000000000000f",
+      "SeasonName": "Season 1",
+      "SeriesId": "a0000000000000000000000000000002",
+      "SeriesName": "Show One",
+      "SeriesPrimaryImageTag": "a0000000000000000000000000000008",
+      "ServerId": "a0000000000000000000000000000001",
+      "Type": "Episode",
+      "UserData": {
+        "IsFavorite": false,
+        "ItemId": "a0000000000000000000000000000017",
+        "Key": "a0000000000000000000000000000017",
+        "Likes": null,
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false,
+        "PlayedPercentage": 0
+      },
+      "VideoType": "VideoFile"
+    },
+    {
+      "BackdropImageTags": [
+        "a0000000000000000000000000000009"
+      ],
+      "CanDelete": false,
+      "CanDownload": false,
+      "CommunityRating": 0,
+      "EnableMediaSourceDisplay": true,
+      "Etag": "a0000000000000000000000000000013",
+      "Id": "a0000000000000000000000000000014",
+      "ImageBlurHashes": {},
+      "ImageTags": {
+        "Logo": "a000000000000000000000000000000a",
+        "Primary": "a0000000000000000000000000000015",
+        "Thumb": "a0000000000000000000000000000009"
+      },
+      "IndexNumber": 2,
+      "IsFolder": false,
+      "LocationType": "Remote",
+      "LockData": false,
+      "LockedFields": [],
+      "MediaSources": [
+        {
+          "Container": "mp4",
+          "ETag": "a0000000000000000000000000000013",
+          "Formats": [],
+          "Id": "a0000000000000000000000000000014",
+          "IsRemote": true,
+          "MediaAttachments": [],
+          "MediaStreams": [
+            {
+              "Codec": "h264",
+              "DisplayTitle": "Video",
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsTextSubtitleStream": false,
+              "SupportsExternalStream": false,
+              "Type": "Video"
+            }
+          ],
+          "Name": "Version 2",
+          "Path": "/p5.mp4",
+          "Protocol": "Http",
+          "RequiredHttpHeaders": {},
+          "RequiresClosing": false,
+          "RequiresLooping": false,
+          "RequiresOpening": false,
+          "SupportsDirectPlay": true,
+          "SupportsDirectStream": true,
+          "SupportsProbing": false,
+          "SupportsTranscoding": false,
+          "Type": "Placeholder",
+          "VideoType": "VideoFile"
+        }
+      ],
+      "MediaType": "Video",
+      "Name": "Episode 2",
+      "OfficialRating": null,
+      "Overview": "Overview 3.",
+      "ParentBackdropImageTags": [
+        "a0000000000000000000000000000009"
+      ],
+      "ParentBackdropItemId": "a0000000000000000000000000000002",
+      "ParentId": "a000000000000000000000000000000f",
+      "ParentIndexNumber": 1,
+      "ParentLogoImageTag": "a000000000000000000000000000000a",
+      "ParentLogoItemId": "a0000000000000000000000000000002",
+      "ParentThumbImageTag": "a0000000000000000000000000000009",
+      "ParentThumbItemId": "a0000000000000000000000000000002",
+      "Path": "/p6/a0000000000000000000000000000013",
+      "People": [
+        {
+          "Id": "a0000000000000000000000000000003",
+          "Name": "Name 16",
+          "Role": "",
+          "Type": "Actor"
+        },
+        {
+          "Id": "a0000000000000000000000000000004",
+          "Name": "Name 17",
+          "Role": "",
+          "Type": "Actor"
+        },
+        {
+          "Id": "a0000000000000000000000000000005",
+          "Name": "Name 18",
+          "Role": "",
+          "Type": "Actor"
+        }
+      ],
+      "PremiereDate": "2026-10-15T11:00:00.000Z",
+      "PrimaryImageAspectRatio": 1.7777777777777777,
+      "ProductionYear": 2026,
+      "ProviderIds": {},
+      "RunTimeTicks": 30000000000,
+      "SeasonId": "a000000000000000000000000000000f",
+      "SeasonName": "Season 1",
+      "SeriesId": "a0000000000000000000000000000002",
+      "SeriesName": "Show One",
+      "SeriesPrimaryImageTag": "a0000000000000000000000000000008",
+      "ServerId": "a0000000000000000000000000000001",
+      "Type": "Episode",
+      "UserData": {
+        "IsFavorite": false,
+        "ItemId": "a0000000000000000000000000000014",
+        "Key": "a0000000000000000000000000000014",
+        "Likes": null,
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false,
+        "PlayedPercentage": 0
+      },
+      "VideoType": "VideoFile"
+    },
+    {
+      "BackdropImageTags": [
+        "a0000000000000000000000000000009"
+      ],
+      "CanDelete": false,
+      "CanDownload": false,
+      "CommunityRating": 0,
+      "EnableMediaSourceDisplay": true,
+      "Etag": "a0000000000000000000000000000010",
+      "Id": "a0000000000000000000000000000011",
+      "ImageBlurHashes": {},
+      "ImageTags": {
+        "Logo": "a000000000000000000000000000000a",
+        "Primary": "a0000000000000000000000000000012",
+        "Thumb": "a0000000000000000000000000000009"
+      },
+      "IndexNumber": 1,
+      "IsFolder": false,
+      "LocationType": "Remote",
+      "LockData": false,
+      "LockedFields": [],
+      "MediaSources": [
+        {
+          "Container": "mp4",
+          "ETag": "a0000000000000000000000000000010",
+          "Formats": [],
+          "Id": "a0000000000000000000000000000011",
+          "IsRemote": true,
+          "MediaAttachments": [],
+          "MediaStreams": [
+            {
+              "Codec": "h264",
+              "DisplayTitle": "Video",
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsTextSubtitleStream": false,
+              "SupportsExternalStream": false,
+              "Type": "Video"
+            }
+          ],
+          "Name": "Version 1",
+          "Path": "/p3.mp4",
+          "Protocol": "Http",
+          "RequiredHttpHeaders": {},
+          "RequiresClosing": false,
+          "RequiresLooping": false,
+          "RequiresOpening": false,
+          "SupportsDirectPlay": true,
+          "SupportsDirectStream": true,
+          "SupportsProbing": false,
+          "SupportsTranscoding": false,
+          "Type": "Placeholder",
+          "VideoType": "VideoFile"
+        }
+      ],
+      "MediaType": "Video",
+      "Name": "Episode 1",
+      "OfficialRating": null,
+      "Overview": "Overview 2.",
+      "ParentBackdropImageTags": [
+        "a0000000000000000000000000000009"
+      ],
+      "ParentBackdropItemId": "a0000000000000000000000000000002",
+      "ParentId": "a000000000000000000000000000000f",
+      "ParentIndexNumber": 1,
+      "ParentLogoImageTag": "a000000000000000000000000000000a",
+      "ParentLogoItemId": "a0000000000000000000000000000002",
+      "ParentThumbImageTag": "a0000000000000000000000000000009",
+      "ParentThumbItemId": "a0000000000000000000000000000002",
+      "Path": "/p4/a0000000000000000000000000000010",
+      "People": [
+        {
+          "Id": "a0000000000000000000000000000003",
+          "Name": "Name 11",
+          "Role": "",
+          "Type": "Actor"
+        },
+        {
+          "Id": "a0000000000000000000000000000004",
+          "Name": "Name 12",
+          "Role": "",
+          "Type": "Actor"
+        },
+        {
+          "Id": "a0000000000000000000000000000005",
+          "Name": "Name 13",
+          "Role": "",
+          "Type": "Actor"
+        }
+      ],
+      "PremiereDate": "2026-10-15T11:00:00.000Z",
+      "PrimaryImageAspectRatio": 1.7777777777777777,
+      "ProductionYear": 2026,
+      "ProviderIds": {},
+      "RunTimeTicks": 30000000000,
+      "SeasonId": "a000000000000000000000000000000f",
+      "SeasonName": "Season 1",
+      "SeriesId": "a0000000000000000000000000000002",
+      "SeriesName": "Show One",
+      "SeriesPrimaryImageTag": "a0000000000000000000000000000008",
+      "ServerId": "a0000000000000000000000000000001",
+      "Type": "Episode",
+      "UserData": {
+        "IsFavorite": false,
+        "ItemId": "a0000000000000000000000000000011",
+        "Key": "a0000000000000000000000000000011",
+        "Likes": null,
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false,
+        "PlayedPercentage": 0
+      },
+      "VideoType": "VideoFile"
+    }
+  ],
+  "StartIndex": 0,
+  "TotalRecordCount": 3
+}
